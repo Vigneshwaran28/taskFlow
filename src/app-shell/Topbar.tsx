@@ -67,8 +67,6 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
           </>
         )}
 
-        <LiveIndicator />
-
         <div className="flex" data-tour="notifications">
           <NotificationBell onOpenTask={openEditById} onOpenTicket={id => router.push(`/tickets/${id}`)} />
         </div>

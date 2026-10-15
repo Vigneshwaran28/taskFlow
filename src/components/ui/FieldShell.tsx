@@ -4,8 +4,8 @@ import { cn } from "@/lib/cn";
 
 export const controlClass = (error?: string | null, extra?: string) =>
   cn(
-    "w-full rounded-lg border bg-card px-3 text-sm text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
-    error ? "border-destructive" : "border-input",
+    "w-full rounded-lg border bg-card px-3.5 text-sm text-foreground shadow-sm transition-all duration-150 placeholder:text-muted-foreground/60 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50",
+    error ? "border-destructive focus-visible:ring-destructive/30" : "border-input",
     extra
   );
 
