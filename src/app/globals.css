@@ -1,0 +1,482 @@
+@import "tailwindcss";
+
+/* Class-based dark mode: <html class="dark"> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-background: #f8fafc;
+  --color-foreground: #0f172a;
+  --color-card: #ffffff;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #5b6779; /* slate-500 failed AA (4.3:1) on the muted background */
+  --color-border: #e2e8f0;
+  --color-input: #cbd5e1;
+  --color-ring: #6366f1;
+  --color-primary: #4f46e5;
+  --color-primary-foreground: #ffffff;
+  --color-accent: #eef2ff;
+  --color-accent-foreground: #3730a3;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+  --color-success: #047857; /* AA as text on white */
+  --color-warning: #b45309; /* #d97706 was 3.2:1 as text on white */
+}
+
+.dark {
+  --color-background: #0b1120;
+  --color-foreground: #e2e8f0;
+  --color-card: #111827;
+  --color-muted: #1f2937;
+  --color-muted-foreground: #94a3b8;
+  --color-border: #1f2937;
+  --color-input: #334155;
+  --color-ring: #818cf8;
+  --color-primary: #6366f1;
+  --color-primary-foreground: #ffffff;
+  --color-accent: #1e1b4b;
+  --color-accent-foreground: #c7d2fe;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+}
+
+/* Dark mode: primary-coloured text (links, counts, "View all") on dark cards was ~4:1. The ring colour is each accent's
+   lighter shade in dark mode, so use it for text. :where() keeps the specificity of .text-primary, so hover:/focus:
+   variants still win. */
+@layer utilities {
+  :where(.dark) .text-primary { color: var(--color-ring); }
+}
+
+/* ---- Accent colours: <html data-accent="…">. Indigo is the default above. ---- */
+html[data-accent="blue"] { --color-primary: #2563eb; --color-ring: #3b82f6; --color-accent: #eff6ff; --color-accent-foreground: #1e40af; }
+html.dark[data-accent="blue"] { --color-primary: #3b82f6; --color-ring: #60a5fa; --color-accent: #172554; --color-accent-foreground: #bfdbfe; }
+html[data-accent="teal"] { --color-primary: #0f766e; --color-ring: #14b8a6; --color-accent: #f0fdfa; --color-accent-foreground: #115e59; }
+html.dark[data-accent="teal"] { --color-primary: #0d9488; --color-ring: #2dd4bf; --color-accent: #042f2e; --color-accent-foreground: #99f6e4; }
+html[data-accent="emerald"] { --color-primary: #047857; --color-ring: #10b981; --color-accent: #ecfdf5; --color-accent-foreground: #065f46; }
+html.dark[data-accent="emerald"] { --color-primary: #059669; --color-ring: #34d399; --color-accent: #022c22; --color-accent-foreground: #a7f3d0; }
+html[data-accent="amber"] { --color-primary: #b45309; --color-ring: #f59e0b; --color-accent: #fffbeb; --color-accent-foreground: #92400e; }
+html.dark[data-accent="amber"] { --color-primary: #d97706; --color-ring: #fbbf24; --color-accent: #451a03; --color-accent-foreground: #fde68a; }
+html[data-accent="rose"] { --color-primary: #e11d48; --color-ring: #f43f5e; --color-accent: #fff1f2; --color-accent-foreground: #9f1239; }
+html.dark[data-accent="rose"] { --color-primary: #e11d48; --color-ring: #fb7185; --color-accent: #4c0519; --color-accent-foreground: #fecdd3; }
+html[data-accent="violet"] { --color-primary: #7c3aed; --color-ring: #8b5cf6; --color-accent: #f5f3ff; --color-accent-foreground: #5b21b6; }
+html.dark[data-accent="violet"] { --color-primary: #7c3aed; --color-ring: #a78bfa; --color-accent: #2e1065; --color-accent-foreground: #ddd6fe; }
+html[data-accent="slate"] { --color-primary: #334155; --color-ring: #64748b; --color-accent: #f1f5f9; --color-accent-foreground: #1e293b; }
+html.dark[data-accent="slate"] { --color-primary: #475569; --color-ring: #94a3b8; --color-accent: #1e293b; --color-accent-foreground: #e2e8f0; }
+
+/* ---- Style presets: <html data-style="…"> (hooks/useTheme.tsx STYLES). Each preset sets the surface tokens, corner radius,
+   shadow depth, page background, heading weight, and its default typeface and sidebar (STYLE_DEFAULTS). The same blocks
+   also match [data-style-preview="…"], so Settings → Appearance renders its mini previews with the real variables.
+   Classic is the base theme above; its block exists only to reset a preview inside another style. ---- */
+:root {
+  --font-system: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --shadow-1: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-2: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --app-bg-image: none;
+  --preset-font: var(--font-system);
+}
+[data-style-preview="classic"] {
+  --color-background: #f8fafc; --color-foreground: #0f172a; --color-card: #ffffff; --color-muted: #f1f5f9; --color-muted-foreground: #5b6779;
+  --color-border: #e2e8f0; --color-input: #cbd5e1;
+  --radius-sm: 0.25rem; --radius-md: 0.375rem; --radius-lg: 0.5rem; --radius-xl: 0.75rem; --radius-2xl: 1rem;
+  --shadow-1: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-2: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --app-bg-image: none; --preset-font: var(--font-system); --heading-weight: 600; --sidebar-dark-bg: #0f172a;
+}
+.dark [data-style-preview="classic"] {
+  --color-background: #0b1120; --color-foreground: #e2e8f0; --color-card: #111827; --color-muted: #1f2937; --color-muted-foreground: #94a3b8;
+  --color-border: #1f2937; --color-input: #334155; --sidebar-dark-bg: #060a14;
+}
+
+/* Modern business: crisp neutrals, hairline borders, a little more radius, a navy-slate sidebar, Inter. */
+html[data-style="business"], [data-style-preview="business"] {
+  --color-background: #f5f6f8; --color-foreground: #101828; --color-card: #ffffff; --color-muted: #f1f3f6; --color-muted-foreground: #4f5b6b;
+  --color-border: #e1e5eb; --color-input: #ccd3dc;
+  --radius-sm: 0.3rem; --radius-md: 0.45rem; --radius-lg: 0.625rem; --radius-xl: 0.875rem; --radius-2xl: 1.125rem;
+  --shadow-1: 0 1px 2px 0 rgb(16 24 40 / 0.06);
+  --shadow-2: 0 12px 24px -6px rgb(16 24 40 / 0.16), 0 4px 8px -4px rgb(16 24 40 / 0.08);
+  --app-bg-image: none; --preset-font: var(--font-inter), var(--font-system); --heading-weight: 650; --sidebar-dark-bg: #16213b;
+}
+html.dark[data-style="business"], .dark [data-style-preview="business"] {
+  --color-background: #0c1017; --color-foreground: #e6e9ef; --color-card: #131922; --color-muted: #1b222d; --color-muted-foreground: #9da7b5;
+  --color-border: #242c38; --color-input: #364050;
+  --shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.4); --shadow-2: 0 16px 32px -8px rgb(0 0 0 / 0.6); --sidebar-dark-bg: #080c13;
+}
+
+/* Glass: translucent, blurred cards over a soft gradient. Without backdrop-filter the cards stay (nearly) opaque. */
+html[data-style="glass"], [data-style-preview="glass"] {
+  --color-background: #eef1fa; --color-foreground: #0f172a; --color-card: rgb(255 255 255 / 0.94); --color-muted: rgb(226 232 240 / 0.6);
+  --color-muted-foreground: #475266; --color-border: rgb(100 116 139 / 0.24); --color-input: rgb(100 116 139 / 0.42);
+  --radius-sm: 0.3rem; --radius-md: 0.5rem; --radius-lg: 0.75rem; --radius-xl: 1rem; --radius-2xl: 1.25rem;
+  --shadow-1: 0 4px 16px -6px rgb(30 41 59 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.55);
+  --shadow-2: 0 24px 48px -12px rgb(30 41 59 / 0.28);
+  --app-bg-image:
+    radial-gradient(at 0% 0%, color-mix(in oklab, var(--color-primary) 26%, transparent) 0, transparent 55%),
+    radial-gradient(at 100% 8%, rgb(56 189 248 / 0.22) 0, transparent 50%),
+    radial-gradient(at 60% 100%, rgb(236 72 153 / 0.14) 0, transparent 55%);
+  --preset-font: var(--font-jakarta), var(--font-system); --heading-weight: 650; --sidebar-dark-bg: #111a2e;
+}
+html.dark[data-style="glass"], .dark [data-style-preview="glass"] {
+  --color-background: #070b16; --color-foreground: #e5e9f0; --color-card: rgb(17 24 39 / 0.94); --color-muted: rgb(51 65 85 / 0.45);
+  --color-muted-foreground: #a3afc2; --color-border: rgb(255 255 255 / 0.1); --color-input: rgb(255 255 255 / 0.18);
+  --shadow-1: 0 4px 16px -6px rgb(0 0 0 / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.05); --shadow-2: 0 24px 48px -12px rgb(0 0 0 / 0.7);
+  --app-bg-image:
+    radial-gradient(at 0% 0%, color-mix(in oklab, var(--color-primary) 32%, transparent) 0, transparent 55%),
+    radial-gradient(at 100% 8%, rgb(14 165 233 / 0.16) 0, transparent 50%),
+    radial-gradient(at 60% 100%, rgb(219 39 119 / 0.12) 0, transparent 55%);
+  --sidebar-dark-bg: rgb(3 7 18 / 0.85);
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  html[data-style="glass"], [data-style-preview="glass"] { --color-card: rgb(255 255 255 / 0.62); }
+  html.dark[data-style="glass"], .dark [data-style-preview="glass"] { --color-card: rgb(17 24 39 / 0.58); }
+  html[data-style="glass"] .bg-card, [data-style-preview="glass"] .bg-card { -webkit-backdrop-filter: blur(16px) saturate(160%); backdrop-filter: blur(16px) saturate(160%); }
+  /* Modals sit over a dimmed backdrop: keep them readable. */
+  html[data-style="glass"] dialog { --color-card: rgb(255 255 255 / 0.95); }
+  html.dark[data-style="glass"] dialog { --color-card: rgb(17 24 39 / 0.96); }
+}
+
+/* Midnight executive: deep dark surfaces with accent-tinted edges and glow (made for dark mode; light mode keeps the dark sidebar). */
+html[data-style="midnight"], [data-style-preview="midnight"] {
+  --color-background: #f2f3f7; --color-foreground: #0b1020; --color-card: #ffffff; --color-muted: #eceef3; --color-muted-foreground: #4a5468;
+  --color-border: #dadee6; --color-input: #c3c9d4;
+  --radius-sm: 0.25rem; --radius-md: 0.375rem; --radius-lg: 0.5rem; --radius-xl: 0.75rem; --radius-2xl: 1rem;
+  --shadow-1: 0 1px 2px 0 rgb(10 15 30 / 0.08); --shadow-2: 0 20px 40px -12px rgb(10 15 30 / 0.3);
+  --app-bg-image: none; --preset-font: var(--font-plex), var(--font-system); --heading-weight: 700; --sidebar-dark-bg: #0a0f1e;
+}
+html.dark[data-style="midnight"], .dark [data-style-preview="midnight"] {
+  --color-background: #05070d; --color-foreground: #e7eaf3; --color-card: #0b1020; --color-muted: #141b2d; --color-muted-foreground: #9ea9c1;
+  --color-border: color-mix(in oklab, var(--color-primary) 22%, #161d30); --color-input: color-mix(in oklab, var(--color-primary) 25%, #26304a);
+  --shadow-1: 0 1px 0 0 color-mix(in oklab, var(--color-primary) 14%, transparent), 0 8px 24px -16px rgb(0 0 0 / 0.9);
+  --shadow-2: 0 0 0 1px color-mix(in oklab, var(--color-primary) 28%, transparent), 0 24px 48px -16px color-mix(in oklab, var(--color-primary) 38%, transparent);
+  --app-bg-image: radial-gradient(1200px 480px at 50% -12%, color-mix(in oklab, var(--color-primary) 20%, transparent), transparent 70%);
+  --sidebar-dark-bg: #03050a;
+}
+
+/* Minimal: flat (no shadows), hairlines only, page and cards the same colour, a little more room on larger screens. */
+html[data-style="minimal"], [data-style-preview="minimal"] {
+  --color-background: #ffffff; --color-foreground: #111418; --color-card: #ffffff; --color-muted: #f4f5f7; --color-muted-foreground: #565e6a;
+  --color-border: #e6e8eb; --color-input: #d2d6dc;
+  --radius-sm: 0.2rem; --radius-md: 0.3rem; --radius-lg: 0.4rem; --radius-xl: 0.5rem; --radius-2xl: 0.75rem;
+  --shadow-1: 0 0 #0000; --shadow-2: 0 0 0 1px var(--color-border);
+  --app-bg-image: none; --preset-font: var(--font-inter), var(--font-system); --heading-weight: 600; --sidebar-dark-bg: #111418;
+}
+html.dark[data-style="minimal"], .dark [data-style-preview="minimal"] {
+  --color-background: #0e1013; --color-foreground: #e8eaed; --color-card: #0e1013; --color-muted: #1a1d22; --color-muted-foreground: #9ea5b0;
+  --color-border: #262a31; --color-input: #383d46; --sidebar-dark-bg: #050607;
+}
+@media (min-width: 48rem) {
+  html[data-style="minimal"] { --spacing: 0.275rem; }
+}
+
+/* Soft: rounder corners, pastel surfaces tinted by the accent, coloured soft shadows. */
+html[data-style="soft"], [data-style-preview="soft"] {
+  --color-background: color-mix(in oklab, var(--color-accent) 60%, #ffffff); --color-foreground: #1b2233;
+  --color-card: color-mix(in oklab, var(--color-accent) 16%, #ffffff); --color-muted: color-mix(in oklab, var(--color-primary) 7%, #ffffff);
+  --color-muted-foreground: #525c6d; --color-border: color-mix(in oklab, var(--color-primary) 14%, #ffffff); --color-input: color-mix(in oklab, var(--color-primary) 30%, #ffffff);
+  --radius-sm: 0.375rem; --radius-md: 0.625rem; --radius-lg: 0.875rem; --radius-xl: 1.25rem; --radius-2xl: 1.6rem;
+  --shadow-1: 0 6px 18px -10px color-mix(in oklab, var(--color-primary) 35%, transparent);
+  --shadow-2: 0 24px 48px -16px color-mix(in oklab, var(--color-primary) 38%, transparent);
+  --app-bg-image: none; --preset-font: var(--font-jakarta), var(--font-system); --heading-weight: 650; --sidebar-dark-bg: #1e2238;
+}
+html.dark[data-style="soft"], .dark [data-style-preview="soft"] {
+  --color-background: color-mix(in oklab, var(--color-primary) 9%, #0d1120); --color-foreground: #e6e9f2;
+  --color-card: color-mix(in oklab, var(--color-primary) 10%, #151a2a); --color-muted: color-mix(in oklab, var(--color-primary) 14%, #1a2033);
+  --color-muted-foreground: #a6b0c4; --color-border: color-mix(in oklab, var(--color-primary) 22%, #1d2336); --color-input: color-mix(in oklab, var(--color-primary) 30%, #282f44);
+  --shadow-1: 0 6px 18px -10px rgb(0 0 0 / 0.6); --shadow-2: 0 24px 48px -16px rgb(0 0 0 / 0.7); --sidebar-dark-bg: #0a0d18;
+}
+
+/* High contrast: strong borders, black/white text, and darker (lighter in dark mode) accent text for WCAG AAA (7:1). */
+html[data-style="contrast"], [data-style-preview="contrast"] {
+  --color-background: #ffffff; --color-foreground: #000000; --color-card: #ffffff; --color-muted: #ededed; --color-muted-foreground: #2b2b2b;
+  --color-border: #595959; --color-input: #1a1a1a;
+  --radius-sm: 0.25rem; --radius-md: 0.375rem; --radius-lg: 0.5rem; --radius-xl: 0.75rem; --radius-2xl: 1rem;
+  --shadow-1: 0 0 #0000; --shadow-2: 0 0 0 2px var(--color-foreground);
+  --app-bg-image: none; --preset-font: var(--font-system); --heading-weight: 700; --sidebar-dark-bg: #000000;
+  /* The accent's own values, read by body below (a token can't refer to itself on the same element). */
+  --hc-primary: var(--color-primary); --hc-ring: var(--color-ring); --hc-accent-foreground: var(--color-accent-foreground);
+}
+html.dark[data-style="contrast"], .dark [data-style-preview="contrast"] {
+  --color-background: #000000; --color-foreground: #ffffff; --color-card: #0a0a0a; --color-muted: #1f1f1f; --color-muted-foreground: #d6d6d6;
+  --color-border: #9a9a9a; --color-input: #c4c4c4; --sidebar-dark-bg: #000000;
+}
+html[data-style="contrast"] body {
+  --color-primary: color-mix(in oklab, var(--hc-primary) 62%, black);
+  --color-accent-foreground: color-mix(in oklab, var(--hc-accent-foreground) 70%, black);
+  --color-success: #03543c; --color-warning: #6f3505; --color-destructive: #a11414;
+}
+html.dark[data-style="contrast"] body {
+  --color-ring: color-mix(in oklab, var(--hc-ring) 45%, white);
+  --color-accent-foreground: color-mix(in oklab, var(--hc-accent-foreground) 40%, white);
+  --color-success: #6ee7b7; --color-warning: #fcd34d;
+}
+html[data-style="contrast"] a.text-primary { text-decoration: underline; text-underline-offset: 2px; }
+
+/* Neon: near-black surfaces, vivid accent edges with a glow, magenta/cyan haze. Made for dark mode; light mode is a crisp
+   white with the same bright edges. */
+html[data-style="neon"], [data-style-preview="neon"] {
+  --color-background: #f7f7fb; --color-foreground: #0d0b1a; --color-card: #ffffff; --color-muted: #f0eff8; --color-muted-foreground: #4d4a63;
+  --color-border: color-mix(in oklab, var(--color-primary) 35%, #e6e4f2); --color-input: color-mix(in oklab, var(--color-primary) 50%, #cfcce0);
+  --radius-sm: 0.3rem; --radius-md: 0.5rem; --radius-lg: 0.7rem; --radius-xl: 0.9rem; --radius-2xl: 1.2rem;
+  --shadow-1: 0 0 0 1px color-mix(in oklab, var(--color-primary) 18%, transparent), 0 4px 14px -6px color-mix(in oklab, var(--color-primary) 45%, transparent);
+  --shadow-2: 0 0 0 1px color-mix(in oklab, var(--color-primary) 30%, transparent), 0 18px 40px -12px color-mix(in oklab, var(--color-primary) 55%, transparent);
+  --app-bg-image: radial-gradient(at 0% 0%, rgb(236 72 153 / 0.12) 0, transparent 45%), radial-gradient(at 100% 0%, rgb(34 211 238 / 0.14) 0, transparent 45%);
+  --preset-font: var(--font-jakarta), var(--font-system); --heading-weight: 700; --sidebar-dark-bg: #0b0918;
+}
+html.dark[data-style="neon"], .dark [data-style-preview="neon"] {
+  --color-background: #05040b; --color-foreground: #f2f0ff; --color-card: #0d0b1a; --color-muted: #17142b; --color-muted-foreground: #aaa6c7;
+  --color-border: color-mix(in oklab, var(--color-primary) 45%, #1d1934); --color-input: color-mix(in oklab, var(--color-primary) 60%, #2a2547);
+  --shadow-1: 0 0 0 1px color-mix(in oklab, var(--color-primary) 35%, transparent), 0 0 18px -4px color-mix(in oklab, var(--color-primary) 60%, transparent);
+  --shadow-2: 0 0 0 1px color-mix(in oklab, var(--color-primary) 55%, transparent), 0 0 42px -6px color-mix(in oklab, var(--color-primary) 70%, transparent);
+  --app-bg-image: radial-gradient(at 0% 0%, rgb(236 72 153 / 0.22) 0, transparent 45%), radial-gradient(at 100% 10%, rgb(34 211 238 / 0.2) 0, transparent 45%),
+    radial-gradient(at 50% 100%, color-mix(in oklab, var(--color-primary) 25%, transparent) 0, transparent 55%);
+  --sidebar-dark-bg: #030208;
+}
+html.dark[data-style="neon"] :is(h1, h2).font-semibold { text-shadow: 0 0 18px color-mix(in oklab, var(--color-ring) 55%, transparent); }
+
+/* Ocean: cool blues and teals, airy cards, a sea-tinted sidebar. */
+html[data-style="ocean"], [data-style-preview="ocean"] {
+  --color-background: #eef6fb; --color-foreground: #0b2233; --color-card: #ffffff; --color-muted: #e3f0f7; --color-muted-foreground: #476173;
+  --color-border: #cfe2ee; --color-input: #b2cfe0;
+  --radius-sm: 0.3rem; --radius-md: 0.5rem; --radius-lg: 0.75rem; --radius-xl: 1rem; --radius-2xl: 1.25rem;
+  --shadow-1: 0 2px 8px -4px rgb(14 116 144 / 0.2); --shadow-2: 0 20px 40px -14px rgb(14 116 144 / 0.32);
+  --app-bg-image: linear-gradient(180deg, rgb(186 230 253 / 0.45), transparent 320px);
+  --preset-font: var(--font-inter), var(--font-system); --heading-weight: 650; --sidebar-dark-bg: #0b2a3d;
+}
+html.dark[data-style="ocean"], .dark [data-style-preview="ocean"] {
+  --color-background: #04131d; --color-foreground: #e2f1f8; --color-card: #0a1f2d; --color-muted: #10293a; --color-muted-foreground: #93b3c6;
+  --color-border: #173447; --color-input: #23495f;
+  --shadow-1: 0 2px 8px -4px rgb(0 0 0 / 0.6); --shadow-2: 0 20px 40px -14px rgb(0 0 0 / 0.7);
+  --app-bg-image: radial-gradient(900px 400px at 20% -10%, rgb(14 165 233 / 0.18), transparent 70%);
+  --sidebar-dark-bg: #020c13;
+}
+
+/* Sunset: warm peach and coral surfaces, rounded, friendly. */
+html[data-style="sunset"], [data-style-preview="sunset"] {
+  --color-background: #fff6f0; --color-foreground: #2a160f; --color-card: #fffdfb; --color-muted: #fdeee4; --color-muted-foreground: #6e5246;
+  --color-border: #f5ddcf; --color-input: #e9c4b1;
+  --radius-sm: 0.375rem; --radius-md: 0.6rem; --radius-lg: 0.85rem; --radius-xl: 1.15rem; --radius-2xl: 1.5rem;
+  --shadow-1: 0 4px 14px -8px rgb(234 88 12 / 0.3); --shadow-2: 0 22px 44px -16px rgb(190 18 60 / 0.3);
+  --app-bg-image: radial-gradient(at 100% 0%, rgb(251 146 60 / 0.18) 0, transparent 50%), radial-gradient(at 0% 100%, rgb(244 63 94 / 0.12) 0, transparent 50%);
+  --preset-font: var(--font-jakarta), var(--font-system); --heading-weight: 650; --sidebar-dark-bg: #2b1410;
+}
+html.dark[data-style="sunset"], .dark [data-style-preview="sunset"] {
+  --color-background: #140906; --color-foreground: #f8e9e1; --color-card: #1f110c; --color-muted: #2a1811; --color-muted-foreground: #c4a597;
+  --color-border: #3a2219; --color-input: #553226;
+  --shadow-1: 0 4px 14px -8px rgb(0 0 0 / 0.7); --shadow-2: 0 22px 44px -16px rgb(0 0 0 / 0.75);
+  --app-bg-image: radial-gradient(at 100% 0%, rgb(234 88 12 / 0.16) 0, transparent 50%), radial-gradient(at 0% 100%, rgb(190 18 60 / 0.14) 0, transparent 50%);
+  --sidebar-dark-bg: #0c0503;
+}
+
+/* Forest: calm greens, earthy neutrals, a little texture of depth. */
+html[data-style="forest"], [data-style-preview="forest"] {
+  --color-background: #f3f6f1; --color-foreground: #14231a; --color-card: #fcfdfb; --color-muted: #e8efe5; --color-muted-foreground: #4b5d50;
+  --color-border: #d7e2d3; --color-input: #bccbb7;
+  --radius-sm: 0.25rem; --radius-md: 0.4rem; --radius-lg: 0.6rem; --radius-xl: 0.85rem; --radius-2xl: 1.1rem;
+  --shadow-1: 0 2px 6px -3px rgb(20 83 45 / 0.2); --shadow-2: 0 20px 40px -14px rgb(20 83 45 / 0.28);
+  --app-bg-image: linear-gradient(180deg, rgb(187 247 208 / 0.35), transparent 300px);
+  --preset-font: var(--font-plex), var(--font-system); --heading-weight: 650; --sidebar-dark-bg: #13261b;
+}
+html.dark[data-style="forest"], .dark [data-style-preview="forest"] {
+  --color-background: #070f0a; --color-foreground: #e3efe6; --color-card: #0f1c14; --color-muted: #16271c; --color-muted-foreground: #9db5a5;
+  --color-border: #1f3527; --color-input: #2e4a37;
+  --shadow-1: 0 2px 6px -3px rgb(0 0 0 / 0.6); --shadow-2: 0 20px 40px -14px rgb(0 0 0 / 0.7);
+  --app-bg-image: radial-gradient(900px 380px at 80% -10%, rgb(34 197 94 / 0.12), transparent 70%);
+  --sidebar-dark-bg: #030805;
+}
+
+/* ---- More accents ---- */
+html[data-accent="cyan"] { --color-primary: #0e7490; --color-ring: #06b6d4; --color-accent: #ecfeff; --color-accent-foreground: #155e75; }
+html.dark[data-accent="cyan"] { --color-primary: #0891b2; --color-ring: #22d3ee; --color-accent: #083344; --color-accent-foreground: #a5f3fc; }
+html[data-accent="fuchsia"] { --color-primary: #c026d3; --color-ring: #d946ef; --color-accent: #fdf4ff; --color-accent-foreground: #86198f; }
+html.dark[data-accent="fuchsia"] { --color-primary: #c026d3; --color-ring: #e879f9; --color-accent: #4a044e; --color-accent-foreground: #f5d0fe; }
+html[data-accent="lime"] { --color-primary: #4d7c0f; --color-ring: #84cc16; --color-accent: #f7fee7; --color-accent-foreground: #3f6212; }
+html.dark[data-accent="lime"] { --color-primary: #65a30d; --color-ring: #a3e635; --color-accent: #1a2e05; --color-accent-foreground: #d9f99d; }
+html[data-accent="orange"] { --color-primary: #ea580c; --color-ring: #f97316; --color-accent: #fff7ed; --color-accent-foreground: #9a3412; }
+html.dark[data-accent="orange"] { --color-primary: #ea580c; --color-ring: #fb923c; --color-accent: #431407; --color-accent-foreground: #fed7aa; }
+
+/* ---- Background picture (Settings → Appearance, or the workspace's branding): <html data-bg="image"> with
+   --user-bg-image, dimmed by the page colour (--user-bg-dim) so text stays readable. ---- */
+html[data-bg="image"] body {
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--color-background) var(--user-bg-dim, 40%), transparent), color-mix(in oklab, var(--color-background) var(--user-bg-dim, 40%), transparent)),
+    var(--user-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+/* Shadows: every preset's depth (classic keeps Tailwind's own). */
+html[data-style]:not([data-style="classic"]) :is(.shadow-sm, .shadow) { --tw-shadow: var(--shadow-1); }
+html[data-style]:not([data-style="classic"]) :is(.shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl) { --tw-shadow: var(--shadow-2); }
+/* Page background and heading weight */
+body { background-image: var(--app-bg-image); background-attachment: fixed; }
+:is(h1, h2, h3).font-semibold { font-weight: var(--heading-weight, 600); }
+
+/* ---- Typeface: <html data-typeface="…"> (a person's choice, or the preset's). The families come from next/font in layout.tsx. ---- */
+html[data-typeface="inter"] { --font-sans: var(--font-inter), var(--font-system); }
+html[data-typeface="jakarta"] { --font-sans: var(--font-jakarta), var(--font-system); }
+html[data-typeface="plex"] { --font-sans: var(--font-plex), var(--font-system); }
+[data-style-preview] { font-family: var(--preset-font); }
+
+/* ---- Sidebar look: <html data-sidebar="light|tinted|dark">. The app sidebar is [data-sidebar-panel="auto"]; a preview
+   names its own look. The tokens are redefined on the panel, so everything inside it follows. ---- */
+html[data-sidebar="tinted"] [data-sidebar-panel="auto"], [data-sidebar-panel="tinted"] {
+  --color-card: color-mix(in oklab, var(--color-primary) 7%, var(--color-background));
+  --color-muted: color-mix(in oklab, var(--color-primary) 13%, var(--color-background));
+  --color-accent: color-mix(in oklab, var(--color-primary) 20%, var(--color-background));
+  --color-border: color-mix(in oklab, var(--color-primary) 16%, var(--color-background));
+}
+html[data-sidebar="dark"] [data-sidebar-panel="auto"], [data-sidebar-panel="dark"] {
+  color-scheme: dark;
+  --color-card: var(--sidebar-dark-bg, #0f172a);
+  --color-foreground: #e8ecf3; --color-muted: rgb(255 255 255 / 0.08); --color-muted-foreground: #aeb8c8; --color-border: rgb(255 255 255 / 0.09);
+  --color-accent: color-mix(in oklab, var(--color-primary) 50%, #0f172a); --color-accent-foreground: #ffffff;
+  color: var(--color-foreground);
+}
+html[data-sidebar="dark"] [data-sidebar-panel="auto"] .text-primary, [data-sidebar-panel="dark"] .text-primary { color: color-mix(in oklab, var(--color-ring) 45%, white); }
+
+/* ---- Text size and density: every size and spacing utility is rem-based, so these scale the whole UI. ---- */
+html[data-font="sm"] { font-size: 93.75%; }
+html[data-font="lg"] { font-size: 112.5%; }
+html[data-density="compact"] { --spacing: 0.21rem; }
+
+/* ---- Reduced motion, chosen in the app (the OS setting is honoured separately by motion-reduce:) ---- */
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ---- The workspace's look and feel (settings.branding.ui, features/workspace/utils/uiOptions.ts): <html data-ui-*>, set by
+   TenantUi. The same rules match [data-ui-preview], the editor's live preview. "default" choices set no attribute, so the
+   style preset decides. Later in the file than the presets, so these win over them. ---- */
+:is(html, [data-ui-preview])[data-ui-radius="none"] { --radius-sm: 0px; --radius-md: 0px; --radius-lg: 0px; --radius-xl: 0px; --radius-2xl: 0px; }
+:is(html, [data-ui-preview])[data-ui-radius="small"] { --radius-sm: 0.125rem; --radius-md: 0.2rem; --radius-lg: 0.25rem; --radius-xl: 0.375rem; --radius-2xl: 0.5rem; }
+:is(html, [data-ui-preview])[data-ui-radius="large"] { --radius-sm: 0.375rem; --radius-md: 0.625rem; --radius-lg: 0.875rem; --radius-xl: 1.25rem; --radius-2xl: 1.625rem; }
+:is(html, [data-ui-preview])[data-ui-radius="pill"] { --radius-sm: 0.5rem; --radius-md: 0.875rem; --radius-lg: 1.25rem; --radius-xl: 1.5rem; --radius-2xl: 2rem; }
+
+:is(html, [data-ui-preview])[data-ui-shadow="none"] { --shadow-1: 0 0 #0000; --shadow-2: 0 0 0 1px var(--color-border); }
+:is(html, [data-ui-preview])[data-ui-shadow="soft"] { --shadow-1: 0 1px 2px 0 rgb(15 23 42 / 0.05); --shadow-2: 0 10px 24px -12px rgb(15 23 42 / 0.2); }
+:is(html, [data-ui-preview])[data-ui-shadow="strong"] { --shadow-1: 0 2px 4px 0 rgb(15 23 42 / 0.1), 0 6px 14px -4px rgb(15 23 42 / 0.14); --shadow-2: 0 30px 60px -14px rgb(15 23 42 / 0.4); }
+:is(html, [data-ui-preview])[data-ui-shadow]:not([data-ui-shadow="default"]) :is(.shadow-sm, .shadow) { --tw-shadow: var(--shadow-1); }
+:is(html, [data-ui-preview])[data-ui-shadow]:not([data-ui-shadow="default"]) :is(.shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl) { --tw-shadow: var(--shadow-2); }
+
+:is(html, [data-ui-preview])[data-ui-surface="flat"] .bg-card { --tw-shadow: 0 0 #0000; }
+:is(html, [data-ui-preview])[data-ui-surface="bordered"] .bg-card { --tw-shadow: 0 0 #0000; border-color: color-mix(in oklab, var(--color-foreground) 22%, var(--color-card)); }
+:is(html, [data-ui-preview])[data-ui-surface="elevated"] :is(.bg-card.rounded-xl, .bg-card.rounded-2xl) { --tw-shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 10px 26px -14px rgb(15 23 42 / 0.32); box-shadow: var(--tw-shadow); }
+.dark [data-ui-preview][data-ui-surface="elevated"] :is(.bg-card.rounded-xl, .bg-card.rounded-2xl),
+html.dark[data-ui-surface="elevated"] :is(.bg-card.rounded-xl, .bg-card.rounded-2xl) { --tw-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 12px 28px -14px rgb(0 0 0 / 0.8); }
+
+:is(html, [data-ui-preview])[data-ui-button-shape="rounded"] .tf-btn { border-radius: 0.75rem; }
+:is(html, [data-ui-preview])[data-ui-button-shape="pill"] .tf-btn { border-radius: 9999px; }
+:is(html, [data-ui-preview])[data-ui-button-shape="square"] .tf-btn { border-radius: 0.125rem; }
+
+/* Typeface: the workspace's choice (TenantUi leaves it out when the person picked their own). */
+:is(html, [data-ui-preview])[data-ui-font="system"] { --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+:is(html, [data-ui-preview])[data-ui-font="inter"] { --font-sans: var(--font-inter), var(--font-system); }
+:is(html, [data-ui-preview])[data-ui-font="jakarta"] { --font-sans: var(--font-jakarta), var(--font-system); }
+:is(html, [data-ui-preview])[data-ui-font="plex"] { --font-sans: var(--font-plex), var(--font-system); }
+:is(html, [data-ui-preview])[data-ui-font="serif"] { --font-sans: ui-serif, Georgia, Cambria, "Times New Roman", serif; }
+:is(html, [data-ui-preview])[data-ui-font="mono"] { --font-sans: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace; }
+[data-ui-preview][data-ui-font] { font-family: var(--font-sans); }
+
+/* Text size and spacing: the workspace's default; a person's own choice (data-font / data-density) wins. */
+html[data-ui-text-size="sm"][data-font="md"] { font-size: 93.75%; }
+html[data-ui-text-size="lg"][data-font="md"] { font-size: 106.25%; }
+html[data-ui-text-size="xl"][data-font="md"] { font-size: 112.5%; }
+:is(html, [data-ui-preview])[data-ui-density="compact"] { --spacing: 0.21rem; }
+:is(html:not([data-density="compact"]), [data-ui-preview])[data-ui-density="spacious"] { --spacing: 0.275rem; }
+
+/* Motion: how long transitions take, and how much moves. Reduced motion (the person's or the device's) still wins below. */
+:is(html, [data-ui-preview]) { --ui-duration: 200ms; --ui-ease: cubic-bezier(0.2, 0.8, 0.2, 1); }
+:is(html, [data-ui-preview])[data-ui-speed="slow"] { --ui-duration: 380ms; }
+:is(html, [data-ui-preview])[data-ui-speed="fast"] { --ui-duration: 120ms; }
+:is(html, [data-ui-preview])[data-ui-animation]:not([data-ui-animation="none"]) :is(.transition, .transition-all, .transition-colors, .transition-opacity, .transition-transform, .transition-shadow, .tf-btn) {
+  transition-duration: var(--ui-duration);
+  transition-timing-function: var(--ui-ease);
+}
+:is(html, [data-ui-preview])[data-ui-animation="subtle"] { --ui-duration: 140ms; }
+:is(html, [data-ui-preview])[data-ui-animation="none"] *:not(.animate-spin) { transition-duration: 0s !important; animation-duration: 0s !important; }
+html[data-ui-animation="lively"] dialog:modal > div { animation: ui-pop var(--ui-duration) var(--ui-ease); }
+html[data-ui-animation="lively"] :is([role="menu"], [role="listbox"], [role="tooltip"]) { animation: ui-fade-up var(--ui-duration) var(--ui-ease); }
+[data-ui-preview][data-ui-page-transition="fade"]:not([data-ui-animation="none"]) [data-ui-preview-page] { animation: ui-fade calc(var(--ui-duration) * 1.4) var(--ui-ease); }
+[data-ui-preview][data-ui-page-transition="slide"]:not([data-ui-animation="none"]) [data-ui-preview-page] { animation: ui-fade-up calc(var(--ui-duration) * 1.4) var(--ui-ease); }
+[data-ui-preview][data-ui-page-transition="zoom"]:not([data-ui-animation="none"]) [data-ui-preview-page] { animation: ui-zoom calc(var(--ui-duration) * 1.4) var(--ui-ease); }
+@keyframes ui-fade { from { opacity: 0; } }
+@keyframes ui-fade-up { from { opacity: 0; transform: translateY(8px); } }
+@keyframes ui-zoom { from { opacity: 0; transform: scale(0.97); } }
+@keyframes ui-pop { from { opacity: 0; transform: translateY(6px) scale(0.98); } }
+
+/* Hover effects on buttons and clickable cards (pointer devices only: no sticky hover on touch screens). */
+@media (hover: hover) {
+  :is(html, [data-ui-preview])[data-ui-hover="lift"] :is(.tf-btn:not(:disabled), button.bg-card, a.bg-card, a.rounded-xl, button.rounded-xl.border):hover { transform: translateY(-2px); --tw-shadow: var(--shadow-2, 0 10px 24px -12px rgb(15 23 42 / 0.25)); box-shadow: var(--tw-shadow); }
+  :is(html, [data-ui-preview])[data-ui-hover="glow"] :is(.tf-btn:not(:disabled), button.bg-card, a.bg-card, a.rounded-xl, button.rounded-xl.border):hover { box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 22%, transparent), 0 6px 22px -8px color-mix(in oklab, var(--color-primary) 55%, transparent); }
+  :is(html, [data-ui-preview])[data-ui-hover="scale"] :is(.tf-btn:not(:disabled), button.bg-card, a.bg-card, a.rounded-xl, button.rounded-xl.border):hover { transform: scale(1.02); }
+  :is(html, [data-ui-preview])[data-ui-hover]:not([data-ui-hover="none"]) :is(.tf-btn, button.bg-card, a.bg-card, a.rounded-xl, button.rounded-xl.border) { transition-property: color, background-color, border-color, box-shadow, transform; transition-duration: var(--ui-duration); }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(html, [data-ui-preview])[data-ui-animation] *:not(.animate-spin) { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  :is(html, [data-ui-preview])[data-ui-hover] *:hover { transform: none !important; }
+}
+
+/* Phones: figures (StatCard) two to a row instead of one tall card each, icon above the number. Any grid of them, with or
+   without a wrapper element per card. */
+@media (width < 40rem) {
+  .grid:is(:has(> [data-tf="stat"]), :has(> * > [data-tf="stat"])) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+  [data-tf="stat"] { flex-direction: column; align-items: flex-start; gap: 0.625rem; padding: 0.875rem; }
+  /* The text column fills the card, so long labels truncate inside it instead of widening the page. */
+  [data-tf="stat"] > .min-w-0 { align-self: stretch; }
+  [data-tf="stat"] .text-2xl { font-size: 1.375rem; line-height: 1.75rem; }
+}
+
+/* Home sections set to half width (two side by side): their own grids keep to two columns, so figures don't shrink to
+   unreadable slivers. */
+@media (width >= 64rem) {
+  [data-home-size="half"] .grid:is(.sm\:grid-cols-3, .lg\:grid-cols-3, .lg\:grid-cols-4, .xl\:grid-cols-3, .xl\:grid-cols-4, .xl\:grid-cols-5, .\32xl\:grid-cols-5) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Dialog.tsx's panel never exceeds the visible viewport: 85vh can be taller than a phone's screen while its browser bars
+   show. Unlayered so it beats the max-h-[85vh] utility. */
+dialog:modal > div.max-h-\[85vh\] { max-height: min(85vh, calc(100dvh - 2rem)); }
+
+/* Printable documents (invoices, prescriptions): hide the app chrome. */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff !important; }
+  .print-area { box-shadow: none !important; border: 0 !important; }
+}
+
+@layer base {
+  /* Tailwind v4 borders default to currentColor; use the token instead. */
+  *, ::before, ::after { border-color: var(--color-border); }
+  html { color-scheme: light; }
+  html.dark { color-scheme: dark; }
+  /* Long unbroken words (URLs, IDs) wrap instead of overflowing their card; truncate/nowrap text is unaffected. */
+  body { font-family: var(--font-sans); overflow-wrap: break-word; }
+  dialog::backdrop { background: rgb(15 23 42 / 0.5); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+
+  /* Reserve the scrollbar's space so pages don't jump sideways when content grows past the fold or a modal locks scrolling. */
+  html { scrollbar-gutter: stable; }
+
+  /* While a modal <dialog> or the mobile menu is open, the page behind it doesn't scroll (only the dialog's own body does).
+     Tied to the element being in the DOM, so closing it always unlocks. */
+  html:has(dialog:modal) { overflow: hidden; }
+  @media (width < 64rem) {
+    html:has([data-scroll-lock]) { overflow: hidden; } /* the mobile menu is lg:hidden */
+  }
+
+  /* A grid with no column template gets one implicit `auto` column, which grows to its widest unbreakable content
+     (a long name, an email) and pushes the page sideways on phones. Default to one shrinkable column instead;
+     any grid-cols-* utility (a later layer) still wins. */
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  /* Browsers size fieldsets to their min-content (min-inline-size: min-content), so one long name inside a picker
+     widened whole dialogs past the phone screen. */
+  fieldset { min-inline-size: 0; }
+}
