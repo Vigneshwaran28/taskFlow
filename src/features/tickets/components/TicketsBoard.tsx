@@ -65,7 +65,7 @@ export function TicketsBoard({ state, debouncedSearch, onChange, onPageChange, o
       <HelpdeskStats />
 
       {scopes.length > 1 && (
-        <nav aria-label="Ticket queues" className="flex gap-1 overflow-x-auto overflow-y-hidden border-b">
+        <nav aria-label="Ticket queues" className="flex gap-1 overflow-x-auto overflow-y-hidden border-b no-scrollbar">
           {scopes.map(([key, meta]) => (
             <button
               key={key}

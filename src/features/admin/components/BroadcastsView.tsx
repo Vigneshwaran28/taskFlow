@@ -81,7 +81,7 @@ export function BroadcastsView() {
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div role="group" aria-label="Show announcements" className="flex w-full min-w-0 overflow-x-auto rounded-lg border bg-card p-0.5 sm:w-max">
+        <div role="group" aria-label="Show announcements" className="flex w-full min-w-0 overflow-x-auto no-scrollbar rounded-lg border bg-card p-0.5 sm:w-max">
           {FILTERS.map(item => (
             <button
               key={item.id}

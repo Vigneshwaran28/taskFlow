@@ -400,7 +400,7 @@ export function TenantFormDialog({ tenant = null, features: available, catalog =
     >
       {/* The tab bar sits outside the form (its negative margins reach the dialog edges without widening the form). */}
       <div className="sticky -top-5 z-10 -mx-4 -mt-5 border-b bg-card px-4 pt-2 sm:-mx-6 sm:px-6">
-        <div role="tablist" aria-label="Tenant settings" onKeyDown={handleTabKey} className="-mb-px flex gap-x-1 overflow-x-auto [scrollbar-width:none] sm:flex-wrap">
+        <div role="tablist" aria-label="Tenant settings" onKeyDown={handleTabKey} className="-mb-px flex gap-x-1 overflow-x-auto no-scrollbar sm:flex-wrap">
           {TABS.map(item => {
             const active = item.id === tab;
             return (

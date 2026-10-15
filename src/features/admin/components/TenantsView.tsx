@@ -136,7 +136,7 @@ export function TenantsView({ selectedTenantId, onOpen, onUsers, initialFilter =
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div role="group" aria-label="Show tenants" className="flex w-full min-w-0 overflow-x-auto rounded-lg border bg-card p-0.5 sm:w-max">
+        <div role="group" aria-label="Show tenants" className="flex w-full min-w-0 overflow-x-auto no-scrollbar rounded-lg border bg-card p-0.5 sm:w-max">
           {FILTERS.map(item => (
             <button
               key={item.id}

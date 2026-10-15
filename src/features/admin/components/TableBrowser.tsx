@@ -127,7 +127,7 @@ export function TableBrowser({ table, tenantId, userId, page, search, sort, orde
         </div>
       </div>
 
-      <div role="tablist" aria-label="Database tables" className="flex gap-1 overflow-x-auto overflow-y-hidden border-b">
+      <div role="tablist" aria-label="Database tables" className="flex gap-1 overflow-x-auto overflow-y-hidden border-b no-scrollbar">
         {tables.map(item => {
           const active = item.name === table;
           return (

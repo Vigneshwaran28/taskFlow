@@ -32,7 +32,7 @@ export function Tabs({ name, label, tabs, active, onChange, children }: TabsProp
 
   return (
     <>
-      <div role="tablist" data-tour="tabs" aria-label={label} onKeyDown={handleKeyDown} className="no-print flex gap-1 overflow-x-auto overflow-y-hidden border-b">
+      <div role="tablist" data-tour="tabs" aria-label={label} onKeyDown={handleKeyDown} className="no-print flex gap-1 overflow-x-auto overflow-y-hidden border-b no-scrollbar">
         {tabs.map(item => (
           <button
             key={item.id}
