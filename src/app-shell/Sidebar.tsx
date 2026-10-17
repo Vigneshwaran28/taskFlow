@@ -1,6 +1,14 @@
 "use client";
 import Link from "@/components/navigation/Link";
-import { createContext, useContext, useEffect, useRef, type ComponentType, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 import {
   Boxes,
   CalendarCheck,
@@ -35,15 +43,19 @@ import { colorFor, useLists } from "@/features/lists";
 import { useUnreadMessages } from "@/features/messaging";
 import { TASK_VIEWS } from "@/features/tasks";
 import { useTicketStats } from "@/features/tickets";
-import { useTheme } from "@/hooks/useTheme";
+import { useTheme, type SidebarPosition } from "@/hooks/useTheme";
 import type { FeatureKey } from "@/types/session";
 import { canOpenModule } from "./modules";
-import { SidebarCustomizer, SidebarQuickToggle } from "./SidebarCustomizer";
+import { PortalTooltip } from "./PortalTooltip";
+import {
+  SidebarCustomizerButton,
+  SidebarQuickToggle,
+} from "./SidebarCustomizer";
 
 interface SidebarNavContextValue {
   isCompact: boolean;
   align: "left" | "center";
-  position: "left" | "right";
+  position: SidebarPosition;
   onClose: () => void;
 }
 
@@ -65,27 +77,76 @@ interface NavItemProps {
   countLabel?: string;
 }
 
-function NavItem({ href, icon: Icon, children, exact, count = 0, countLabel }: NavItemProps) {
+function NavItem({
+  href,
+  icon: Icon,
+  children,
+  exact,
+  count = 0,
+  countLabel,
+}: NavItemProps) {
   const { isCompact, align, position, onClose } = useSidebarNav();
   const active = useIsActive(href, exact);
+  const linkRef = useRef<HTMLAnchorElement>(null);
+  const [hovered, setHovered] = useState(false);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
 
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "group relative flex items-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        isCompact
-          ? "justify-center p-2.5"
-          : cn("gap-3 px-3 py-2 text-sm font-medium", align === "center" ? "justify-center text-center" : "justify-start text-left"),
-        active ? "bg-accent text-accent-foreground font-semibold shadow-2xs" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-      )}
-      aria-current={active ? "page" : undefined}
-      onClick={onClose}
-    >
-      {Icon && <Icon className={cn("shrink-0", isCompact ? "h-5 w-5" : "h-4 w-4")} aria-hidden="true" />}
-      {isCompact ? (
-        <>
+  function handleMouseEnter() {
+    if (isCompact && linkRef.current) {
+      setAnchorRect(linkRef.current.getBoundingClientRect());
+      setHovered(true);
+    }
+  }
+
+  function handleMouseLeave() {
+    setHovered(false);
+  }
+
+  function handleFocus() {
+    if (isCompact && linkRef.current) {
+      setAnchorRect(linkRef.current.getBoundingClientRect());
+      setHovered(true);
+    }
+  }
+
+  function handleBlur() {
+    setHovered(false);
+  }
+
+  if (isCompact) {
+    return (
+      <>
+        <Link
+          ref={linkRef}
+          href={href}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onClick={onClose}
+          aria-current={active ? "page" : undefined}
+          aria-label={typeof children === "string" ? children : undefined}
+          className={cn(
+            "relative flex h-10 w-10 items-center justify-center rounded-xl mx-auto transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            active
+              ? "bg-accent text-accent-foreground font-semibold shadow-xs"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          {/* Active indicator bar */}
+          {active && (
+            <span
+              className={cn(
+                "absolute top-2 bottom-2 w-1 rounded-full bg-primary transition-all",
+                position === "right" ? "-right-1" : "-left-1"
+              )}
+              aria-hidden="true"
+            />
+          )}
+
+          {Icon && <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />}
           <span className="sr-only">{children}</span>
+
           {count > 0 && (
             <span
               className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-xs"
@@ -94,40 +155,79 @@ function NavItem({ href, icon: Icon, children, exact, count = 0, countLabel }: N
               {count > 99 ? "99+" : count}
             </span>
           )}
-          <span
-            role="tooltip"
-            className={cn(
-              "pointer-events-none absolute z-50 whitespace-nowrap rounded-md bg-popover px-2.5 py-1 text-xs font-medium text-popover-foreground shadow-md transition-opacity duration-150 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100",
-              position === "right"
-                ? "right-full mr-2.5 top-1/2 -translate-y-1/2"
-                : "left-full ml-2.5 top-1/2 -translate-y-1/2"
-            )}
-          >
-            {children}
-            {count > 0 && <span className="ml-1.5 font-bold text-primary">({count})</span>}
-          </span>
-        </>
-      ) : (
-        <>
-          <span className={cn("truncate", align === "center" ? "" : "flex-1")}>{children}</span>
-          {count > 0 && (
-            <span className="rounded-full bg-primary/10 px-1.5 text-xs font-medium tabular-nums text-primary" aria-label={countLabel}>
-              {count}
+        </Link>
+
+        <PortalTooltip
+          label={
+            <span className="flex items-center gap-1.5">
+              <span>{children}</span>
+              {count > 0 && (
+                <span className="rounded-full bg-primary/20 px-1 text-[10px] text-primary font-bold">
+                  {count}
+                </span>
+              )}
             </span>
-          )}
-        </>
+          }
+          position={position}
+          visible={hovered}
+          anchorRect={anchorRect}
+        />
+      </>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      onClick={onClose}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        align === "center"
+          ? "justify-center text-center gap-2.5"
+          : "justify-start text-left gap-3",
+        active
+          ? "bg-accent text-accent-foreground font-semibold shadow-2xs"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      )}
+    >
+      {Icon && <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />}
+      <span className={cn("truncate", align === "center" ? "max-w-[150px]" : "flex-1")}>
+        {children}
+      </span>
+      {count > 0 && (
+        <span
+          className="rounded-full bg-primary/10 px-1.5 text-xs font-medium tabular-nums text-primary"
+          aria-label={countLabel}
+        >
+          {count}
+        </span>
       )}
     </Link>
   );
 }
 
-function Section({ label, children, action }: { label: string; children: ReactNode; action?: ReactNode }) {
+function Section({
+  label,
+  children,
+  action,
+}: {
+  label: string;
+  children: ReactNode;
+  action?: ReactNode;
+}) {
   const { isCompact, align } = useSidebarNav();
 
   if (isCompact) {
     return (
-      <nav aria-label={label} className="flex flex-col gap-1">
-        <div className="my-1.5 border-t border-border/60" role="separator" title={label} />
+      <nav aria-label={label} className="flex flex-col gap-1.5 py-1">
+        <div
+          className="my-1.5 flex justify-center"
+          role="separator"
+          title={label}
+        >
+          <span className="h-px w-6 rounded-full bg-border/60" />
+        </div>
         {children}
       </nav>
     );
@@ -135,69 +235,140 @@ function Section({ label, children, action }: { label: string; children: ReactNo
 
   return (
     <nav aria-label={label} className="flex flex-col gap-1">
-      <div className={cn("flex items-center justify-between px-3 pb-1", align === "center" && "justify-center text-center")}>
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-        {action && align !== "center" && action}
-      </div>
+      {align === "center" ? (
+        <div className="flex items-center justify-center gap-2 px-3 pb-1">
+          <span className="h-px w-3 bg-border/60" aria-hidden="true" />
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {label}
+          </p>
+          <span className="h-px w-3 bg-border/60" aria-hidden="true" />
+        </div>
+      ) : (
+        <div className="flex items-center justify-between px-3 pb-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {label}
+          </p>
+          {action}
+        </div>
+      )}
       {children}
     </nav>
   );
 }
 
-function ListLink({ id, name, color, openCount }: { id: number; name: string; color: string; openCount: number }) {
+function ListLink({
+  id,
+  name,
+  color,
+  openCount,
+}: {
+  id: number;
+  name: string;
+  color: string;
+  openCount: number;
+}) {
   const { isCompact, align, position, onClose } = useSidebarNav();
   const active = useIsActive(`/lists/${id}`);
+  const linkRef = useRef<HTMLAnchorElement>(null);
+  const [hovered, setHovered] = useState(false);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
 
-  return (
-    <Link
-      href={`/lists/${id}`}
-      className={cn(
-        "group relative flex items-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        isCompact
-          ? "justify-center p-2.5"
-          : cn("gap-3 px-3 py-2 text-sm font-medium", align === "center" ? "justify-center text-center" : "justify-start text-left"),
-        active ? "bg-accent text-accent-foreground font-semibold shadow-2xs" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-      )}
-      aria-current={active ? "page" : undefined}
-      onClick={onClose}
-    >
-      <span className={cn("shrink-0 rounded-full", isCompact ? "h-3 w-3" : "h-2.5 w-2.5", colorFor(color).dot)} aria-hidden="true" />
-      {isCompact ? (
-        <>
+  function handleMouseEnter() {
+    if (isCompact && linkRef.current) {
+      setAnchorRect(linkRef.current.getBoundingClientRect());
+      setHovered(true);
+    }
+  }
+
+  function handleMouseLeave() {
+    setHovered(false);
+  }
+
+  if (isCompact) {
+    return (
+      <>
+        <Link
+          ref={linkRef}
+          href={`/lists/${id}`}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onFocus={handleMouseEnter}
+          onBlur={handleMouseLeave}
+          onClick={onClose}
+          aria-current={active ? "page" : undefined}
+          aria-label={name}
+          className={cn(
+            "relative flex h-10 w-10 items-center justify-center rounded-xl mx-auto transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            active
+              ? "bg-accent text-accent-foreground font-semibold shadow-xs"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          <span
+            className={cn("h-3 w-3 shrink-0 rounded-full", colorFor(color).dot)}
+            aria-hidden="true"
+          />
           <span className="sr-only">{name}</span>
+
           {openCount > 0 && (
             <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/20 px-1 text-[10px] font-bold text-primary">
               {openCount}
             </span>
           )}
-          <span
-            role="tooltip"
-            className={cn(
-              "pointer-events-none absolute z-50 whitespace-nowrap rounded-md bg-popover px-2.5 py-1 text-xs font-medium text-popover-foreground shadow-md transition-opacity duration-150 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100",
-              position === "right"
-                ? "right-full mr-2.5 top-1/2 -translate-y-1/2"
-                : "left-full ml-2.5 top-1/2 -translate-y-1/2"
-            )}
-          >
-            {name}
-            {openCount > 0 && <span className="ml-1.5 font-bold text-muted-foreground">({openCount})</span>}
-          </span>
-        </>
-      ) : (
-        <>
-          <span className={cn("truncate", align === "center" ? "" : "flex-1")}>{name}</span>
-          {openCount > 0 && <span className="text-xs tabular-nums text-muted-foreground">{openCount}</span>}
-        </>
+        </Link>
+
+        <PortalTooltip
+          label={
+            <span className="flex items-center gap-1.5">
+              <span>{name}</span>
+              {openCount > 0 && (
+                <span className="text-muted-foreground">({openCount})</span>
+              )}
+            </span>
+          }
+          position={position}
+          visible={hovered}
+          anchorRect={anchorRect}
+        />
+      </>
+    );
+  }
+
+  return (
+    <Link
+      href={`/lists/${id}`}
+      onClick={onClose}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        align === "center"
+          ? "justify-center text-center gap-2.5"
+          : "justify-start text-left gap-3",
+        active
+          ? "bg-accent text-accent-foreground font-semibold shadow-2xs"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      )}
+    >
+      <span
+        className={cn("h-2.5 w-2.5 shrink-0 rounded-full", colorFor(color).dot)}
+        aria-hidden="true"
+      />
+      <span className={cn("truncate", align === "center" ? "max-w-[150px]" : "flex-1")}>
+        {name}
+      </span>
+      {openCount > 0 && (
+        <span className="text-xs tabular-nums text-muted-foreground">
+          {openCount}
+        </span>
       )}
     </Link>
   );
 }
 
-/** Task views and lists. Rendered only when the workspace has the tasks module, so lists load only then. */
 function TasksNav() {
   const { data: lists = [] } = useLists();
   const onListsPage = useIsActive("/lists", true);
-  const { onClose } = useSidebarNav();
+  const { isCompact, onClose } = useSidebarNav();
 
   return (
     <>
@@ -211,22 +382,34 @@ function TasksNav() {
           Calendar
         </NavItem>
       </Section>
+
       <Section
         label="Lists"
         action={
-          <Link
-            href="/lists"
-            onClick={onClose}
-            aria-current={onListsPage ? "page" : undefined}
-            className={cn("rounded text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", onListsPage && "underline")}
-            aria-label="Manage lists"
-          >
-            Manage
-          </Link>
+          !isCompact ? (
+            <Link
+              href="/lists"
+              onClick={onClose}
+              aria-current={onListsPage ? "page" : undefined}
+              className={cn(
+                "rounded text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                onListsPage && "underline"
+              )}
+              aria-label="Manage lists"
+            >
+              Manage
+            </Link>
+          ) : undefined
         }
       >
         {lists.map(list => (
-          <ListLink key={list.id} id={list.id} name={list.name} color={list.color} openCount={list.openCount} />
+          <ListLink
+            key={list.id}
+            id={list.id}
+            name={list.name}
+            color={list.color}
+            openCount={list.openCount}
+          />
         ))}
         {!lists.length && (
           <NavItem href="/lists" icon={FolderKanban}>
@@ -238,12 +421,14 @@ function TasksNav() {
   );
 }
 
-/** Help desk link with what needs the user's attention. */
 function HelpdeskNavItem() {
   const { data: stats } = useTicketStats();
-  // Staff see their queue plus unassigned work; everyone else their assigned tickets and open requests.
-  const count = stats?.staff ? stats.assignedToMe + stats.unassigned : (stats?.assignedToMe ?? 0) + (stats?.myOpen ?? 0);
-  const label = stats?.staff ? `${count} assigned to you or unassigned` : `${count} assigned to you or open requests`;
+  const count = stats?.staff
+    ? stats.assignedToMe + stats.unassigned
+    : (stats?.assignedToMe ?? 0) + (stats?.myOpen ?? 0);
+  const label = stats?.staff
+    ? `${count} assigned to you or unassigned`
+    : `${count} assigned to you or open requests`;
   return (
     <NavItem href="/tickets" icon={LifeBuoy} count={count} countLabel={label}>
       Help desk
@@ -254,7 +439,12 @@ function HelpdeskNavItem() {
 function MessagesNavItem() {
   const { data } = useUnreadMessages();
   return (
-    <NavItem href="/messages" icon={MessagesSquare} count={data?.total ?? 0} countLabel={`${data?.total ?? 0} unread messages`}>
+    <NavItem
+      href="/messages"
+      icon={MessagesSquare}
+      count={data?.total ?? 0}
+      countLabel={`${data?.total ?? 0} unread messages`}
+    >
       Messages
     </NavItem>
   );
@@ -263,7 +453,12 @@ function MessagesNavItem() {
 function AnnouncementsNavItem() {
   const { data } = useAnnouncements();
   return (
-    <NavItem href="/announcements" icon={Megaphone} count={data?.unread ?? 0} countLabel={`${data?.unread ?? 0} unread announcements`}>
+    <NavItem
+      href="/announcements"
+      icon={Megaphone}
+      count={data?.unread ?? 0}
+      countLabel={`${data?.unread ?? 0} unread announcements`}
+    >
       Announcements
     </NavItem>
   );
@@ -273,14 +468,26 @@ function SidebarBody() {
   const { data: user } = useCurrentUser();
   const siteTitle = useSiteTitle();
   const tagline = user?.tenant?.settings?.branding?.tagline;
-  const { isCompact, onClose } = useSidebarNav();
+  const { isCompact, position, onClose } = useSidebarNav();
 
   const has = (feature: FeatureKey) => canOpenModule(user, feature);
-  const can = (permission: string) => Boolean(user?.permissions?.includes(permission));
+  const can = (permission: string) =>
+    Boolean(user?.permissions?.includes(permission));
 
   return (
-    <div className={cn("flex h-full flex-col gap-5 overflow-y-auto", isCompact ? "px-2 py-4" : "px-3 py-5")}>
-      <div className={cn("flex items-start gap-2", isCompact ? "justify-center py-1" : "justify-between px-2")}>
+    <div
+      className={cn(
+        "flex h-full flex-col overflow-y-auto overscroll-contain transition-all duration-200",
+        isCompact ? "gap-4 px-2 py-4 items-center" : "gap-5 px-3 py-5"
+      )}
+    >
+      {/* Header */}
+      <div
+        className={cn(
+          "flex items-start gap-2 shrink-0",
+          isCompact ? "justify-center py-1" : "justify-between px-2"
+        )}
+      >
         <div className={cn("min-w-0", isCompact && "flex justify-center")}>
           <Logo
             title={isCompact ? "" : siteTitle}
@@ -288,7 +495,9 @@ function SidebarBody() {
             imageUrl={user?.tenant?.settings?.branding?.logoUrl}
           />
           {!isCompact && (tagline || (user?.tenant && siteTitle !== user.tenant.name)) && (
-            <p className="mt-1.5 truncate pl-0.5 text-xs font-medium text-muted-foreground">{tagline || user?.tenant?.name}</p>
+            <p className="mt-1.5 truncate pl-0.5 text-xs font-medium text-muted-foreground">
+              {tagline || user?.tenant?.name}
+            </p>
           )}
         </div>
         {!isCompact && (
@@ -303,7 +512,8 @@ function SidebarBody() {
         )}
       </div>
 
-      <nav aria-label="Main" className="flex flex-col gap-1">
+      {/* Main Nav */}
+      <nav aria-label="Main" className="flex flex-col gap-1 w-full">
         <NavItem href="/" exact icon={LayoutDashboard}>
           Home
         </NavItem>
@@ -335,7 +545,10 @@ function SidebarBody() {
         )}
       </Section>
 
-      {(has("sales") || has("billing") || has("inventory") || has("logistics")) && (
+      {(has("sales") ||
+        has("billing") ||
+        has("inventory") ||
+        has("logistics")) && (
         <Section label="Operations">
           {has("sales") && (
             <NavItem href="/sales" icon={TrendingUp}>
@@ -383,8 +596,17 @@ function SidebarBody() {
         </Section>
       )}
 
-      <div className="mt-auto flex flex-col gap-1 pt-3 border-t border-border/50">
-        {(can("workspace.users.manage") || can("workspace.roles.manage") || can("workspace.settings.manage") || can("workspace.audit.view")) && (
+      {/* Footer Area */}
+      <div
+        className={cn(
+          "mt-auto flex flex-col gap-1 border-t border-border/50 pt-3 shrink-0",
+          isCompact ? "w-full items-center" : "w-full"
+        )}
+      >
+        {(can("workspace.users.manage") ||
+          can("workspace.roles.manage") ||
+          can("workspace.settings.manage") ||
+          can("workspace.audit.view")) && (
           <NavItem href="/admin" icon={Gauge}>
             Workspace admin
           </NavItem>
@@ -408,21 +630,23 @@ function SidebarBody() {
           Settings
         </NavItem>
 
-        <div className="mt-1 flex items-center justify-between border-t border-border/40 pt-2">
-          <SidebarCustomizer compactTrigger={isCompact} />
-          {!isCompact && <SidebarQuickToggle />}
+        {/* Customization controls in footer */}
+        <div className="mt-1 flex flex-col gap-1 border-t border-border/40 pt-2 w-full">
+          <SidebarCustomizerButton isCompact={isCompact} />
+          <SidebarQuickToggle isCompact={isCompact} position={position} />
         </div>
-        {isCompact && (
-          <div className="flex justify-center mt-0.5">
-            <SidebarQuickToggle />
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
-export function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => void }) {
+export function Sidebar({
+  mobileOpen,
+  onClose,
+}: {
+  mobileOpen: boolean;
+  onClose: () => void;
+}) {
   const { preferences } = useTheme();
   const position = preferences.sidebarPosition ?? "left";
   const mode = preferences.sidebarMode ?? "full";
@@ -431,10 +655,11 @@ export function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose:
 
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  // Mobile menu: move focus into it and close on Escape from anywhere
   useEffect(() => {
     if (!mobileOpen) return;
-    overlayRef.current?.querySelector<HTMLElement>("[aria-label='Close menu']")?.focus();
+    overlayRef.current
+      ?.querySelector<HTMLElement>("[aria-label='Close menu']")
+      ?.focus();
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
     }
@@ -450,12 +675,16 @@ export function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose:
         data-tour="sidebar"
         data-sidebar-panel="auto"
         className={cn(
-          "no-print fixed inset-y-0 hidden z-30 bg-card transition-all duration-200 lg:block",
-          position === "right" ? "right-0 border-l border-r-0" : "left-0 border-r",
-          isCompact ? "w-20" : "w-64"
+          "no-print fixed inset-y-0 hidden z-30 bg-card transition-[width,transform] duration-200 ease-in-out lg:block",
+          position === "right"
+            ? "right-0 border-l border-r-0"
+            : "left-0 border-r",
+          isCompact ? "w-16" : "w-64"
         )}
       >
-        <SidebarNavContext.Provider value={{ isCompact, align, position, onClose }}>
+        <SidebarNavContext.Provider
+          value={{ isCompact, align, position, onClose }}
+        >
           <SidebarBody />
         </SidebarNavContext.Provider>
       </aside>
@@ -470,18 +699,26 @@ export function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose:
           data-scroll-lock
           ref={overlayRef}
         >
-          <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} aria-hidden="true" />
+          <div
+            className="absolute inset-0 bg-slate-900/50"
+            onClick={onClose}
+            aria-hidden="true"
+          />
           <aside
             data-tf="sidebar"
             data-tour="sidebar"
             data-sidebar-panel="auto"
             className={cn(
               "absolute inset-y-0 w-72 max-w-[85vw] bg-card shadow-xl transition-all duration-200",
-              position === "right" ? "right-0 border-l border-r-0" : "left-0 border-r"
+              position === "right"
+                ? "right-0 border-l border-r-0"
+                : "left-0 border-r"
             )}
           >
             {/* On mobile drawer, always show full mode labels for clear touch targets */}
-            <SidebarNavContext.Provider value={{ isCompact: false, align, position, onClose }}>
+            <SidebarNavContext.Provider
+              value={{ isCompact: false, align, position, onClose }}
+            >
               <SidebarBody />
             </SidebarNavContext.Provider>
           </aside>

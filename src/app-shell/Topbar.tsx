@@ -12,6 +12,7 @@ import { QuickMeetButton } from "@/features/meetings";
 import { NotificationBell } from "@/features/notifications";
 import { useTaskDialog } from "@/features/tasks";
 import { CommandPalette } from "./CommandPalette";
+import { SidebarCustomizerButton } from "./SidebarCustomizer";
 import { ThemeMenu } from "./ThemeMenu";
 import { canOpenModule } from "./modules";
 import { isTaskPage, taskDefaultsFor } from "./taskPages";
@@ -79,6 +80,8 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
         <HelpMenu />
 
         <ThemeMenu />
+
+        <SidebarCustomizerButton isCompact className="p-2" />
 
         <div className="relative" data-tour="account">
           <button

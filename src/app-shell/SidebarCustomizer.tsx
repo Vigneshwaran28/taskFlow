@@ -1,28 +1,28 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   AlignCenter,
   AlignLeft,
   Check,
   PanelLeftClose,
   PanelLeftOpen,
-  PanelRight,
+  PanelRightClose,
+  PanelRightOpen,
   RotateCcw,
   SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
+import { Dialog } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/shared/Toaster";
 import { useCurrentUser, useUpdatePreferences } from "@/features/auth";
 import {
   useTheme,
   type AppearancePreferences,
   type SidebarMode,
+  type SidebarPosition,
 } from "@/hooks/useTheme";
 import { cn } from "@/lib/cn";
-
-interface SidebarCustomizerProps {
-  compactTrigger?: boolean;
-}
 
 export function SidebarCustomizerControls({
   onChanged,
@@ -64,163 +64,296 @@ export function SidebarCustomizerControls({
   }
 
   return (
-    <div className="flex flex-col gap-4 text-xs">
-      {user && (
-        <div className="flex items-center justify-between rounded-lg bg-accent/40 px-2.5 py-1.5 text-[11px] font-medium text-foreground">
-          <span className="flex items-center gap-1.5 truncate">
-            <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
-            <span className="truncate">Saved for <strong className="font-semibold">{user.name}</strong></span>
-          </span>
-          <span className="shrink-0 text-[10px] text-muted-foreground">User-wise</span>
-        </div>
-      )}
+    <div className="flex flex-col gap-6">
+      {/* Live Preview Canvas */}
+      <div className="rounded-xl border bg-muted/30 p-3 sm:p-4">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Live Layout Preview
+        </p>
+        <div className="relative flex h-36 w-full overflow-hidden rounded-lg border border-border/80 bg-background shadow-inner">
+          {/* Topbar in preview */}
+          <div className="absolute inset-x-0 top-0 flex h-6 items-center justify-between border-b bg-card/80 px-2">
+            <span className="h-2 w-16 rounded-xs bg-muted-foreground/30" />
+            <div className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
+              <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
+            </div>
+          </div>
 
-      {/* Position */}
+          {/* Dynamic Sidebar in preview */}
+          <div
+            className={cn(
+              "absolute inset-y-6 flex flex-col border-border/70 bg-card p-1.5 transition-all duration-300",
+              position === "right" ? "right-0 border-l" : "left-0 border-r",
+              mode === "compact" ? "w-12 items-center" : "w-32",
+              align === "center" && "items-center"
+            )}
+          >
+            {/* Logo in preview */}
+            <div
+              className={cn(
+                "mb-2 flex items-center gap-1",
+                align === "center" || mode === "compact" ? "justify-center" : ""
+              )}
+            >
+              <span className="h-3 w-3 shrink-0 rounded-xs bg-primary" />
+              {mode === "full" && <span className="h-2 w-12 rounded-xs bg-foreground/70" />}
+            </div>
+
+            {/* Menu items in preview */}
+            <div className="flex w-full flex-col gap-1">
+              <div
+                className={cn(
+                  "flex items-center rounded-xs bg-accent/80 p-0.5",
+                  mode === "compact" ? "h-3.5 w-3.5 justify-center" : "w-full gap-1",
+                  align === "center" && mode === "full" ? "justify-center" : ""
+                )}
+              >
+                <span className="h-2 w-2 rounded-xs bg-primary" />
+                {mode === "full" && <span className="h-1.5 w-10 rounded-xs bg-foreground/60" />}
+              </div>
+              <div
+                className={cn(
+                  "flex items-center rounded-xs p-0.5",
+                  mode === "compact" ? "h-3.5 w-3.5 justify-center" : "w-full gap-1",
+                  align === "center" && mode === "full" ? "justify-center" : ""
+                )}
+              >
+                <span className="h-2 w-2 rounded-xs bg-muted-foreground/40" />
+                {mode === "full" && <span className="h-1.5 w-8 rounded-xs bg-muted-foreground/40" />}
+              </div>
+              <div
+                className={cn(
+                  "flex items-center rounded-xs p-0.5",
+                  mode === "compact" ? "h-3.5 w-3.5 justify-center" : "w-full gap-1",
+                  align === "center" && mode === "full" ? "justify-center" : ""
+                )}
+              >
+                <span className="h-2 w-2 rounded-xs bg-muted-foreground/40" />
+                {mode === "full" && <span className="h-1.5 w-12 rounded-xs bg-muted-foreground/40" />}
+              </div>
+            </div>
+          </div>
+
+          {/* Main content in preview */}
+          <div
+            className={cn(
+              "flex flex-1 flex-col gap-2 p-3 transition-all duration-300 pt-8",
+              position === "right"
+                ? mode === "compact"
+                  ? "mr-12"
+                  : "mr-32"
+                : mode === "compact"
+                ? "ml-12"
+                : "ml-32"
+            )}
+          >
+            <div className="h-3 w-28 rounded-xs bg-muted-foreground/30" />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="h-12 rounded-md border border-dashed border-border/70 bg-card/40 p-1.5">
+                <span className="block h-2 w-12 rounded-xs bg-muted-foreground/30 mb-1" />
+                <span className="block h-1.5 w-16 rounded-xs bg-muted-foreground/20" />
+              </div>
+              <div className="h-12 rounded-md border border-dashed border-border/70 bg-card/40 p-1.5">
+                <span className="block h-2 w-10 rounded-xs bg-muted-foreground/30 mb-1" />
+                <span className="block h-1.5 w-14 rounded-xs bg-muted-foreground/20" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Position Selection */}
       <div>
-        <label className="mb-1.5 flex items-center justify-between font-semibold uppercase tracking-wider text-muted-foreground text-[10px]">
-          <span>Position</span>
-          <span className="font-normal capitalize text-foreground">{position} side</span>
+        <label className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span>Sidebar Position</span>
+          <span className="font-normal capitalize text-foreground">{position} Side</span>
         </label>
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           <button
             type="button"
             onClick={() => update("sidebarPosition", "left")}
             className={cn(
-              "flex flex-col items-center gap-1.5 rounded-lg border p-2 text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "flex items-start gap-3 rounded-xl border p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               position === "left"
-                ? "border-primary bg-accent/70 font-semibold text-accent-foreground shadow-xs"
-                : "border-border/60 hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+                ? "border-primary bg-accent/60 shadow-xs"
+                : "border-border/70 hover:bg-muted/60"
             )}
           >
-            <div className="flex h-7 w-12 items-center rounded border border-border/70 bg-background p-0.5 shadow-2xs">
-              <span className="h-full w-3.5 rounded-xs bg-primary/80" />
-              <span className="ml-1 h-2 flex-1 rounded-xs bg-muted-foreground/30" />
+            <div className="flex h-10 w-14 shrink-0 items-center rounded-md border bg-background p-1 shadow-2xs">
+              <span className="h-full w-4 rounded-xs bg-primary" />
+              <span className="ml-1 h-3 flex-1 rounded-xs bg-muted-foreground/25" />
             </div>
-            <span className="flex items-center gap-1">
-              {position === "left" && <Check className="h-3 w-3 text-primary" />}
-              Left
-            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-foreground">Left Side</span>
+                {position === "left" && <Check className="h-4 w-4 text-primary" />}
+              </div>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Classic standard sidebar placed on the left side of the screen.
+              </p>
+            </div>
           </button>
 
           <button
             type="button"
             onClick={() => update("sidebarPosition", "right")}
             className={cn(
-              "flex flex-col items-center gap-1.5 rounded-lg border p-2 text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "flex items-start gap-3 rounded-xl border p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               position === "right"
-                ? "border-primary bg-accent/70 font-semibold text-accent-foreground shadow-xs"
-                : "border-border/60 hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+                ? "border-primary bg-accent/60 shadow-xs"
+                : "border-border/70 hover:bg-muted/60"
             )}
           >
-            <div className="flex h-7 w-12 items-center justify-end rounded border border-border/70 bg-background p-0.5 shadow-2xs">
-              <span className="mr-1 h-2 flex-1 rounded-xs bg-muted-foreground/30" />
-              <span className="h-full w-3.5 rounded-xs bg-primary/80" />
+            <div className="flex h-10 w-14 shrink-0 items-center justify-end rounded-md border bg-background p-1 shadow-2xs">
+              <span className="mr-1 h-3 flex-1 rounded-xs bg-muted-foreground/25" />
+              <span className="h-full w-4 rounded-xs bg-primary" />
             </div>
-            <span className="flex items-center gap-1">
-              {position === "right" && <Check className="h-3 w-3 text-primary" />}
-              Right
-            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-foreground">Right Side</span>
+                {position === "right" && <Check className="h-4 w-4 text-primary" />}
+              </div>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Primary sidebar placed on the right side of the screen.
+              </p>
+            </div>
           </button>
         </div>
       </div>
 
-      {/* Display Mode */}
+      {/* Display Mode Selection */}
       <div>
-        <label className="mb-1.5 flex items-center justify-between font-semibold uppercase tracking-wider text-muted-foreground text-[10px]">
+        <label className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           <span>Display Mode</span>
           <span className="font-normal text-foreground">
-            {mode === "full" ? "Icon & Label" : "Icon Alone"}
+            {mode === "full" ? "Icon & Label (Expanded)" : "Icon Alone (Compact Rail)"}
           </span>
         </label>
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           <button
             type="button"
             onClick={() => update("sidebarMode", "full")}
             className={cn(
-              "flex flex-col items-center gap-1.5 rounded-lg border p-2 text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "flex items-start gap-3 rounded-xl border p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               mode === "full"
-                ? "border-primary bg-accent/70 font-semibold text-accent-foreground shadow-xs"
-                : "border-border/60 hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+                ? "border-primary bg-accent/60 shadow-xs"
+                : "border-border/70 hover:bg-muted/60"
             )}
           >
-            <div className="flex h-7 w-12 items-center gap-1 rounded border border-border/70 bg-background px-1 shadow-2xs">
-              <span className="h-3 w-3 shrink-0 rounded-xs bg-primary/80" />
-              <span className="h-1.5 flex-1 rounded-xs bg-muted-foreground/40" />
+            <div className="flex h-10 w-14 shrink-0 items-center gap-1 rounded-md border bg-background px-1.5 shadow-2xs">
+              <span className="h-4 w-4 shrink-0 rounded-xs bg-primary" />
+              <span className="h-2 flex-1 rounded-xs bg-muted-foreground/40" />
             </div>
-            <span className="flex items-center gap-1">
-              {mode === "full" && <Check className="h-3 w-3 text-primary" />}
-              Icon & Label
-            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-foreground">Icon & Label</span>
+                {mode === "full" && <Check className="h-4 w-4 text-primary" />}
+              </div>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Expanded 256px sidebar showing all titles, categories, and badges.
+              </p>
+            </div>
           </button>
 
           <button
             type="button"
             onClick={() => update("sidebarMode", "compact")}
             className={cn(
-              "flex flex-col items-center gap-1.5 rounded-lg border p-2 text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "flex items-start gap-3 rounded-xl border p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               mode === "compact"
-                ? "border-primary bg-accent/70 font-semibold text-accent-foreground shadow-xs"
-                : "border-border/60 hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+                ? "border-primary bg-accent/60 shadow-xs"
+                : "border-border/70 hover:bg-muted/60"
             )}
           >
-            <div className="flex h-7 w-12 items-center justify-center gap-1 rounded border border-border/70 bg-background px-1 shadow-2xs">
-              <span className="h-3.5 w-3.5 rounded-xs bg-primary/80" />
+            <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-md border bg-background shadow-2xs">
+              <span className="h-4 w-4 rounded-xs bg-primary" />
             </div>
-            <span className="flex items-center gap-1">
-              {mode === "compact" && <Check className="h-3 w-3 text-primary" />}
-              Icon Alone
-            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-foreground">Icon Alone</span>
+                {mode === "compact" && <Check className="h-4 w-4 text-primary" />}
+              </div>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Space-saving 64px rail with centered icons and floating tooltips.
+              </p>
+            </div>
           </button>
         </div>
       </div>
 
-      {/* Alignment */}
+      {/* Alignment Selection */}
       <div>
-        <label className="mb-1.5 flex items-center justify-between font-semibold uppercase tracking-wider text-muted-foreground text-[10px]">
-          <span>Alignment</span>
+        <label className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span>Item Alignment</span>
           <span className="font-normal capitalize text-foreground">{align}</span>
         </label>
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           <button
             type="button"
             onClick={() => update("sidebarAlign", "left")}
             className={cn(
-              "flex items-center justify-center gap-2 rounded-lg border p-2 text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "flex items-center gap-3 rounded-xl border p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               align === "left"
-                ? "border-primary bg-accent/70 font-semibold text-accent-foreground shadow-xs"
-                : "border-border/60 hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+                ? "border-primary bg-accent/60 shadow-xs"
+                : "border-border/70 hover:bg-muted/60"
             )}
           >
-            <AlignLeft className="h-3.5 w-3.5 shrink-0" />
-            <span>Left</span>
-            {align === "left" && <Check className="ml-auto h-3 w-3 text-primary" />}
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border bg-background">
+              <AlignLeft className="h-4 w-4 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-foreground">Left Aligned</span>
+                {align === "left" && <Check className="h-4 w-4 text-primary" />}
+              </div>
+              <p className="text-xs text-muted-foreground">Standard left-anchored icons and text.</p>
+            </div>
           </button>
 
           <button
             type="button"
             onClick={() => update("sidebarAlign", "center")}
             className={cn(
-              "flex items-center justify-center gap-2 rounded-lg border p-2 text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "flex items-center gap-3 rounded-xl border p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               align === "center"
-                ? "border-primary bg-accent/70 font-semibold text-accent-foreground shadow-xs"
-                : "border-border/60 hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+                ? "border-primary bg-accent/60 shadow-xs"
+                : "border-border/70 hover:bg-muted/60"
             )}
           >
-            <AlignCenter className="h-3.5 w-3.5 shrink-0" />
-            <span>Center</span>
-            {align === "center" && <Check className="ml-auto h-3 w-3 text-primary" />}
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border bg-background">
+              <AlignCenter className="h-4 w-4 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-foreground">Center Balanced</span>
+                {align === "center" && <Check className="h-4 w-4 text-primary" />}
+              </div>
+              <p className="text-xs text-muted-foreground">Centered icons with balanced layout.</p>
+            </div>
           </button>
         </div>
       </div>
 
-      {/* Reset */}
-      <div className="pt-1">
+      {/* User Information & Reset */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-border/60">
+        {user ? (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+            <span>
+              Saved for <strong className="font-medium text-foreground">{user.name}</strong> · User-wise
+            </span>
+          </div>
+        ) : (
+          <span />
+        )}
+
         <button
           type="button"
           onClick={resetToDefaults}
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border/80 px-2.5 py-1.5 text-[11px] text-muted-foreground hover:border-primary/50 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:underline"
         >
-          <RotateCcw className="h-3 w-3" />
+          <RotateCcw className="h-3.5 w-3.5" />
           Reset to defaults
         </button>
       </div>
@@ -229,16 +362,41 @@ export function SidebarCustomizerControls({
 }
 
 /**
+ * Modal dialog for customizing sidebar navigation.
+ * Renders in a top-layer portal to ensure zero clipping, zero layout overlap, and maximum accessibility.
+ */
+export function SidebarCustomizerDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Navigation & Sidebar Customization"
+      description="Personalize your sidebar position, layout mode, and alignment. These settings are saved to your account and follow you across devices."
+      size="lg"
+      footer={
+        <Button onClick={onClose} variant="primary">
+          Done
+        </Button>
+      }
+    >
+      <SidebarCustomizerControls onChanged={() => {}} />
+    </Dialog>
+  );
+}
+
+/**
  * 1-click Quick Toggle between Full (icon + label) and Compact (icon alone) modes.
  */
-export function SidebarQuickToggle() {
+export function SidebarQuickToggle({ isCompact, position }: { isCompact: boolean; position: SidebarPosition }) {
   const toast = useToast();
-  const { preferences, setPreference } = useTheme();
+  const { setPreference } = useTheme();
   const save = useUpdatePreferences();
-
-  const position = preferences.sidebarPosition ?? "left";
-  const mode = preferences.sidebarMode ?? "full";
-  const isCompact = mode === "compact";
 
   function toggle() {
     const nextMode: SidebarMode = isCompact ? "full" : "compact";
@@ -255,13 +413,13 @@ export function SidebarQuickToggle() {
     );
   }
 
-  // Icons adjust visually based on sidebar placement (left vs right)
+  // Icons adjust dynamically based on sidebar position (left vs right) and mode
   const Icon = isCompact
     ? position === "right"
-      ? PanelRight
+      ? PanelRightClose
       : PanelLeftOpen
     : position === "right"
-    ? PanelRight
+    ? PanelRightOpen
     : PanelLeftClose;
 
   return (
@@ -272,93 +430,48 @@ export function SidebarQuickToggle() {
       aria-label={isCompact ? "Expand sidebar" : "Collapse sidebar"}
       className={cn(
         "flex items-center justify-center rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        isCompact ? "w-full" : ""
+        isCompact ? "h-9 w-9 mx-auto" : "gap-2 px-3 py-2 text-xs font-medium w-full"
       )}
     >
-      <Icon className="h-4 w-4" aria-hidden="true" />
-      {!isCompact && <span className="ml-2 text-xs font-medium">Collapse</span>}
+      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+      {!isCompact && <span>Collapse sidebar</span>}
     </button>
   );
 }
 
 /**
- * Interactive Popover Customizer Menu mounted right on the sidebar.
+ * Button trigger that opens the non-overlapping SidebarCustomizerDialog.
  */
-export function SidebarCustomizer({ compactTrigger = false }: SidebarCustomizerProps) {
+export function SidebarCustomizerButton({
+  isCompact = false,
+  className,
+}: {
+  isCompact?: boolean;
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { preferences } = useTheme();
-  const position = preferences.sidebarPosition ?? "left";
-  const isCompact = (preferences.sidebarMode ?? "full") === "compact";
-
-  useEffect(() => {
-    if (!open) return undefined;
-    function onPointer(e: PointerEvent) {
-      if (!containerRef.current?.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("pointerdown", onPointer);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onPointer);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
 
   return (
-    <div className="relative" ref={containerRef}>
+    <>
       <button
         type="button"
-        onClick={() => setOpen(c => !c)}
-        aria-expanded={open}
+        onClick={() => setOpen(true)}
         aria-haspopup="dialog"
-        title="Customize sidebar (Position, Display, Alignment)"
-        aria-label="Customize sidebar"
+        title="Customize sidebar navigation (Position, Display, Alignment)"
+        aria-label="Customize sidebar navigation"
         className={cn(
-          "flex items-center rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          isCompact || compactTrigger ? "w-full justify-center" : "w-full gap-2.5 px-3 py-2 text-sm font-medium"
+          "flex items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          isCompact
+            ? "h-9 w-9 justify-center mx-auto"
+            : "gap-2.5 px-3 py-2 text-xs font-medium w-full",
+          className
         )}
       >
         <SlidersHorizontal className="h-4 w-4 shrink-0" aria-hidden="true" />
-        {(!isCompact && !compactTrigger) && <span>Customize menu</span>}
+        {!isCompact && <span>Customize navigation</span>}
       </button>
 
-      {open && (
-        <div
-          role="dialog"
-          aria-label="Customize sidebar navigation"
-          className={cn(
-            "absolute bottom-full z-50 mb-2 w-72 rounded-xl border bg-card p-3.5 shadow-xl animate-in fade-in zoom-in-95",
-            position === "right"
-              ? isCompact
-                ? "right-full mr-2 bottom-0 mb-0"
-                : "right-0"
-              : isCompact
-              ? "left-full ml-2 bottom-0 mb-0"
-              : "left-0"
-          )}
-        >
-          <div className="mb-3 flex items-center justify-between border-b pb-2">
-            <div>
-              <p className="text-xs font-bold text-foreground">Menu Customization</p>
-              <p className="text-[11px] text-muted-foreground">Personal layout settings</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="rounded p-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              Done
-            </button>
-          </div>
-
-          <SidebarCustomizerControls onChanged={() => {}} />
-        </div>
-      )}
-    </div>
+      <SidebarCustomizerDialog open={open} onClose={() => setOpen(false)} />
+    </>
   );
 }

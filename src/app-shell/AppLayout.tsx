@@ -85,13 +85,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <Sidebar mobileOpen={menuOpen} onClose={closeMenu} />
         <div
           className={cn(
-            "transition-all duration-200 print:pl-0 print:pr-0",
+            "min-h-screen transition-[padding] duration-200 ease-in-out print:pl-0 print:pr-0",
             sidebarPosition === "right"
               ? isCompact
-                ? "lg:pr-20 lg:pl-0"
+                ? "lg:pr-16 lg:pl-0"
                 : "lg:pr-64 lg:pl-0"
               : isCompact
-              ? "lg:pl-20 lg:pr-0"
+              ? "lg:pl-16 lg:pr-0"
               : "lg:pl-64 lg:pr-0"
           )}
         >
