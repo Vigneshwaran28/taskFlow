@@ -17,12 +17,18 @@ export const STYLES = ["classic", "business", "glass", "midnight", "minimal", "s
 /** "auto" = the style preset's own choice */
 export const FONTS = ["auto", "system", "inter", "jakarta", "plex"] as const;
 export const SIDEBARS = ["auto", "light", "tinted", "dark"] as const;
+export const SIDEBAR_POSITIONS = ["left", "right"] as const;
+export const SIDEBAR_MODES = ["full", "compact"] as const;
+export const SIDEBAR_ALIGNS = ["left", "center"] as const;
 
 export type ThemeMode = (typeof THEMES)[number];
 export type Accent = (typeof ACCENTS)[number];
 export type StylePreset = (typeof STYLES)[number];
 export type FontChoice = (typeof FONTS)[number];
 export type SidebarChoice = (typeof SIDEBARS)[number];
+export type SidebarPosition = (typeof SIDEBAR_POSITIONS)[number];
+export type SidebarMode = (typeof SIDEBAR_MODES)[number];
+export type SidebarAlign = (typeof SIDEBAR_ALIGNS)[number];
 
 /** What each preset uses when the person leaves typeface and sidebar on "auto". */
 export const STYLE_DEFAULTS: Readonly<Record<StylePreset, { font: Exclude<FontChoice, "auto">; sidebar: Exclude<SidebarChoice, "auto"> }>> = Object.freeze({
@@ -63,6 +69,9 @@ export interface AppearancePreferences {
   style: StylePreset | null;
   font: FontChoice;
   sidebar: SidebarChoice;
+  sidebarPosition: SidebarPosition;
+  sidebarMode: SidebarMode;
+  sidebarAlign: SidebarAlign;
   fontScale: "sm" | "md" | "lg";
   density: "comfortable" | "compact";
   reduceMotion: boolean;
@@ -93,6 +102,9 @@ export const DEFAULT_PREFERENCES: AppearancePreferences = Object.freeze({
   style: null,
   font: "auto",
   sidebar: "auto",
+  sidebarPosition: "left",
+  sidebarMode: "full",
+  sidebarAlign: "left",
   fontScale: "md",
   density: "comfortable",
   reduceMotion: false,
@@ -123,7 +135,7 @@ const NON_APP_PAGES = ["login", "clinic-display", "patient"];
  * Inline script for <head>: applies the saved appearance before first paint (no flash of the wrong theme, style, colour,
  * motion setting, or background picture). The picture is painted only on the remembered workspace's app pages.
  */
-export const THEME_BOOT_SCRIPT = `try{var p=JSON.parse(localStorage.getItem("${STORAGE_KEY}")||"null")||{theme:localStorage.getItem("${LEGACY_KEY}")||"system"};var b=JSON.parse(localStorage.getItem("${BRAND_KEY}")||"null")||{};var r=document.documentElement;var d=p.theme==="dark"||(p.theme!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);r.classList.toggle("dark",d);var a=b.lockAccent?b.accent:(p.accent||b.accent);if(a)r.dataset.accent=a;if(p.fontScale)r.dataset.font=p.fontScale;if(p.density)r.dataset.density=p.density;r.dataset.motion=p.reduceMotion?"reduce":"normal";var D=${JSON.stringify(STYLE_DEFAULTS)};var s=b.lock?b.style:(p.style||b.style);if(!D[s])s="classic";r.dataset.style=s;r.dataset.typeface=p.font&&p.font!=="auto"?p.font:D[s].font;r.dataset.sidebar=p.sidebar&&p.sidebar!=="auto"?p.sidebar:D[s].sidebar;var g=location.pathname.split("/");if(b.slug&&decodeURIComponent(g[1]||"").toLowerCase()===b.slug&&${JSON.stringify(NON_APP_PAGES)}.indexOf(g[2]||"")<0){var i=p.backgroundImage==="none"?null:(p.backgroundImage||b.bg);if(i&&i.length<=1000&&new RegExp(${JSON.stringify(SAFE_IMAGE_URL.source)},"i").test(i)){var m=p.backgroundDim!=null?p.backgroundDim:(b.dim!=null?b.dim:40);r.style.setProperty("--user-bg-image",'url("'+i+'")');r.style.setProperty("--user-bg-dim",Math.min(90,Math.max(0,m))+"%");r.dataset.bg="image";}}}catch(e){}`;
+export const THEME_BOOT_SCRIPT = `try{var p=JSON.parse(localStorage.getItem("${STORAGE_KEY}")||"null")||{theme:localStorage.getItem("${LEGACY_KEY}")||"system"};var b=JSON.parse(localStorage.getItem("${BRAND_KEY}")||"null")||{};var r=document.documentElement;var d=p.theme==="dark"||(p.theme!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);r.classList.toggle("dark",d);var a=b.lockAccent?b.accent:(p.accent||b.accent);if(a)r.dataset.accent=a;if(p.fontScale)r.dataset.font=p.fontScale;if(p.density)r.dataset.density=p.density;r.dataset.motion=p.reduceMotion?"reduce":"normal";if(p.sidebarPosition)r.dataset.sidebarPosition=p.sidebarPosition;if(p.sidebarMode)r.dataset.sidebarMode=p.sidebarMode;if(p.sidebarAlign)r.dataset.sidebarAlign=p.sidebarAlign;var D=${JSON.stringify(STYLE_DEFAULTS)};var s=b.lock?b.style:(p.style||b.style);if(!D[s])s="classic";r.dataset.style=s;r.dataset.typeface=p.font&&p.font!=="auto"?p.font:D[s].font;r.dataset.sidebar=p.sidebar&&p.sidebar!=="auto"?p.sidebar:D[s].sidebar;var g=location.pathname.split("/");if(b.slug&&decodeURIComponent(g[1]||"").toLowerCase()===b.slug&&${JSON.stringify(NON_APP_PAGES)}.indexOf(g[2]||"")<0){var i=p.backgroundImage==="none"?null:(p.backgroundImage||b.bg);if(i&&i.length<=1000&&new RegExp(${JSON.stringify(SAFE_IMAGE_URL.source)},"i").test(i)){var m=p.backgroundDim!=null?p.backgroundDim:(b.dim!=null?b.dim:40);r.style.setProperty("--user-bg-image",'url("'+i+'")');r.style.setProperty("--user-bg-dim",Math.min(90,Math.max(0,m))+"%");r.dataset.bg="image";}}}catch(e){}`;
 
 interface ThemeContextValue {
   theme: ThemeMode;
@@ -185,6 +197,9 @@ function apply(preferences: AppearancePreferences, accent: Accent, style: StyleP
   root.dataset.style = style;
   root.dataset.typeface = preferences.font && preferences.font !== "auto" ? preferences.font : defaults.font;
   root.dataset.sidebar = preferences.sidebar && preferences.sidebar !== "auto" ? preferences.sidebar : defaults.sidebar;
+  root.dataset.sidebarPosition = preferences.sidebarPosition || "left";
+  root.dataset.sidebarMode = preferences.sidebarMode || "full";
+  root.dataset.sidebarAlign = preferences.sidebarAlign || "left";
   root.dataset.font = preferences.fontScale;
   root.dataset.density = preferences.density;
   root.dataset.motion = preferences.reduceMotion ? "reduce" : "normal";

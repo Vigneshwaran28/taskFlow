@@ -15,6 +15,7 @@ export function useTickets(query: TicketQuery) {
     queryKey: ticketKeys.list(query),
     queryFn: ({ signal }) => ticketService.list(query, { signal }),
     placeholderData: keepPreviousData,
+    staleTime: 15_000,
   });
 }
 

@@ -40,6 +40,7 @@ export const APP_SECTIONS = new Set([
   "audit",
   "settings",
   "admin",
+  "meetings",
 ]);
 
 const firstSegment = (path: string) => path.split(/[/?#]/)[1] ?? "";

@@ -5,6 +5,8 @@ export interface AppNotification {
   taskId: number | null;
   /** Set for help desk updates */
   ticketId: number | null;
+  /** Set for workspace meeting alerts */
+  meetingId: number | null;
   title: string;
   body: string | null;
   /** Due date of the related task (ISO UTC) */

@@ -21,12 +21,13 @@ export const notificationKeys = {
 const POLL_MS = 30_000;
 
 export function useNotifications() {
-  const refetchInterval = usePollInterval(POLL_MS);
+  const refetchInterval = usePollInterval(POLL_MS, 120_000);
   return useQuery({
     queryKey: notificationKeys.all,
     queryFn: ({ signal }) => notificationService.getNotifications({ signal }),
     refetchInterval,
     refetchIntervalInBackground: true, // reminders should arrive even when the tab is hidden
+    staleTime: 15_000,
   });
 }
 

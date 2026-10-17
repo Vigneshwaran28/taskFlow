@@ -7,9 +7,10 @@ import { Avatar, initials } from "@/components/shared/Avatar";
 import { Button } from "@/components/ui/Button";
 import { useCurrentUser, useLogout, useWorkspaceSessions } from "@/features/auth";
 import { HelpMenu } from "@/features/help";
+import { SoundToggle } from "@/components/shared/SoundToggle";
+import { QuickMeetButton } from "@/features/meetings";
 import { NotificationBell } from "@/features/notifications";
 import { useTaskDialog } from "@/features/tasks";
-import { LiveIndicator } from "@/realtime";
 import { CommandPalette } from "./CommandPalette";
 import { ThemeMenu } from "./ThemeMenu";
 import { canOpenModule } from "./modules";
@@ -67,9 +68,13 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
           </>
         )}
 
+        <QuickMeetButton />
+
         <div className="flex" data-tour="notifications">
           <NotificationBell onOpenTask={openEditById} onOpenTicket={id => router.push(`/tickets/${id}`)} />
         </div>
+
+        <SoundToggle />
 
         <HelpMenu />
 

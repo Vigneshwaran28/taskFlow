@@ -4,7 +4,7 @@ import { Check, Monitor, Moon, Sun } from "lucide-react";
 import { STYLE_META, StylePreview } from "@/components/shared/StylePreview";
 import { useToast } from "@/components/shared/Toaster";
 import { useUpdatePreferences } from "@/features/auth";
-import { ACCENTS, STYLE_DEFAULTS, STYLES, useTheme, type Accent, type AppearancePreferences, type FontChoice, type SidebarChoice, type ThemeMode, ACCENT_META } from "@/hooks/useTheme";
+import { ACCENTS, STYLE_DEFAULTS, STYLES, useTheme, type Accent, type AppearancePreferences, type FontChoice, type SidebarChoice, type SidebarPosition, type SidebarMode, type SidebarAlign, type ThemeMode, ACCENT_META } from "@/hooks/useTheme";
 import { cn } from "@/lib/cn";
 import type { SessionUser } from "@/types/session";
 import { BackgroundPicker } from "./BackgroundPicker";
@@ -44,6 +44,21 @@ const SIDEBAR_OPTIONS: readonly { value: Exclude<SidebarChoice, "auto">; label: 
   { value: "light", label: "Light" },
   { value: "tinted", label: "Tinted" },
   { value: "dark", label: "Dark" },
+];
+
+const POSITION_OPTIONS: readonly { value: SidebarPosition; label: string; description: string }[] = [
+  { value: "left", label: "Left side", description: "Standard layout with sidebar placed on the left." },
+  { value: "right", label: "Right side", description: "Sidebar placed on the right side of the screen." },
+];
+
+const MODE_OPTIONS: readonly { value: SidebarMode; label: string; description: string }[] = [
+  { value: "full", label: "Icon & label", description: "Expanded navigation with both icons and labels." },
+  { value: "compact", label: "Icon alone", description: "Compact rail with icons only and hover tooltips." },
+];
+
+const ALIGN_OPTIONS: readonly { value: SidebarAlign; label: string; description: string }[] = [
+  { value: "left", label: "Left aligned", description: "Left-aligned icons and menu item text." },
+  { value: "center", label: "Centered", description: "Centered navigation icons and text labels." },
 ];
 
 const chipClass = (active: boolean) =>
@@ -160,6 +175,45 @@ export function AppearanceSettings({ user }: { user: SessionUser }) {
                   </label>
                 );
               })}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend className={legendClass}>Sidebar position</legend>
+            <div className="grid max-w-md grid-cols-2 gap-3">
+              {POSITION_OPTIONS.map(option => (
+                <label key={option.value} className={cn(tileClass((preferences.sidebarPosition ?? "left") === option.value), "items-start text-left")}>
+                  <input type="radio" name="sidebar-position" checked={(preferences.sidebarPosition ?? "left") === option.value} onChange={() => change("sidebarPosition", option.value)} className="sr-only" />
+                  <span className="font-medium text-sm">{option.label}</span>
+                  <span className="text-xs font-normal text-muted-foreground">{option.description}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend className={legendClass}>Sidebar display mode</legend>
+            <div className="grid max-w-md grid-cols-2 gap-3">
+              {MODE_OPTIONS.map(option => (
+                <label key={option.value} className={cn(tileClass((preferences.sidebarMode ?? "full") === option.value), "items-start text-left")}>
+                  <input type="radio" name="sidebar-mode" checked={(preferences.sidebarMode ?? "full") === option.value} onChange={() => change("sidebarMode", option.value)} className="sr-only" />
+                  <span className="font-medium text-sm">{option.label}</span>
+                  <span className="text-xs font-normal text-muted-foreground">{option.description}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend className={legendClass}>Sidebar alignment</legend>
+            <div className="grid max-w-md grid-cols-2 gap-3">
+              {ALIGN_OPTIONS.map(option => (
+                <label key={option.value} className={cn(tileClass((preferences.sidebarAlign ?? "left") === option.value), "items-start text-left")}>
+                  <input type="radio" name="sidebar-align" checked={(preferences.sidebarAlign ?? "left") === option.value} onChange={() => change("sidebarAlign", option.value)} className="sr-only" />
+                  <span className="font-medium text-sm">{option.label}</span>
+                  <span className="text-xs font-normal text-muted-foreground">{option.description}</span>
+                </label>
+              ))}
             </div>
           </fieldset>
         </div>

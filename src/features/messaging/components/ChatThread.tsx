@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useEffectEvent, useRef, useState, type FormEvent } from "react";
-import { ArrowLeft, Info, Send, Trash2, Users } from "lucide-react";
+import { ArrowLeft, ExternalLink, Info, Send, Trash2, Users, Video } from "lucide-react";
 import { Avatar } from "@/components/shared/Avatar";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { ErrorState, LoadingState } from "@/components/shared/States";
@@ -36,6 +36,57 @@ export function ChatThread({ conversation, currentUserId, onBack, onLeft }: Chat
   const [deleting, setDeleting] = useState<ChatMessage | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const latestId = data?.messages.at(-1)?.id;
+
+  const [meetMenuOpen, setMeetMenuOpen] = useState(false);
+
+  function insertMeeting(type: "google_meet" | "zoom" | "teams") {
+    setMeetMenuOpen(false);
+    let link = "";
+    if (type === "google_meet") {
+      link = "Join my Google Meet: https://meet.google.com/new";
+      window.open("https://meet.google.com/new", "_blank", "noopener,noreferrer");
+    } else if (type === "zoom") {
+      link = "Join my Zoom meeting: https://zoom.us/start/videomeeting";
+      window.open("https://zoom.us/start/videomeeting", "_blank", "noopener,noreferrer");
+    } else {
+      link = "Join my Microsoft Teams call: https://teams.microsoft.com";
+      window.open("https://teams.microsoft.com", "_blank", "noopener,noreferrer");
+    }
+    setBody(curr => (curr ? `${curr}\n${link}` : link));
+  }
+
+  function renderMessageBody(text: string, isMine: boolean) {
+    const urlMatch = text.match(/(https?:\/\/[^\s]+)/);
+    if (!urlMatch) return <p className="whitespace-pre-wrap break-words">{text}</p>;
+    const url = urlMatch[1];
+    const isMeet = url.includes("meet.google.com");
+    const isZoom = url.includes("zoom.us");
+    const isTeams = url.includes("teams.microsoft.com") || url.includes("teams.live.com");
+    const isVideoMeeting = isMeet || isZoom || isTeams;
+
+    return (
+      <div className="flex flex-col gap-1.5">
+        <p className="whitespace-pre-wrap break-words">{text}</p>
+        {isVideoMeeting && (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "mt-1 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold shadow-xs transition",
+              isMine
+                ? "bg-white/20 text-white hover:bg-white/30"
+                : "bg-primary text-primary-foreground hover:bg-primary/90"
+            )}
+          >
+            <Video className="h-3 w-3" aria-hidden="true" />
+            <span>Join {isMeet ? "Google Meet" : isZoom ? "Zoom" : "Teams"}</span>
+            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+          </a>
+        )}
+      </div>
+    );
+  }
 
   const messages = [...older.messages, ...(data?.messages ?? [])];
   const hasMore = older.hasMore ?? data?.hasMore;
@@ -156,7 +207,11 @@ export function ChatThread({ conversation, currentUserId, onBack, onLeft }: Chat
                                 : "rounded-bl-md bg-muted text-foreground"
                           )}
                         >
-                          <p className="whitespace-pre-wrap break-words">{message.deleted ? "Message deleted" : message.body}</p>
+                          {message.deleted ? (
+                            <p className="italic">Message deleted</p>
+                          ) : (
+                            renderMessageBody(message.body || "", mine)
+                          )}
                         </div>
                       </div>
                       <time dateTime={message.createdAt} className="px-1 text-[11px] text-muted-foreground">
@@ -172,10 +227,61 @@ export function ChatThread({ conversation, currentUserId, onBack, onLeft }: Chat
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleSend} className="flex items-end gap-2 border-t p-3">
+      <form onSubmit={handleSend} className="flex items-end gap-2 border-t p-3 relative">
         <label htmlFor="chat-composer" className="sr-only">
           Message {conversation.name}
         </label>
+
+        {/* Video Meet Dropdown in Composer */}
+        <div className="relative">
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            onClick={() => setMeetMenuOpen(c => !c)}
+            title="Share a Google Meet, Zoom, or Teams link"
+            aria-label="Share meeting link"
+            className="h-10 w-10 shrink-0 text-muted-foreground hover:text-primary"
+          >
+            <Video className="h-4 w-4" aria-hidden="true" />
+          </Button>
+
+          {meetMenuOpen && (
+            <div
+              onMouseLeave={() => setMeetMenuOpen(false)}
+              className="absolute bottom-full left-0 z-30 mb-2 w-48 overflow-hidden rounded-xl border bg-card p-1 shadow-lg animate-in fade-in"
+            >
+              <div className="px-2 py-1 text-[11px] font-semibold uppercase text-muted-foreground">
+                Share Meeting Link
+              </div>
+              <button
+                type="button"
+                onClick={() => insertMeeting("google_meet")}
+                className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-muted"
+              >
+                <span>Google Meet</span>
+                <ExternalLink className="h-3 w-3 text-muted-foreground" />
+              </button>
+              <button
+                type="button"
+                onClick={() => insertMeeting("zoom")}
+                className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-muted"
+              >
+                <span>Zoom</span>
+                <ExternalLink className="h-3 w-3 text-muted-foreground" />
+              </button>
+              <button
+                type="button"
+                onClick={() => insertMeeting("teams")}
+                className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-muted"
+              >
+                <span>Teams</span>
+                <ExternalLink className="h-3 w-3 text-muted-foreground" />
+              </button>
+            </div>
+          )}
+        </div>
+
         <textarea
           id="chat-composer"
           rows={1}

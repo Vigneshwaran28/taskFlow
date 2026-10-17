@@ -5,6 +5,7 @@ import { Bell, BellOff, CheckCheck } from "lucide-react";
 import { useToast } from "@/components/shared/Toaster";
 import { cn } from "@/lib/cn";
 import { formatTimeAgo } from "@/lib/dates";
+import { useRouter } from "@/lib/navigation";
 import { alertTitle, describeNotification, useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications, useReminderAlerts } from "../hooks/useNotifications";
 import type { AppNotification } from "../services/notificationService";
 
@@ -43,10 +44,13 @@ export function NotificationBell({ onOpenTask, onOpenTicket }: NotificationBellP
   const unread = data?.unreadCount ?? 0;
   const items = data?.items ?? [];
 
+  const router = useRouter();
+
   function handleSelect(notification: AppNotification) {
     if (!notification.isRead) markRead.mutate(notification.id);
     setOpen(false);
-    if (notification.ticketId) onOpenTicket(notification.ticketId);
+    if (notification.meetingId) router.push("/meetings");
+    else if (notification.ticketId) onOpenTicket(notification.ticketId);
     else if (notification.taskId) onOpenTask(notification.taskId);
   }
 
