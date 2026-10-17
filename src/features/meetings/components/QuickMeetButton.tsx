@@ -59,7 +59,11 @@ export function QuickMeetButton() {
         </Button>
 
         {dropdownOpen && (
-          <div className="absolute right-0 top-full z-40 mt-1.5 w-60 overflow-hidden rounded-xl border border-border bg-card p-1.5 shadow-xl animate-in fade-in zoom-in-95">
+          <div
+            role="menu"
+            aria-label="Video Meeting Options"
+            className="absolute right-0 top-full z-40 mt-1.5 w-64 overflow-hidden rounded-xl border border-border bg-card/98 p-1.5 shadow-2xl backdrop-blur-md animate-in fade-in zoom-in-95"
+          >
             <div className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Instant Meeting
             </div>

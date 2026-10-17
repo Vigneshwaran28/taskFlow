@@ -132,9 +132,9 @@ html.dark[data-style="glass"], .dark [data-style-preview="glass"] {
   html[data-style="glass"], [data-style-preview="glass"] { --color-card: rgb(255 255 255 / 0.62); }
   html.dark[data-style="glass"], .dark [data-style-preview="glass"] { --color-card: rgb(17 24 39 / 0.58); }
   html[data-style="glass"] .bg-card, [data-style-preview="glass"] .bg-card { -webkit-backdrop-filter: blur(16px) saturate(160%); backdrop-filter: blur(16px) saturate(160%); }
-  /* Modals sit over a dimmed backdrop: keep them readable. */
-  html[data-style="glass"] dialog { --color-card: rgb(255 255 255 / 0.95); }
-  html.dark[data-style="glass"] dialog { --color-card: rgb(17 24 39 / 0.96); }
+  /* Modals sit over a dimmed backdrop: keep them solid, readable, and non-overlapping. */
+  html[data-style="glass"] dialog, html[data-style="glass"] [role="dialog"] { --color-card: #ffffff; }
+  html.dark[data-style="glass"] dialog, html.dark[data-style="glass"] [role="dialog"] { --color-card: #111827; }
 }
 
 /* Midnight executive: deep dark surfaces with accent-tinted edges and glow (made for dark mode; light mode keeps the dark sidebar). */
@@ -460,7 +460,7 @@ dialog:modal > div.max-h-\[85vh\] { max-height: min(85vh, calc(100dvh - 2rem)); 
   html.dark { color-scheme: dark; }
   /* Long unbroken words (URLs, IDs) wrap instead of overflowing their card; truncate/nowrap text is unaffected. */
   body { font-family: var(--font-sans); overflow-wrap: break-word; }
-  dialog::backdrop { background: rgb(15 23 42 / 0.5); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+  dialog::backdrop { background: rgb(15 23 42 / 0.72); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 
   /* Reserve the scrollbar's space so pages don't jump sideways when content grows past the fold or a modal locks scrolling. */
   html { scrollbar-gutter: stable; }
