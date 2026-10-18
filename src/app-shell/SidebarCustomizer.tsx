@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRouter } from "@/lib/navigation";
 import {
   AlignCenter,
   AlignLeft,
@@ -424,6 +424,8 @@ export function SidebarCustomizerDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const router = useRouter();
+
   return (
     <Dialog
       open={open}
@@ -438,6 +440,19 @@ export function SidebarCustomizerDialog({
       }
     >
       <SidebarCustomizerControls onChanged={() => {}} />
+      <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-3 text-xs text-muted-foreground">
+        <span>Looking for all appearance options?</span>
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            router.push("/settings?tab=appearance#navigation");
+          }}
+          className="font-medium text-primary hover:underline focus-visible:outline-none"
+        >
+          Open in Settings page →
+        </button>
+      </div>
     </Dialog>
   );
 }
@@ -501,29 +516,24 @@ export function SidebarCustomizerButton({
   isCompact?: boolean;
   className?: string;
 }) {
-  const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-haspopup="dialog"
-        title="Customize sidebar navigation (Position, Display, Alignment)"
-        aria-label="Customize sidebar navigation"
-        className={cn(
-          "flex items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          isCompact
-            ? "h-9 w-9 justify-center mx-auto"
-            : "gap-2.5 px-3 py-2 text-xs font-medium w-full",
-          className
-        )}
-      >
-        <SlidersHorizontal className="h-4 w-4 shrink-0" aria-hidden="true" />
-        {!isCompact && <span>Customize navigation</span>}
-      </button>
-
-      <SidebarCustomizerDialog open={open} onClose={() => setOpen(false)} />
-    </>
+    <button
+      type="button"
+      onClick={() => router.push("/settings?tab=appearance#navigation")}
+      title="Customize navbar & navigation in Settings"
+      aria-label="Customize navbar & navigation in Settings"
+      className={cn(
+        "flex items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        isCompact
+          ? "h-9 w-9 justify-center mx-auto"
+          : "gap-2.5 px-3 py-2 text-xs font-medium w-full",
+        className
+      )}
+    >
+      <SlidersHorizontal className="h-4 w-4 shrink-0" aria-hidden="true" />
+      {!isCompact && <span>Customize navigation</span>}
+    </button>
   );
 }

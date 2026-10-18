@@ -2,7 +2,7 @@
 import NextLink from "next/link";
 import { usePathname, useRouter } from "@/lib/navigation";
 import { useState, type FocusEvent } from "react";
-import { ArrowLeftRight, LayoutGrid, LogOut, Menu, Plus, Settings } from "lucide-react";
+import { ArrowLeftRight, LayoutGrid, LogOut, Menu, Plus, Settings, SlidersHorizontal } from "lucide-react";
 import { Avatar, initials } from "@/components/shared/Avatar";
 import { Button } from "@/components/ui/Button";
 import { useCurrentUser, useLogout, useWorkspaceSessions } from "@/features/auth";
@@ -11,8 +11,9 @@ import { SoundToggle } from "@/components/shared/SoundToggle";
 import { QuickMeetButton } from "@/features/meetings";
 import { NotificationBell } from "@/features/notifications";
 import { useTaskDialog } from "@/features/tasks";
+import { useTheme } from "@/hooks/useTheme";
+import { cn } from "@/lib/cn";
 import { CommandPalette } from "./CommandPalette";
-import { SidebarCustomizerButton } from "./SidebarCustomizer";
 import { ThemeMenu } from "./ThemeMenu";
 import { canOpenModule } from "./modules";
 import { isTaskPage, taskDefaultsFor } from "./taskPages";
@@ -46,8 +47,23 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
     if (!event.currentTarget.parentElement?.contains(event.relatedTarget as Node | null)) setMenuOpen(false);
   }
 
+  const { preferences } = useTheme();
+  const navbarStyle = preferences.navbarStyle || "glass";
+  const isSticky = preferences.navbarSticky !== false;
+  const showQuickMeet = preferences.showQuickMeet !== false;
+  const showSoundToggle = preferences.showSoundToggle !== false;
+
+  const topbarClass = cn(
+    "no-print z-30 flex items-center gap-3 transition-all duration-200",
+    isSticky ? (navbarStyle === "floating" ? "sticky top-2.5" : "sticky top-0") : "relative",
+    navbarStyle === "floating" && "mx-3 sm:mx-6 my-2 h-14 rounded-2xl border border-border/80 bg-card/85 px-4 sm:px-6 shadow-md backdrop-blur-md",
+    navbarStyle === "solid" && "h-16 border-b bg-card px-4 sm:px-6 shadow-xs",
+    navbarStyle === "tinted" && "h-16 border-b border-primary/20 bg-accent/35 px-4 sm:px-6 backdrop-blur",
+    navbarStyle === "glass" && "h-16 border-b bg-background/80 px-4 sm:px-6 backdrop-blur"
+  );
+
   return (
-    <header data-tf="topbar" className="no-print sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur sm:px-6">
+    <header data-tf="topbar" className={topbarClass}>
       <button type="button" onClick={onOpenMenu} aria-label="Open menu" className="rounded-lg p-2 text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden">
         <Menu className="h-5 w-5" aria-hidden="true" />
       </button>
@@ -69,19 +85,27 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
           </>
         )}
 
-        <QuickMeetButton />
+        {showQuickMeet && <QuickMeetButton />}
 
         <div className="flex" data-tour="notifications">
           <NotificationBell onOpenTask={openEditById} onOpenTicket={id => router.push(`/tickets/${id}`)} />
         </div>
 
-        <SoundToggle />
+        {showSoundToggle && <SoundToggle />}
 
         <HelpMenu />
 
         <ThemeMenu />
 
-        <SidebarCustomizerButton isCompact className="p-2" />
+        <button
+          type="button"
+          onClick={() => router.push("/settings?tab=appearance#navigation")}
+          title="Customize navbar & navigation in Settings"
+          aria-label="Customize navbar & navigation in Settings"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+        </button>
 
         <div className="relative" data-tour="account">
           <button

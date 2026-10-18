@@ -20,6 +20,9 @@ export const SIDEBARS = ["auto", "light", "tinted", "dark"] as const;
 export const SIDEBAR_POSITIONS = ["left", "right"] as const;
 export const SIDEBAR_MODES = ["full", "compact"] as const;
 export const SIDEBAR_ALIGNS = ["left", "center"] as const;
+export const NAVBAR_STYLES = ["glass", "solid", "tinted", "floating"] as const;
+
+export type NavbarStyle = (typeof NAVBAR_STYLES)[number];
 
 import type { IconLibraryKey, IconStyleKey } from "@/lib/icons/types";
 
@@ -78,6 +81,10 @@ export interface AppearancePreferences {
   sidebarPosition: SidebarPosition;
   sidebarMode: SidebarMode;
   sidebarAlign: SidebarAlign;
+  navbarStyle: NavbarStyle;
+  navbarSticky: boolean;
+  showQuickMeet: boolean;
+  showSoundToggle: boolean;
   iconLibrary: IconLibraryKey;
   iconStyle: IconStyleKey;
   iconStrokeWidth: number;
@@ -115,6 +122,10 @@ export const DEFAULT_PREFERENCES: AppearancePreferences = Object.freeze({
   sidebarPosition: "left",
   sidebarMode: "full",
   sidebarAlign: "left",
+  navbarStyle: "glass",
+  navbarSticky: true,
+  showQuickMeet: true,
+  showSoundToggle: true,
   iconLibrary: "lucide",
   iconStyle: "outline",
   iconStrokeWidth: 2,
@@ -149,7 +160,7 @@ const NON_APP_PAGES = ["login", "clinic-display", "patient"];
  * Inline script for <head>: applies the saved appearance before first paint (no flash of the wrong theme, style, colour,
  * motion setting, or background picture). The picture is painted only on the remembered workspace's app pages.
  */
-export const THEME_BOOT_SCRIPT = `try{var p=JSON.parse(localStorage.getItem("${STORAGE_KEY}")||"null")||{theme:localStorage.getItem("${LEGACY_KEY}")||"system"};var b=JSON.parse(localStorage.getItem("${BRAND_KEY}")||"null")||{};var r=document.documentElement;var d=p.theme==="dark"||(p.theme!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);r.classList.toggle("dark",d);var a=b.lockAccent?b.accent:(p.accent||b.accent);if(a)r.dataset.accent=a;if(p.fontScale)r.dataset.font=p.fontScale;if(p.density)r.dataset.density=p.density;r.dataset.motion=p.reduceMotion?"reduce":"normal";if(p.sidebarPosition)r.dataset.sidebarPosition=p.sidebarPosition;if(p.sidebarMode)r.dataset.sidebarMode=p.sidebarMode;if(p.sidebarAlign)r.dataset.sidebarAlign=p.sidebarAlign;if(p.iconLibrary)r.dataset.iconLibrary=p.iconLibrary;var D=${JSON.stringify(STYLE_DEFAULTS)};var s=b.lock?b.style:(p.style||b.style);if(!D[s])s="classic";r.dataset.style=s;r.dataset.typeface=p.font&&p.font!=="auto"?p.font:D[s].font;r.dataset.sidebar=p.sidebar&&p.sidebar!=="auto"?p.sidebar:D[s].sidebar;var g=location.pathname.split("/");if(b.slug&&decodeURIComponent(g[1]||"").toLowerCase()===b.slug&&${JSON.stringify(NON_APP_PAGES)}.indexOf(g[2]||"")<0){var i=p.backgroundImage==="none"?null:(p.backgroundImage||b.bg);if(i&&i.length<=1000&&new RegExp(${JSON.stringify(SAFE_IMAGE_URL.source)},"i").test(i)){var m=p.backgroundDim!=null?p.backgroundDim:(b.dim!=null?b.dim:40);r.style.setProperty("--user-bg-image",'url("'+i+'")');r.style.setProperty("--user-bg-dim",Math.min(90,Math.max(0,m))+"%");r.dataset.bg="image";}}}catch(e){}`;
+export const THEME_BOOT_SCRIPT = `try{var p=JSON.parse(localStorage.getItem("${STORAGE_KEY}")||"null")||{theme:localStorage.getItem("${LEGACY_KEY}")||"system"};var b=JSON.parse(localStorage.getItem("${BRAND_KEY}")||"null")||{};var r=document.documentElement;var d=p.theme==="dark"||(p.theme!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);r.classList.toggle("dark",d);var a=b.lockAccent?b.accent:(p.accent||b.accent);if(a)r.dataset.accent=a;if(p.fontScale)r.dataset.font=p.fontScale;if(p.density)r.dataset.density=p.density;r.dataset.motion=p.reduceMotion?"reduce":"normal";if(p.sidebarPosition)r.dataset.sidebarPosition=p.sidebarPosition;if(p.sidebarMode)r.dataset.sidebarMode=p.sidebarMode;if(p.sidebarAlign)r.dataset.sidebarAlign=p.sidebarAlign;if(p.navbarStyle)r.dataset.navbarStyle=p.navbarStyle;if(p.iconLibrary)r.dataset.iconLibrary=p.iconLibrary;var D=${JSON.stringify(STYLE_DEFAULTS)};var s=b.lock?b.style:(p.style||b.style);if(!D[s])s="classic";r.dataset.style=s;r.dataset.typeface=p.font&&p.font!=="auto"?p.font:D[s].font;r.dataset.sidebar=p.sidebar&&p.sidebar!=="auto"?p.sidebar:D[s].sidebar;var g=location.pathname.split("/");if(b.slug&&decodeURIComponent(g[1]||"").toLowerCase()===b.slug&&${JSON.stringify(NON_APP_PAGES)}.indexOf(g[2]||"")<0){var i=p.backgroundImage==="none"?null:(p.backgroundImage||b.bg);if(i&&i.length<=1000&&new RegExp(${JSON.stringify(SAFE_IMAGE_URL.source)},"i").test(i)){var m=p.backgroundDim!=null?p.backgroundDim:(b.dim!=null?b.dim:40);r.style.setProperty("--user-bg-image",'url("'+i+'")');r.style.setProperty("--user-bg-dim",Math.min(90,Math.max(0,m))+"%");r.dataset.bg="image";}}}catch(e){}`;
 
 interface ThemeContextValue {
   theme: ThemeMode;
@@ -214,6 +225,8 @@ function apply(preferences: AppearancePreferences, accent: Accent, style: StyleP
   root.dataset.sidebarPosition = preferences.sidebarPosition || "left";
   root.dataset.sidebarMode = preferences.sidebarMode || "full";
   root.dataset.sidebarAlign = preferences.sidebarAlign || "left";
+  root.dataset.navbarStyle = preferences.navbarStyle || "glass";
+  root.dataset.navbarSticky = String(preferences.navbarSticky !== false);
   root.dataset.iconLibrary = preferences.iconLibrary || "lucide";
   root.dataset.iconStyle = preferences.iconStyle || "outline";
   root.style.setProperty("--icon-stroke-width", `${preferences.iconStrokeWidth || 2}px`);
