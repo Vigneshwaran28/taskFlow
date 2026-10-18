@@ -22,6 +22,11 @@ import {
   type SidebarMode,
   type SidebarPosition,
 } from "@/hooks/useTheme";
+import {
+  ICON_LIBRARIES,
+  ICON_LIBRARY_MAP,
+  NAV_ICONS,
+} from "@/lib/icons";
 import { cn } from "@/lib/cn";
 
 export function SidebarCustomizerControls({
@@ -37,6 +42,9 @@ export function SidebarCustomizerControls({
   const position = preferences.sidebarPosition ?? "left";
   const mode = preferences.sidebarMode ?? "full";
   const align = preferences.sidebarAlign ?? "left";
+  const iconLib = preferences.iconLibrary || "lucide";
+  const iconStroke = preferences.iconStrokeWidth ?? 2;
+  const PreviewIcons = NAV_ICONS[iconLib] || NAV_ICONS.lucide;
 
   function update<K extends keyof AppearancePreferences>(
     key: K,
@@ -60,7 +68,9 @@ export function SidebarCustomizerControls({
     update("sidebarPosition", "left");
     update("sidebarMode", "full");
     update("sidebarAlign", "left");
-    toast.success("Sidebar reset to standard layout");
+    update("iconLibrary", "lucide");
+    update("iconStrokeWidth", 2);
+    toast.success("Sidebar and icons reset to standard defaults");
   }
 
   return (
@@ -105,31 +115,31 @@ export function SidebarCustomizerControls({
               <div
                 className={cn(
                   "flex items-center rounded-xs bg-accent/80 p-0.5",
-                  mode === "compact" ? "h-3.5 w-3.5 justify-center" : "w-full gap-1",
+                  mode === "compact" ? "h-4 w-4 justify-center" : "w-full gap-1",
                   align === "center" && mode === "full" ? "justify-center" : ""
                 )}
               >
-                <span className="h-2 w-2 rounded-xs bg-primary" />
+                <PreviewIcons.home className="h-2.5 w-2.5 shrink-0 text-primary" strokeWidth={iconStroke} />
                 {mode === "full" && <span className="h-1.5 w-10 rounded-xs bg-foreground/60" />}
               </div>
               <div
                 className={cn(
                   "flex items-center rounded-xs p-0.5",
-                  mode === "compact" ? "h-3.5 w-3.5 justify-center" : "w-full gap-1",
+                  mode === "compact" ? "h-4 w-4 justify-center" : "w-full gap-1",
                   align === "center" && mode === "full" ? "justify-center" : ""
                 )}
               >
-                <span className="h-2 w-2 rounded-xs bg-muted-foreground/40" />
+                <PreviewIcons.tasks className="h-2.5 w-2.5 shrink-0 text-muted-foreground/60" strokeWidth={iconStroke} />
                 {mode === "full" && <span className="h-1.5 w-8 rounded-xs bg-muted-foreground/40" />}
               </div>
               <div
                 className={cn(
                   "flex items-center rounded-xs p-0.5",
-                  mode === "compact" ? "h-3.5 w-3.5 justify-center" : "w-full gap-1",
+                  mode === "compact" ? "h-4 w-4 justify-center" : "w-full gap-1",
                   align === "center" && mode === "full" ? "justify-center" : ""
                 )}
               >
-                <span className="h-2 w-2 rounded-xs bg-muted-foreground/40" />
+                <PreviewIcons.messaging className="h-2.5 w-2.5 shrink-0 text-muted-foreground/60" strokeWidth={iconStroke} />
                 {mode === "full" && <span className="h-1.5 w-12 rounded-xs bg-muted-foreground/40" />}
               </div>
             </div>
@@ -332,6 +342,48 @@ export function SidebarCustomizerControls({
               <p className="text-xs text-muted-foreground">Centered icons with balanced layout.</p>
             </div>
           </button>
+        </div>
+      </div>
+
+      {/* Icon Library Selection */}
+      <div>
+        <label className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span>Icon Library & Style</span>
+          <span className="font-normal text-foreground">
+            {ICON_LIBRARY_MAP[iconLib].name} ({ICON_LIBRARY_MAP[iconLib].licenseType})
+          </span>
+        </label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {ICON_LIBRARIES.map((lib) => {
+            const isSelected = iconLib === lib.key;
+            const LibHomeIcon = NAV_ICONS[lib.key].home;
+            return (
+              <button
+                key={lib.key}
+                type="button"
+                onClick={() => update("iconLibrary", lib.key)}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-xl border p-2.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  isSelected
+                    ? "border-primary bg-accent/60 shadow-xs ring-1 ring-primary"
+                    : "border-border/70 hover:bg-muted/60"
+                )}
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-background">
+                  <LibHomeIcon className="h-4 w-4 text-primary" strokeWidth={iconStroke} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="truncate text-xs font-semibold text-foreground">
+                      {lib.name.replace(" Icons", "").replace(" Symbols", "")}
+                    </span>
+                    {isSelected && <Check className="h-3 w-3 shrink-0 text-primary" />}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">{lib.licenseType}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 

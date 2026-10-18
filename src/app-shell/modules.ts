@@ -77,3 +77,16 @@ export function canOpenModule(user: Pick<SessionUser, "tenant" | "permissions"> 
   if (!meta || !user?.tenant?.features.includes(key)) return false;
   return !meta.access.length || meta.access.some(permission => user.permissions?.includes(permission));
 }
+
+import { resolveNavIcon, type IconLibraryKey } from "@/lib/icons";
+
+/** Returns the effective icon component for a module based on active icon library and custom overrides */
+export function getModuleIcon(
+  key: FeatureKey,
+  library: IconLibraryKey = "lucide",
+  customIcons?: Record<string, string> | null
+) {
+  const fallback = MODULES[key]?.icon;
+  return resolveNavIcon(key, library, customIcons, fallback);
+}
+

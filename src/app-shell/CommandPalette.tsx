@@ -16,7 +16,6 @@ import {
   History,
   KeyRound,
   LayoutDashboard,
-  LifeBuoy,
   Moon,
   PackagePlus,
   Palmtree,
@@ -33,11 +32,12 @@ import {
 import { useCurrentUser } from "@/features/auth";
 import { colorFor, listKeys, type TaskList } from "@/features/lists";
 import { TASK_VIEWS, useTaskDialog } from "@/features/tasks";
-import { useTheme } from "@/hooks/useTheme";
+import { useTheme, type AppearancePreferences } from "@/hooks/useTheme";
 import { cn } from "@/lib/cn";
 import { usePathname, useRouter } from "@/lib/navigation";
 import type { FeatureKey, SessionUser } from "@/types/session";
-import { MODULES, MODULE_KEYS, canOpenModule } from "./modules";
+import { MODULES, MODULE_KEYS, canOpenModule, getModuleIcon } from "./modules";
+import { resolveNavIcon } from "@/lib/icons";
 import { isTaskPage, taskDefaultsFor } from "./taskPages";
 
 type Icon = ComponentType<{ className?: string }>;
@@ -86,11 +86,15 @@ function rememberPage(path: string) {
 }
 
 /** Every page this person can open, in sidebar order. */
-function pagesFor(user: SessionUser, lists: readonly TaskList[]): Command[] {
+function pagesFor(user: SessionUser, lists: readonly TaskList[], preferences?: AppearancePreferences): Command[] {
   const can = (...permissions: string[]) => permissions.some(permission => user.permissions?.includes(permission));
   const has = (feature: FeatureKey) => canOpenModule(user, feature);
+  const iconLib = preferences?.iconLibrary || "lucide";
+  const customIcons = preferences?.customIcons;
+  const modIcon = (key: FeatureKey) => getModuleIcon(key, iconLib, customIcons);
+  const navIcon = (navKey: string, fallback: Icon) => resolveNavIcon(navKey, iconLib, customIcons, fallback);
   const page = (href: string, label: string, icon: Icon, keywords?: string): Command => ({ id: `page:${href}`, group: "Pages", href, label, icon, keywords });
-  const pages: Command[] = [page("/", "Home", LayoutDashboard, "dashboard overview start")];
+  const pages: Command[] = [page("/", "Home", navIcon("home", LayoutDashboard), "dashboard overview start")];
   if (has("tasks")) {
     for (const [key, view] of Object.entries(TASK_VIEWS)) pages.push(page(`/tasks/${key}`, `Tasks: ${view.label}`, view.icon, "todo"));
     pages.push(page("/calendar", "Calendar", CalendarRange, "tasks due month"));
@@ -100,28 +104,29 @@ function pagesFor(user: SessionUser, lists: readonly TaskList[]): Command[] {
   for (const key of MODULE_KEYS) {
     if (key === "tasks" || !has(key)) continue;
     const meta = MODULES[key];
+    const resolvedIcon = modIcon(key);
     if (key === "directory") {
-      pages.push(page("/teams", "Teams", Users, "departments directory"), page("/people", "People", meta.icon, "staff directory colleagues"));
+      pages.push(page("/teams", "Teams", navIcon("teams", Users), "departments directory"), page("/people", "People", resolvedIcon, "staff directory colleagues"));
       continue;
     }
-    pages.push(page(meta.path, meta.label, meta.icon, meta.description));
-    if (key === "helpdesk" && can("helpdesk.work")) pages.push(page("/tickets?scope=unassigned", "Help desk: Unassigned tickets", LifeBuoy, "queue"));
-    if (key === "helpdesk" && can("helpdesk.use")) pages.push(page("/tickets?scope=mine", "Help desk: My requests", LifeBuoy, "tickets"));
-    if (key === "billing") pages.push(page("/billing?tab=invoices", "Billing: Invoices", meta.icon), page("/billing?tab=quotes", "Billing: Quotes", ScrollText, "estimates"));
-    if (key === "sales") pages.push(page("/sales?tab=orders", "Sales: Orders", meta.icon), page("/sales?tab=customers", "Sales: Customers", Users, "clients"));
-    if (key === "logistics" && can("logistics.deliver")) pages.push(page("/logistics?tab=mine", "Logistics: My deliveries", meta.icon, "driver"));
+    pages.push(page(meta.path, meta.label, resolvedIcon, meta.description));
+    if (key === "helpdesk" && can("helpdesk.work")) pages.push(page("/tickets?scope=unassigned", "Help desk: Unassigned tickets", resolvedIcon, "queue"));
+    if (key === "helpdesk" && can("helpdesk.use")) pages.push(page("/tickets?scope=mine", "Help desk: My requests", resolvedIcon, "tickets"));
+    if (key === "billing") pages.push(page("/billing?tab=invoices", "Billing: Invoices", resolvedIcon), page("/billing?tab=quotes", "Billing: Quotes", ScrollText, "estimates"));
+    if (key === "sales") pages.push(page("/sales?tab=orders", "Sales: Orders", resolvedIcon), page("/sales?tab=customers", "Sales: Customers", Users, "clients"));
+    if (key === "logistics" && can("logistics.deliver")) pages.push(page("/logistics?tab=mine", "Logistics: My deliveries", resolvedIcon, "driver"));
     if (key === "attendance" && can("attendance.self")) pages.push(page("/attendance?tab=leave", "Attendance: My leave", Palmtree, "holiday time off"));
     if (key === "attendance" && can("attendance.leave.approve")) pages.push(page("/attendance?tab=approvals", "Attendance: Leave approvals", ClipboardCheck));
     if (key === "expenses" && can("expenses.approve", "expenses.pay")) pages.push(page("/expenses?tab=approvals", "Expenses: Approvals", ClipboardCheck, "claims reimburse"));
   }
-  if (can("workspace.users.manage", "workspace.roles.manage", "workspace.settings.manage", "workspace.audit.view")) pages.push(page("/admin", "Workspace admin", Gauge, "overview seats restrictions security"));
-  if (can("workspace.users.manage")) pages.push(page("/users", "Manage users", UserCog, "people accounts invite import"));
+  if (can("workspace.users.manage", "workspace.roles.manage", "workspace.settings.manage", "workspace.audit.view")) pages.push(page("/admin", "Workspace admin", navIcon("admin", Gauge), "overview seats restrictions security"));
+  if (can("workspace.users.manage")) pages.push(page("/users", "Manage users", navIcon("users", UserCog), "people accounts invite import"));
   if (can("workspace.settings.manage")) pages.push(page("/settings?tab=restrictions", "Security & restrictions", KeyRound, "password session domains modules"));
-  if (can("workspace.roles.manage", "workspace.users.manage")) pages.push(page("/roles", "Roles & access", ShieldCheck, "permissions"));
-  if (can("workspace.audit.view")) pages.push(page("/audit", "Audit log", ScrollText, "history activity"));
-  pages.push(page("/settings", "Settings", Settings, "profile password appearance theme style notifications workspace"));
-  pages.push(page("/settings?tab=appearance", "Settings: Appearance", Settings, "theme dark light style colour accent font background picture custom css"));
-  if (can("workspace.settings.manage")) pages.push(page("/settings?tab=branding", "Settings: Branding", Settings, "logo title colour sign-in page custom css"));
+  if (can("workspace.roles.manage", "workspace.users.manage")) pages.push(page("/roles", "Roles & access", navIcon("roles", ShieldCheck), "permissions"));
+  if (can("workspace.audit.view")) pages.push(page("/audit", "Audit log", navIcon("audit", ScrollText), "history activity"));
+  pages.push(page("/settings", "Settings", navIcon("settings", Settings), "profile password appearance theme style notifications workspace"));
+  pages.push(page("/settings?tab=appearance", "Settings: Appearance", navIcon("settings", Settings), "theme dark light style colour accent font background picture custom css"));
+  if (can("workspace.settings.manage")) pages.push(page("/settings?tab=branding", "Settings: Branding", navIcon("settings", Settings), "logo title colour sign-in page custom css"));
   return pages;
 }
 
@@ -163,7 +168,7 @@ function PaletteDialog({ user, onClose }: { user: SessionUser; onClose: () => vo
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const { openCreate } = useTaskDialog();
-  const { setTheme } = useTheme();
+  const { preferences, setTheme } = useTheme();
   const ref = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listboxId = useId();
@@ -179,7 +184,7 @@ function PaletteDialog({ user, onClose }: { user: SessionUser; onClose: () => vo
     inputRef.current?.focus();
   }, []);
 
-  const pages = useMemo(() => pagesFor(user, lists), [user, lists]);
+  const pages = useMemo(() => pagesFor(user, lists, preferences), [user, lists, preferences]);
   const commands = useMemo(() => {
     const run = {
       newTask: () => openCreate(isTaskPage(pathname) ? taskDefaultsFor(pathname) : undefined),

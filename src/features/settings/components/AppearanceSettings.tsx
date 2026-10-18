@@ -10,6 +10,7 @@ import type { SessionUser } from "@/types/session";
 import { BackgroundPicker } from "./BackgroundPicker";
 import { SettingsSection } from "./SettingsSection";
 import { UserCssEditor } from "./UserCssEditor";
+import { IconCustomizerSection } from "./IconCustomizerSection";
 
 const THEME_OPTIONS: readonly { value: ThemeMode; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { value: "light", label: "Light", icon: Sun },
@@ -217,6 +218,14 @@ export function AppearanceSettings({ user }: { user: SessionUser }) {
             </div>
           </fieldset>
         </div>
+      </SettingsSection>
+
+      <SettingsSection
+        id="icons"
+        title="Icon library & customization"
+        description="Choose your preferred icon family from 6 best free icon libraries: Lucide Icons, Tabler Icons, Google Material Symbols, Heroicons, Phosphor Icons, and Remix Icon. Customize line weight and module-specific icons."
+      >
+        <IconCustomizerSection />
       </SettingsSection>
 
       <SettingsSection id="colours" title="Colours" description="The accent colour of buttons, links, and highlights.">

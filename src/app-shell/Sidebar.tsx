@@ -51,6 +51,7 @@ import {
   SidebarCustomizerButton,
   SidebarQuickToggle,
 } from "./SidebarCustomizer";
+import { DynamicIcon, type NavIconKey } from "@/lib/icons";
 
 interface SidebarNavContextValue {
   isCompact: boolean;
@@ -70,7 +71,8 @@ const useSidebarNav = () => useContext(SidebarNavContext);
 
 interface NavItemProps {
   href: string;
-  icon?: ComponentType<{ className?: string }>;
+  icon?: ComponentType<{ className?: string; strokeWidth?: number }>;
+  navKey?: NavIconKey | string;
   children: ReactNode;
   exact?: boolean;
   count?: number;
@@ -80,16 +82,20 @@ interface NavItemProps {
 function NavItem({
   href,
   icon: Icon,
+  navKey,
   children,
   exact,
   count = 0,
   countLabel,
 }: NavItemProps) {
+  const { preferences } = useTheme();
   const { isCompact, align, position, onClose } = useSidebarNav();
   const active = useIsActive(href, exact);
   const linkRef = useRef<HTMLAnchorElement>(null);
   const [hovered, setHovered] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+
+  const strokeWidth = preferences.iconStrokeWidth ?? 2;
 
   function handleMouseEnter() {
     if (isCompact && linkRef.current) {
@@ -144,7 +150,7 @@ function NavItem({
             />
           )}
 
-          {Icon && <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />}
+          <DynamicIcon navKey={navKey} fallback={Icon} className="h-5 w-5 shrink-0" strokeWidth={strokeWidth} aria-hidden={true} />
           <span className="sr-only">{children}</span>
 
           {count > 0 && (
@@ -191,7 +197,7 @@ function NavItem({
           : "text-muted-foreground hover:bg-muted hover:text-foreground"
       )}
     >
-      {Icon && <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />}
+      <DynamicIcon navKey={navKey} fallback={Icon} className="h-4 w-4 shrink-0" strokeWidth={strokeWidth} aria-hidden={true} />
       <span className={cn("truncate", align === "center" ? "max-w-[150px]" : "flex-1")}>
         {children}
       </span>
@@ -430,7 +436,7 @@ function HelpdeskNavItem() {
     ? `${count} assigned to you or unassigned`
     : `${count} assigned to you or open requests`;
   return (
-    <NavItem href="/tickets" icon={LifeBuoy} count={count} countLabel={label}>
+    <NavItem href="/tickets" navKey="helpdesk" icon={LifeBuoy} count={count} countLabel={label}>
       Help desk
     </NavItem>
   );
@@ -441,6 +447,7 @@ function MessagesNavItem() {
   return (
     <NavItem
       href="/messages"
+      navKey="messaging"
       icon={MessagesSquare}
       count={data?.total ?? 0}
       countLabel={`${data?.total ?? 0} unread messages`}
@@ -455,6 +462,7 @@ function AnnouncementsNavItem() {
   return (
     <NavItem
       href="/announcements"
+      navKey="announcements"
       icon={Megaphone}
       count={data?.unread ?? 0}
       countLabel={`${data?.unread ?? 0} unread announcements`}
@@ -514,7 +522,7 @@ function SidebarBody() {
 
       {/* Main Nav */}
       <nav aria-label="Main" className="flex flex-col gap-1 w-full">
-        <NavItem href="/" exact icon={LayoutDashboard}>
+        <NavItem href="/" exact navKey="home" icon={LayoutDashboard}>
           Home
         </NavItem>
       </nav>
@@ -522,12 +530,12 @@ function SidebarBody() {
       {has("tasks") && <TasksNav />}
 
       <Section label="Workspace">
-        <NavItem href="/meetings" icon={Video}>
+        <NavItem href="/meetings" navKey="meetings" icon={Video}>
           Meetings
         </NavItem>
         {has("messaging") && <MessagesNavItem />}
         {has("notes") && (
-          <NavItem href="/notes" icon={StickyNote}>
+          <NavItem href="/notes" navKey="notes" icon={StickyNote}>
             Notes
           </NavItem>
         )}
@@ -535,10 +543,10 @@ function SidebarBody() {
         {has("helpdesk") && <HelpdeskNavItem />}
         {has("directory") && (
           <>
-            <NavItem href="/teams" icon={Users}>
+            <NavItem href="/teams" navKey="teams" icon={Users}>
               Teams
             </NavItem>
-            <NavItem href="/people" icon={Contact}>
+            <NavItem href="/people" navKey="people" icon={Contact}>
               People
             </NavItem>
           </>
@@ -551,22 +559,22 @@ function SidebarBody() {
         has("logistics")) && (
         <Section label="Operations">
           {has("sales") && (
-            <NavItem href="/sales" icon={TrendingUp}>
+            <NavItem href="/sales" navKey="sales" icon={TrendingUp}>
               Sales
             </NavItem>
           )}
           {has("billing") && (
-            <NavItem href="/billing" icon={FileText}>
+            <NavItem href="/billing" navKey="billing" icon={FileText}>
               Billing
             </NavItem>
           )}
           {has("inventory") && (
-            <NavItem href="/inventory" icon={Boxes}>
+            <NavItem href="/inventory" navKey="inventory" icon={Boxes}>
               Inventory
             </NavItem>
           )}
           {has("logistics") && (
-            <NavItem href="/logistics" icon={Truck}>
+            <NavItem href="/logistics" navKey="logistics" icon={Truck}>
               Logistics
             </NavItem>
           )}
@@ -575,7 +583,7 @@ function SidebarBody() {
 
       {has("clinic") && (
         <Section label="Healthcare">
-          <NavItem href="/clinic" icon={Stethoscope}>
+          <NavItem href="/clinic" navKey="clinic" icon={Stethoscope}>
             Clinic
           </NavItem>
         </Section>
@@ -584,12 +592,12 @@ function SidebarBody() {
       {(has("attendance") || has("expenses")) && (
         <Section label="People ops">
           {has("attendance") && (
-            <NavItem href="/attendance" icon={CalendarCheck}>
+            <NavItem href="/attendance" navKey="attendance" icon={CalendarCheck}>
               Attendance & leave
             </NavItem>
           )}
           {has("expenses") && (
-            <NavItem href="/expenses" icon={ReceiptText}>
+            <NavItem href="/expenses" navKey="expenses" icon={ReceiptText}>
               Expenses
             </NavItem>
           )}
@@ -607,26 +615,26 @@ function SidebarBody() {
           can("workspace.roles.manage") ||
           can("workspace.settings.manage") ||
           can("workspace.audit.view")) && (
-          <NavItem href="/admin" icon={Gauge}>
+          <NavItem href="/admin" navKey="admin" icon={Gauge}>
             Workspace admin
           </NavItem>
         )}
         {can("workspace.users.manage") && (
-          <NavItem href="/users" icon={UserCog}>
+          <NavItem href="/users" navKey="users" icon={UserCog}>
             Manage users
           </NavItem>
         )}
         {(can("workspace.roles.manage") || can("workspace.users.manage")) && (
-          <NavItem href="/roles" icon={ShieldCheck}>
+          <NavItem href="/roles" navKey="roles" icon={ShieldCheck}>
             Roles & access
           </NavItem>
         )}
         {can("workspace.audit.view") && (
-          <NavItem href="/audit" icon={ScrollText}>
+          <NavItem href="/audit" navKey="audit" icon={ScrollText}>
             Audit log
           </NavItem>
         )}
-        <NavItem href="/settings" icon={Settings}>
+        <NavItem href="/settings" navKey="settings" icon={Settings}>
           Settings
         </NavItem>
 
