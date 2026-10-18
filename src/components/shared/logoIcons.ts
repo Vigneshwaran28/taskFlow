@@ -24,6 +24,8 @@ import {
   Zap,
 } from "lucide-react";
 
+import { ICON_BY_ID } from "@/lib/icons/registry";
+
 type IconComponent = ComponentType<{ className?: string; strokeWidth?: number; color?: string; size?: number }>;
 
 export const LOGO_ICONS: Readonly<Record<string, { icon: IconComponent; label: string }>> = Object.freeze({
@@ -51,10 +53,16 @@ export const LOGO_ICONS: Readonly<Record<string, { icon: IconComponent; label: s
 
 export const LOGO_ICON_KEYS = Object.freeze(Object.keys(LOGO_ICONS));
 
-/** The icon component for a key (the tick for unknown keys). */
-export const logoIcon = (key: string | null | undefined) => (LOGO_ICONS[key ?? ""] ?? LOGO_ICONS.check).icon;
+/** The icon component for a key (the tick for unknown keys). Checks both legacy keys and icon library catalog IDs. */
+export const logoIcon = (key: string | null | undefined): IconComponent => {
+  if (!key) return LOGO_ICONS.check.icon;
+  if (LOGO_ICONS[key]) return LOGO_ICONS[key].icon;
+  if (ICON_BY_ID[key]) return ICON_BY_ID[key].component as unknown as IconComponent;
+  return LOGO_ICONS.check.icon;
+};
 
 /** Renders a logo icon by name (a stable component, so callers don't pick a component during render). */
 export function LogoGlyph({ name, ...props }: { name?: string | null; className?: string; strokeWidth?: number; color?: string; size?: number }) {
   return createElement(logoIcon(name), props);
 }
+

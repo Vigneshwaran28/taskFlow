@@ -6,6 +6,7 @@ import { useToast } from "@/components/shared/Toaster";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { TextField } from "@/components/ui/TextField";
+import { TemporaryPasswordField } from "@/components/shared/TemporaryPasswordField";
 import { MODULES, MODULE_KEYS } from "@/app-shell/modules";
 import { LoginBrandingFields, LoginTemplateView, WorkspaceLoginLink, loginPreviewWorkspace, workspaceLoginPath } from "@/features/auth";
 import { CONFIGURABLE_MODULES, ModuleSettingsEditor, resolveUi, UiCustomizationFields, type ConfigurableModule, type UiSettings } from "@/features/workspace";
@@ -387,20 +388,8 @@ export function TenantFormDialog({ tenant = null, features: available, catalog =
       size="xl"
       title={tenant ? `Edit ${tenant.name}` : "New tenant"}
       description={tenant ? "Change the plan, branding, sign-in page, and company details." : "Create a customer workspace and the admin account that runs it."}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" form="tenant-form" loading={mutation.isPending}>
-            {tenant ? "Save changes" : "Create tenant"}
-          </Button>
-        </>
-      }
-    >
-      {/* The tab bar sits outside the form (its negative margins reach the dialog edges without widening the form). */}
-      <div className="sticky -top-5 z-10 -mx-4 -mt-5 border-b bg-card px-4 pt-2 sm:-mx-6 sm:px-6">
-        <div role="tablist" aria-label="Tenant settings" onKeyDown={handleTabKey} className="-mb-px flex gap-x-1 overflow-x-auto no-scrollbar sm:flex-wrap">
+      headContent={
+        <div role="tablist" aria-label="Tenant settings" onKeyDown={handleTabKey} className="-mb-px flex gap-x-1 overflow-x-auto no-scrollbar sm:flex-wrap pt-1">
           {TABS.map(item => {
             const active = item.id === tab;
             return (
@@ -436,9 +425,19 @@ export function TenantFormDialog({ tenant = null, features: available, catalog =
             );
           })}
         </div>
-      </div>
-
-      <form id="tenant-form" onSubmit={handleSubmit} noValidate className="mt-5 flex min-w-0 flex-col gap-5">
+      }
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" form="tenant-form" loading={mutation.isPending}>
+            {tenant ? "Save changes" : "Create tenant"}
+          </Button>
+        </>
+      }
+    >
+      <form id="tenant-form" onSubmit={handleSubmit} noValidate className="flex min-w-0 flex-col gap-5">
         <FormAlert message={formErrorOf(mutation.error)} />
         {errors.settings && (
           <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
@@ -508,17 +507,15 @@ export function TenantFormDialog({ tenant = null, features: available, catalog =
                       onChange={event => set("ownerEmail", event.target.value)}
                     />
                   </div>
-                  <TextField
+                  <TemporaryPasswordField
                     label="Temporary password"
                     id="tenant-owner-password"
                     required
-                    type="text"
-                    autoComplete="new-password"
                     maxLength={128}
                     hint="At least 8 characters. Share it with the owner; they choose their own at first sign-in."
                     value={values.ownerPassword}
                     error={ownerError("ownerPassword")}
-                    onChange={event => set("ownerPassword", event.target.value)}
+                    onChange={val => set("ownerPassword", val)}
                   />
                 </fieldset>
               )}

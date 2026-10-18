@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/TextField";
+import { TemporaryPasswordField } from "@/components/shared/TemporaryPasswordField";
 import { fieldErrorsOf, formErrorOf } from "@/lib/apiClient";
 import { useCreateTenantUser } from "../hooks/useAdmin";
 import type { ConsoleRole } from "../services/adminService";
@@ -83,16 +84,14 @@ export function AddUserDialog({ tenantId, tenantName, onClose }: { tenantId: num
             options={ROLE_OPTIONS}
             onChange={event => set("role", ROLE_OPTIONS.find(option => option.value === event.target.value)?.value ?? "member")}
           />
-          <TextField
+          <TemporaryPasswordField
             label="Temporary password"
             id="au-password"
             required
-            type="text"
-            autoComplete="new-password"
             hint="At least 8 characters."
             value={values.password}
             error={shown.password}
-            onChange={event => set("password", event.target.value)}
+            onChange={val => set("password", val)}
           />
         </div>
       </form>

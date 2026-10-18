@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/TextField";
+import { TemporaryPasswordField } from "@/components/shared/TemporaryPasswordField";
 import { CopyButton, usePasswordRule } from "@/features/auth";
 import { fieldErrorsOf, formErrorOf } from "@/lib/apiClient";
 import { formatDateTime } from "@/lib/dates";
@@ -177,17 +178,15 @@ function TemporaryPasswordStep({ user, onClose }: Omit<PasswordResetDialogProps,
       }
     >
       <form id="temporary-password-form" onSubmit={handleSubmit} noValidate>
-        <TextField
+        <TemporaryPasswordField
           label="Temporary password"
           id="temporary-password"
-          type="text"
-          autoComplete="new-password"
           autoFocus
           value={password}
           error={error}
           hint="Their current password stops working; they choose a new one at next sign-in."
-          onChange={event => {
-            setPassword(event.target.value);
+          onChange={val => {
+            setPassword(val);
             setError("");
           }}
         />

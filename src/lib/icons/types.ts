@@ -24,20 +24,22 @@ export interface IconLibraryMeta {
   sampleIconNames: string[];
 }
 
+export type IconCategoryKey =
+  | "navigation"
+  | "operations"
+  | "communication"
+  | "medical"
+  | "finance"
+  | "general"
+  | "actions"
+  | "objects";
+
 export interface IconItem {
   id: string; // e.g. "lucide:check-square", "tabler:checkbox"
   name: string;
   library: IconLibraryKey;
   tags: string[];
-  category:
-    | "navigation"
-    | "operations"
-    | "communication"
-    | "medical"
-    | "finance"
-    | "general"
-    | "actions"
-    | "objects";
+  category: IconCategoryKey;
   component: ComponentType<{
     className?: string;
     strokeWidth?: number;

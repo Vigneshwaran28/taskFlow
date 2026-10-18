@@ -485,7 +485,7 @@ function SidebarBody() {
   return (
     <div
       className={cn(
-        "flex h-full flex-col overflow-y-auto overscroll-contain transition-all duration-200",
+        "flex h-full flex-col overflow-y-auto overscroll-contain transition-all duration-200 no-scrollbar",
         isCompact ? "gap-4 px-2 py-4 items-center" : "gap-5 px-3 py-5"
       )}
     >

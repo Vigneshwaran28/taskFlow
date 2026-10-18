@@ -6,6 +6,7 @@ import { useToast } from "@/components/shared/Toaster";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { TextField } from "@/components/ui/TextField";
+import { TemporaryPasswordField } from "@/components/shared/TemporaryPasswordField";
 import { useRoles, type Role } from "@/features/access";
 import { useAllowedEmailDomains, usePasswordRule } from "@/features/auth";
 import { fieldErrorsOf, formErrorOf } from "@/lib/apiClient";
@@ -204,15 +205,14 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
                 error={errors.email}
                 onChange={event => set("email", event.target.value)}
               />
-              <TextField
+              <TemporaryPasswordField
                 label="Temporary password"
                 id="user-password"
-                type="text"
-                autoComplete="new-password"
+                required
                 hint={passwordRule.hint}
                 value={values.password}
                 error={errors.password}
-                onChange={event => set("password", event.target.value)}
+                onChange={val => set("password", val)}
               />
             </div>
           )}
@@ -240,17 +240,15 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
               Set a temporary password
             </h3>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-              <TextField
+              <TemporaryPasswordField
                 label="Temporary password"
                 id="user-new-password"
-                type="text"
-                autoComplete="new-password"
                 className="flex-1"
                 value={newPassword}
                 error={passwordError}
                 hint="Their current password stops working; they choose a new one at next sign-in."
-                onChange={event => {
-                  setNewPassword(event.target.value);
+                onChange={val => {
+                  setNewPassword(val);
                   setPasswordError("");
                 }}
               />

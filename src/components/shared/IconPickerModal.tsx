@@ -94,6 +94,89 @@ export function IconPickerModal({
       title={`Customize Icon: ${targetLabel}`}
       description="Select from 6 world-class open-source icon libraries (Lucide, Tabler, Google Material Symbols, Heroicons, Phosphor, Remix Icon) to personalize this module."
       size="xl"
+      headContent={
+        <div className="flex flex-col gap-2.5 py-2.5">
+          {/* Search bar & Category filter */}
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                id={searchInputId}
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search icons by name, action, or tag..."
+                className="h-9 w-full rounded-lg border border-border bg-background pl-9 pr-8 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="h-9 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {CATEGORIES.map((cat) => (
+                <option key={cat.value} value={cat.value}>
+                  {cat.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Library Filter Chips */}
+          <div className="flex flex-wrap items-center gap-1.5 no-scrollbar">
+            <button
+              type="button"
+              onClick={() => setSelectedLibrary("all")}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                selectedLibrary === "all"
+                  ? "bg-primary text-primary-foreground shadow-2xs"
+                  : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              All Libraries ({ICON_CATALOG.length})
+            </button>
+            {ICON_LIBRARIES.map((lib) => {
+              const active = selectedLibrary === lib.key;
+              return (
+                <button
+                  key={lib.key}
+                  type="button"
+                  onClick={() => setSelectedLibrary(lib.key)}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                    active
+                      ? "bg-primary text-primary-foreground shadow-2xs"
+                      : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <span>{lib.name}</span>
+                  <span
+                    className={cn(
+                      "rounded-full px-1 text-[10px] font-semibold",
+                      active
+                        ? "bg-primary-foreground/20 text-primary-foreground"
+                        : "bg-foreground/10 text-muted-foreground"
+                    )}
+                  >
+                    {lib.licenseType}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      }
       footer={
         <div className="flex w-full items-center justify-between gap-3">
           <Button
@@ -117,90 +200,10 @@ export function IconPickerModal({
       }
     >
       <div className="flex flex-col gap-4">
-        {/* Search bar & Category filter */}
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              id={searchInputId}
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search icons by name, action, or tag..."
-              className="h-9 w-full rounded-lg border border-border bg-background pl-9 pr-8 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="h-9 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {CATEGORIES.map((cat) => (
-              <option key={cat.value} value={cat.value}>
-                {cat.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Library Filter Chips */}
-        <div className="flex flex-wrap items-center gap-1.5 border-b border-border/60 pb-3">
-          <button
-            type="button"
-            onClick={() => setSelectedLibrary("all")}
-            className={cn(
-              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-              selectedLibrary === "all"
-                ? "bg-primary text-primary-foreground shadow-2xs"
-                : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            All Libraries ({ICON_CATALOG.length})
-          </button>
-          {ICON_LIBRARIES.map((lib) => {
-            const active = selectedLibrary === lib.key;
-            return (
-              <button
-                key={lib.key}
-                type="button"
-                onClick={() => setSelectedLibrary(lib.key)}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                  active
-                    ? "bg-primary text-primary-foreground shadow-2xs"
-                    : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <span>{lib.name}</span>
-                <span
-                  className={cn(
-                    "rounded-full px-1 text-[10px] font-semibold",
-                    active
-                      ? "bg-primary-foreground/20 text-primary-foreground"
-                      : "bg-foreground/10 text-muted-foreground"
-                  )}
-                >
-                  {lib.licenseType}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
         {/* Main Content: Icon Grid + Live Preview */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_240px]">
-          {/* Scrollable Icon Grid */}
-          <div className="flex max-h-[360px] flex-col overflow-y-auto rounded-xl border border-border/80 bg-muted/20 p-2.5">
+          {/* Icon Grid */}
+          <div className="flex flex-col rounded-xl border border-border/80 bg-muted/20 p-2.5">
             {filteredIcons.length === 0 ? (
               <div className="flex h-48 flex-col items-center justify-center gap-2 text-center text-muted-foreground">
                 <Search className="h-8 w-8 text-muted-foreground/40" />

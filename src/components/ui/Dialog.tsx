@@ -12,6 +12,8 @@ export interface DialogProps {
   size?: "sm" | "md" | "lg" | "xl";
   children: ReactNode;
   footer?: ReactNode;
+  /** Fixed header content below title/description (e.g. tabs, search, menu) that stays pinned at the top */
+  headContent?: ReactNode;
 }
 
 // The page behind an open modal must not scroll (the native <dialog> doesn't lock it). Counted, so stacked
@@ -33,7 +35,7 @@ function lockPageScroll() {
   };
 }
 
-export function Dialog({ open, onClose, title, description, size = "md", children, footer }: DialogProps) {
+export function Dialog({ open, onClose, title, description, size = "md", children, footer, headContent }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const descriptionId = useId();
@@ -64,34 +66,43 @@ export function Dialog({ open, onClose, title, description, size = "md", childre
       aria-describedby={description ? descriptionId : undefined}
       onCancel={handleCancel}
       onClick={handleBackdropClick}
-      className={cn("m-auto w-[calc(100%-1.5rem)] rounded-2xl sm:w-[calc(100%-2rem)] border bg-card p-0 text-foreground shadow-2xl", { sm: "max-w-md", md: "max-w-lg", lg: "max-w-2xl", xl: "max-w-4xl" }[size])}
+      className={cn(
+        "m-auto w-[calc(100%-1.5rem)] rounded-2xl sm:w-[calc(100%-2rem)] border bg-card p-0 text-foreground shadow-2xl overflow-hidden",
+        { sm: "max-w-md", md: "max-w-lg", lg: "max-w-2xl", xl: "max-w-4xl" }[size]
+      )}
     >
       {open && (
-        <div className="flex max-h-[85vh] flex-col">
-          <div className="flex items-start justify-between gap-4 border-b px-4 py-4 sm:px-6">
-            <div className="min-w-0">
-              <h2 id={titleId} className="text-lg font-semibold wrap-break-word">
-                {title}
-              </h2>
-              {description && (
-                <p id={descriptionId} className="mt-1 text-sm text-muted-foreground">
-                  {description}
-                </p>
-              )}
+        <div className="flex max-h-[85vh] flex-col overflow-hidden">
+          {/* Fixed header containing title, close button, and any menu/tabs */}
+          <div className="shrink-0 border-b bg-card">
+            <div className="flex items-start justify-between gap-4 px-4 py-4 sm:px-6">
+              <div className="min-w-0">
+                <h2 id={titleId} className="text-lg font-semibold wrap-break-word">
+                  {title}
+                </h2>
+                {description && (
+                  <p id={descriptionId} className="mt-1 text-sm text-muted-foreground">
+                    {description}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close dialog"
+                className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <X className="h-5 w-5" aria-hidden="true" />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close dialog"
-              className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <X className="h-5 w-5" aria-hidden="true" />
-            </button>
+            {headContent && <div className="border-t border-border/50 bg-card px-4 sm:px-6">{headContent}</div>}
           </div>
-          {/* relative: absolutely positioned content (sr-only inputs, icons) stays inside this scroller instead of
-              growing the <dialog> itself, which caused a second scrollbar. min-h-0 lets it shrink in the flex column. */}
-          <div className="relative min-h-0 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">{children}</div>
-          {footer && <div className="flex flex-wrap justify-end gap-2 border-t bg-muted/40 px-4 py-3 sm:px-6 sm:py-4">{footer}</div>}
+
+          {/* The sole scrollable container inside the dialog */}
+          <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">{children}</div>
+
+          {/* Fixed footer */}
+          {footer && <div className="shrink-0 flex flex-wrap justify-end gap-2 border-t bg-muted/40 px-4 py-3 sm:px-6 sm:py-4">{footer}</div>}
         </div>
       )}
     </dialog>
