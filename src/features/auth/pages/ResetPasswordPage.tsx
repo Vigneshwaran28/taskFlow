@@ -2,7 +2,7 @@
 import { useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import Link from "@/components/navigation/Link";
 import { useParams } from "next/navigation";
-import { CircleCheck, Eye, EyeOff, KeyRound, LinkIcon } from "lucide-react";
+import { CircleCheck, KeyRound, LinkIcon } from "lucide-react";
 import { FormAlert, LoadingState } from "@/components/shared/States";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
@@ -66,32 +66,19 @@ function StrengthMeter({ password, rule }: { password: string; rule: PasswordRul
 
 /** A password field with a show / hide button. */
 function PasswordField({ label, name, value, error, hint, autoFocus, onChange }: { label: string; name: keyof Values; value: string; error?: string; hint?: ReactNode; autoFocus?: boolean; onChange: (event: ChangeEvent<HTMLInputElement>) => void }) {
-  const [visible, setVisible] = useState(false);
   return (
-    <div className="relative">
-      <TextField
-        label={label}
-        name={name}
-        type={visible ? "text" : "password"}
-        autoComplete="new-password"
-        autoFocus={autoFocus}
-        maxLength={128}
-        hint={hint}
-        value={value}
-        error={error}
-        onChange={onChange}
-        className="[&_input]:pr-10"
-      />
-      <button
-        type="button"
-        onClick={() => setVisible(!visible)}
-        aria-label={visible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
-        aria-pressed={visible}
-        className="absolute right-1.5 top-[1.85rem] flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        {visible ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
-      </button>
-    </div>
+    <TextField
+      label={label}
+      name={name}
+      type="password"
+      autoComplete="new-password"
+      autoFocus={autoFocus}
+      maxLength={128}
+      hint={hint}
+      value={value}
+      error={error}
+      onChange={onChange}
+    />
   );
 }
 
