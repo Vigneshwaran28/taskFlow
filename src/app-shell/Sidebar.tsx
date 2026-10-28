@@ -47,10 +47,7 @@ import { useTheme, type SidebarPosition } from "@/hooks/useTheme";
 import type { FeatureKey } from "@/types/session";
 import { canOpenModule } from "./modules";
 import { PortalTooltip } from "./PortalTooltip";
-import {
-  SidebarCustomizerButton,
-  SidebarQuickToggle,
-} from "./SidebarCustomizer";
+import { SidebarQuickToggle } from "./SidebarCustomizer";
 import { DynamicIcon, type NavIconKey } from "@/lib/icons";
 
 interface SidebarNavContextValue {
@@ -640,7 +637,6 @@ function SidebarBody() {
 
         {/* Customization controls in footer */}
         <div className="mt-1 flex flex-col gap-1 border-t border-border/40 pt-2 w-full">
-          <SidebarCustomizerButton isCompact={isCompact} />
           <SidebarQuickToggle isCompact={isCompact} position={position} />
         </div>
       </div>

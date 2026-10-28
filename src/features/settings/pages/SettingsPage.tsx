@@ -3,7 +3,7 @@
 // then the workspace admin's tabs they have access to. Only the active tab is mounted, so hidden tabs load nothing.
 // Switching away from a tab with unsaved changes asks first.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Bell, Building2, GraduationCap, KeyRound, LayoutGrid, Palette, PanelsTopLeft, ShieldCheck, SlidersHorizontal, UserRound } from "lucide-react";
+import { Bell, Building2, GraduationCap, KeyRound, LayoutGrid, Palette, PanelLeft, PanelsTopLeft, ShieldCheck, SlidersHorizontal, UserRound } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ErrorState, LoadingState } from "@/components/shared/States";
@@ -14,6 +14,8 @@ import { ModuleSettingsPanel, SecuritySettingsPanel, type EditableSettingsKey } 
 import { useSearchParam } from "@/lib/navigation";
 import type { SessionUser } from "@/types/session";
 import { AppearanceSettings } from "../components/AppearanceSettings";
+import { IconCustomizerSection } from "../components/IconCustomizerSection";
+import { NavbarCustomizerSection } from "../components/NavbarCustomizerSection";
 import { NotificationSettings } from "../components/NotificationSettings";
 import { PasswordForm } from "../components/PasswordForm";
 import { ProfileForm } from "../components/ProfileForm";
@@ -21,7 +23,7 @@ import { SettingsSection } from "../components/SettingsSection";
 import { UnsavedChangesProvider, useUnsavedReporter } from "../components/UnsavedChanges";
 import { WorkspaceInfo } from "../components/WorkspaceInfo";
 
-type TabId = "profile" | "appearance" | "notifications" | "password" | "workspace" | "branding" | "company" | "modules" | "help" | "restrictions";
+type TabId = "profile" | "appearance" | "navigation" | "notifications" | "password" | "workspace" | "branding" | "company" | "modules" | "help" | "restrictions";
 
 interface SettingsTab extends TabItem {
   id: TabId;
@@ -65,6 +67,29 @@ function useSettingsTabs(user: SessionUser | null | undefined): SettingsTab[] {
       ),
     },
     { id: "appearance", label: "Appearance", icon: Palette, render: current => <AppearanceSettings user={current} /> },
+    {
+      id: "navigation",
+      label: "Navigation",
+      icon: PanelLeft,
+      render: () => (
+        <>
+          <SettingsSection
+            id="navigation"
+            title="Navbar & navigation"
+            description="Customize the top navigation bar style, sticky scrolling, quick actions, and sidebar navigation layout."
+          >
+            <NavbarCustomizerSection />
+          </SettingsSection>
+          <SettingsSection
+            id="icons"
+            title="Icon library & customization"
+            description="Choose your preferred icon family from 6 free icon libraries: Lucide Icons, Tabler Icons, Google Material Symbols, Heroicons, Phosphor Icons, and Remix Icon. Customize line weight and module-specific icons."
+          >
+            <IconCustomizerSection />
+          </SettingsSection>
+        </>
+      ),
+    },
     {
       id: "notifications",
       label: "Notifications",
@@ -168,8 +193,9 @@ export function SettingsPage() {
     else unsaved.current.delete(id);
   }, []);
 
-  // Old links pointed at sections with #security: open the matching tab.
+  // Old links pointed at sections with #security or #navigation: open the matching tab.
   useEffect(() => {
+    if (!tabParam && (window.location.hash === "#navigation" || window.location.hash === "#icons")) setTabParam("navigation");
     if (!tabParam && window.location.hash === "#security") setTabParam("restrictions");
   }, [tabParam, setTabParam]);
 

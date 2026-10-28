@@ -521,7 +521,7 @@ export function SidebarCustomizerButton({
   return (
     <button
       type="button"
-      onClick={() => router.push("/settings?tab=appearance#navigation")}
+      onClick={() => router.push("/settings?tab=navigation")}
       title="Customize navbar & navigation in Settings"
       aria-label="Customize navbar & navigation in Settings"
       className={cn(

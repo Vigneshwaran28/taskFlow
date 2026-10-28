@@ -1,6 +1,6 @@
 "use client";
 import type { ComponentType } from "react";
-import { Check, Monitor, Moon, Sun } from "lucide-react";
+import { Check, Monitor, Moon, PanelLeft, Sun } from "lucide-react";
 import { STYLE_META, StylePreview } from "@/components/shared/StylePreview";
 import { useToast } from "@/components/shared/Toaster";
 import { useUpdatePreferences } from "@/features/auth";
@@ -10,8 +10,6 @@ import type { SessionUser } from "@/types/session";
 import { BackgroundPicker } from "./BackgroundPicker";
 import { SettingsSection } from "./SettingsSection";
 import { UserCssEditor } from "./UserCssEditor";
-import { IconCustomizerSection } from "./IconCustomizerSection";
-import { NavbarCustomizerSection } from "./NavbarCustomizerSection";
 
 const THEME_OPTIONS: readonly { value: ThemeMode; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { value: "light", label: "Light", icon: Sun },
@@ -167,21 +165,25 @@ export function AppearanceSettings({ user }: { user: SessionUser }) {
         </div>
       </SettingsSection>
 
-      <SettingsSection
-        id="navigation"
-        title="Navbar & navigation"
-        description="Customize the top navigation bar style, sticky scrolling, quick actions, and sidebar navigation layout."
-      >
-        <NavbarCustomizerSection />
-      </SettingsSection>
-
-      <SettingsSection
-        id="icons"
-        title="Icon library & customization"
-        description="Choose your preferred icon family from 6 best free icon libraries: Lucide Icons, Tabler Icons, Google Material Symbols, Heroicons, Phosphor Icons, and Remix Icon. Customize line weight and module-specific icons."
-      >
-        <IconCustomizerSection />
-      </SettingsSection>
+      <div className="rounded-xl border border-border/80 bg-muted/40 p-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 rounded-lg bg-primary/10 p-2 text-primary">
+              <PanelLeft className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Navbar, Sidebar & Icon Customization</h3>
+              <p className="text-xs text-muted-foreground">Looking to customize your top navbar style, sidebar placement, or icon library? These controls are in the dedicated Navigation tab.</p>
+            </div>
+          </div>
+          <a
+            href="?tab=navigation"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 shrink-0 self-start sm:self-auto"
+          >
+            <span>Open Navigation Settings</span>
+          </a>
+        </div>
+      </div>
 
       <SettingsSection id="colours" title="Colours" description="The accent colour of buttons, links, and highlights.">
         <fieldset disabled={brand.lockAccent}>

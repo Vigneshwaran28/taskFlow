@@ -99,7 +99,7 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
 
         <button
           type="button"
-          onClick={() => router.push("/settings?tab=appearance#navigation")}
+          onClick={() => router.push("/settings?tab=navigation")}
           title="Customize navbar & navigation in Settings"
           aria-label="Customize navbar & navigation in Settings"
           className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
