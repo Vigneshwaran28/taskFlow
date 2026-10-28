@@ -65,13 +65,21 @@ export function PasswordResetDialog({ user, mode = "choose", onClose }: Password
 }
 
 function ResetLinkStep({ user, onClose }: Omit<PasswordResetDialogProps, "mode">) {
+  const toast = useToast();
   const createLink = useCreateResetLink();
   const [hours, setHours] = useState("24");
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (createLink.isPending) return;
-    createLink.mutate({ id: user.id, expiresInHours: Number(hours) });
+    createLink.mutate(
+      { id: user.id, expiresInHours: Number(hours) },
+      {
+        onError: err => {
+          toast.error("Couldn't create reset link", formErrorOf(err) ?? err.message);
+        },
+      }
+    );
   }
 
   const link = createLink.data;
@@ -154,7 +162,11 @@ function TemporaryPasswordStep({ user, onClose }: Omit<PasswordResetDialogProps,
           toast.success("Temporary password set", `${user.name} must choose a new one at next sign-in.`);
           onClose();
         },
-        onError: err => setError(fieldErrorsOf(err).password ?? err.message),
+        onError: err => {
+          const msg = fieldErrorsOf(err).password ?? err.message;
+          setError(msg);
+          toast.error("Couldn't set temporary password", msg);
+        },
       }
     );
   }

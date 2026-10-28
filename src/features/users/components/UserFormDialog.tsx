@@ -141,7 +141,11 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
           setNewPassword("");
           toast.success("Temporary password set", `${user.name} must choose a new one at next sign-in.`);
         },
-        onError: error => setPasswordError(fieldErrorsOf(error).password ?? error.message),
+        onError: error => {
+          const msg = fieldErrorsOf(error).password ?? error.message;
+          setPasswordError(msg);
+          toast.error("Couldn't set temporary password", msg);
+        },
       }
     );
   }

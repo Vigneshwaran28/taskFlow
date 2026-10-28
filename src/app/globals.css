@@ -462,6 +462,47 @@ dialog:modal > div.max-h-\[85vh\] { max-height: min(85vh, calc(100dvh - 2rem)); 
   body { font-family: var(--font-sans); overflow-wrap: break-word; }
   dialog::backdrop { background: rgb(15 23 42 / 0.72); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 
+  /* Ensure toast notifications / alert toaster sit in the browser's top layer with highest z-index,
+     clearly visible over any open modal dialog and backdrop. */
+  [data-tf-toaster][popover] {
+    position: fixed !important;
+    inset: auto 1rem 1rem 1rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+    width: auto !important;
+    max-width: calc(100vw - 2rem) !important;
+    height: auto !important;
+    z-index: 100000 !important;
+    pointer-events: none !important;
+  }
+
+  [data-tf-toaster][popover]:popover-open {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 0.625rem !important;
+  }
+
+  [data-tf-toaster][popover]:not(:popover-open) {
+    display: none !important;
+  }
+
+  @media (min-width: 640px) {
+    [data-tf-toaster][popover] {
+      left: auto !important;
+      right: 1rem !important;
+      max-width: 28rem !important;
+    }
+  }
+
+  [data-tf-toaster]::backdrop {
+    display: none !important;
+    background: transparent !important;
+  }
+
   /* Reserve the scrollbar's space so pages don't jump sideways when content grows past the fold or a modal locks scrolling. */
   html { scrollbar-gutter: stable; }
 

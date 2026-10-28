@@ -51,7 +51,7 @@ export function MeetingToasts() {
       action: {
         label: "Join Meeting",
         onClick: () => {
-          if (typeof window !== "undefined") {
+          if (typeof window !== "undefined" && /^https?:\/\//i.test(meeting.url)) {
             window.open(meeting.url, "_blank", "noopener,noreferrer");
           }
         },

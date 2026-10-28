@@ -101,8 +101,8 @@ export function ResetPasswordPage() {
 
   // The link went bad while the form was open (used in another tab, or expired): same message as on load.
   const linkGone = reset.error instanceof ApiError && reset.error.status === 404;
-  if (link.error || linkGone) {
-    const notFound = linkGone || (link.error instanceof ApiError && link.error.status === 404);
+  if (link.error || linkGone || !link.data) {
+    const notFound = linkGone || !link.data || (link.error instanceof ApiError && link.error.status === 404);
     const slug = link.data?.workspace?.slug ?? null;
     return (
       <WorkspaceAuthShell slug={slug} headline="Reset your password" message="Reset links work once and expire after a few hours, so finish here before closing this page." title="This link can't be used" subtitle={notFound ? "This reset link is invalid or has expired." : "We couldn't check this link right now."}>

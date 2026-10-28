@@ -178,15 +178,28 @@ export function MeetingCard({ meeting, onEdit }: MeetingCardProps) {
             <span className="max-sm:hidden ml-1">{copied ? "Copied" : "Copy"}</span>
           </Button>
 
-          <a
-            href={meeting.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <span>Join</span>
-            <ExternalLink className="h-3 w-3" aria-hidden="true" />
-          </a>
+          {/^https?:\/\//i.test(meeting.url) ? (
+            <a
+              href={meeting.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span>Join</span>
+              <ExternalLink className="h-3 w-3" aria-hidden="true" />
+            </a>
+          ) : (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled
+              title="Invalid meeting link format"
+              className="h-8 px-3 text-xs opacity-50 cursor-not-allowed"
+            >
+              <span>Invalid Link</span>
+            </Button>
+          )}
         </div>
       </div>
     </div>

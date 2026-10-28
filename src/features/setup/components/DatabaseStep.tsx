@@ -48,7 +48,7 @@ function parseConnectionString(str: string): Partial<DatabaseFormValues> | null 
     return {
       host: url.hostname,
       port: url.port || "5432",
-      database: url.pathname.replace(/^\//, ""),
+      database: url.pathname.replace(/^\/+|\/+$/g, ""),
       user: decodeURIComponent(url.username),
       password: decodeURIComponent(url.password),
       ssl: true,
@@ -84,7 +84,7 @@ export function validateDatabase(settings: DatabaseFormValues): DatabaseErrors {
   const port = Number(settings.port);
   if (!Number.isInteger(port) || port < 1 || port > 65535) errors.port = "Enter a port between 1 and 65535.";
   if (!settings.database.trim()) errors.database = "Database name is required.";
-  else if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(settings.database.trim())) errors.database = "Use letters, numbers, and underscores only.";
+  else if (!/^[A-Za-z_][A-Za-z0-9_$-]*$/.test(settings.database.trim())) errors.database = "Use letters, numbers, underscores, and dashes only.";
   if (!settings.user.trim()) errors.user = "User is required.";
   return errors;
 }

@@ -44,7 +44,10 @@ export function Dialog({ open, onClose, title, description, size = "md", childre
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
+    if (open && !dialog.open) {
+      dialog.showModal();
+      window.dispatchEvent(new CustomEvent("tf:dialog-open"));
+    }
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
