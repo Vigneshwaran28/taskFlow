@@ -96,6 +96,8 @@ export interface AppearancePreferences {
   backgroundImage: string | null;
   /** 0-90: how much the page colour dims the picture; null = the workspace's */
   backgroundDim: number | null;
+  /** Custom text colour over background picture (e.g. #ffffff); null = auto/default */
+  backgroundTextColor: string | null;
 }
 
 export interface Brand {
@@ -104,9 +106,10 @@ export interface Brand {
   /** The workspace's default style (classic when unset) */
   style?: StylePreset;
   lockStyle?: boolean;
-  /** The workspace's background picture link ("" = none) and dimming */
+  /** The workspace's background picture link ("" = none), dimming, and text color */
   backgroundImage?: string;
   backgroundDim?: number;
+  backgroundTextColor?: string;
   /** The workspace's address: the boot script paints the picture only on its app pages */
   slug?: string;
 }
@@ -135,16 +138,25 @@ export const DEFAULT_PREFERENCES: AppearancePreferences = Object.freeze({
   reduceMotion: false,
   backgroundImage: null,
   backgroundDim: null,
+  backgroundTextColor: null,
 });
 
 /** Only links the server also accepts (they go inside CSS url("…")): http(s), no quotes, brackets, spaces, or backslashes. */
 const SAFE_IMAGE_URL = /^https?:\/\/[^\s"'()<>\\]+$/i;
 export const isSafeImageUrl = (value: string | null | undefined): value is string => Boolean(value && value.length <= 1000 && SAFE_IMAGE_URL.test(value));
 
-/** The background picture in use and its dimming: the person's choice, else the workspace's. */
-export function resolveBackground(preferences: Pick<AppearancePreferences, "backgroundImage" | "backgroundDim">, brand: Pick<Brand, "backgroundImage" | "backgroundDim">) {
+/** The background picture in use, its dimming, and text colour: the person's choice, else the workspace's. */
+export function resolveBackground(
+  preferences: Pick<AppearancePreferences, "backgroundImage" | "backgroundDim" | "backgroundTextColor">,
+  brand: Pick<Brand, "backgroundImage" | "backgroundDim" | "backgroundTextColor">
+) {
   const image = preferences.backgroundImage === "none" ? null : (preferences.backgroundImage ?? brand.backgroundImage ?? null);
-  return { image: isSafeImageUrl(image) ? image : null, dim: preferences.backgroundDim ?? brand.backgroundDim ?? 40 };
+  const textColor = preferences.backgroundTextColor ?? brand.backgroundTextColor ?? null;
+  return {
+    image: isSafeImageUrl(image) ? image : null,
+    dim: preferences.backgroundDim ?? brand.backgroundDim ?? 40,
+    textColor: textColor && textColor.trim() ? textColor.trim() : null,
+  };
 }
 
 /** The style in use: the workspace's when it's locked or the person has no choice of their own. */
@@ -160,7 +172,7 @@ const NON_APP_PAGES = ["login", "clinic-display", "patient"];
  * Inline script for <head>: applies the saved appearance before first paint (no flash of the wrong theme, style, colour,
  * motion setting, or background picture). The picture is painted only on the remembered workspace's app pages.
  */
-export const THEME_BOOT_SCRIPT = `try{var p=JSON.parse(localStorage.getItem("${STORAGE_KEY}")||"null")||{theme:localStorage.getItem("${LEGACY_KEY}")||"system"};var b=JSON.parse(localStorage.getItem("${BRAND_KEY}")||"null")||{};var r=document.documentElement;var d=p.theme==="dark"||(p.theme!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);r.classList.toggle("dark",d);var a=b.lockAccent?b.accent:(p.accent||b.accent);if(a)r.dataset.accent=a;if(p.fontScale)r.dataset.font=p.fontScale;if(p.density)r.dataset.density=p.density;r.dataset.motion=p.reduceMotion?"reduce":"normal";if(p.sidebarPosition)r.dataset.sidebarPosition=p.sidebarPosition;if(p.sidebarMode)r.dataset.sidebarMode=p.sidebarMode;if(p.sidebarAlign)r.dataset.sidebarAlign=p.sidebarAlign;if(p.navbarStyle)r.dataset.navbarStyle=p.navbarStyle;if(p.iconLibrary)r.dataset.iconLibrary=p.iconLibrary;var D=${JSON.stringify(STYLE_DEFAULTS)};var s=b.lock?b.style:(p.style||b.style);if(!D[s])s="classic";r.dataset.style=s;r.dataset.typeface=p.font&&p.font!=="auto"?p.font:D[s].font;r.dataset.sidebar=p.sidebar&&p.sidebar!=="auto"?p.sidebar:D[s].sidebar;var g=location.pathname.split("/");if(b.slug&&decodeURIComponent(g[1]||"").toLowerCase()===b.slug&&${JSON.stringify(NON_APP_PAGES)}.indexOf(g[2]||"")<0){var i=p.backgroundImage==="none"?null:(p.backgroundImage||b.bg);if(i&&i.length<=1000&&new RegExp(${JSON.stringify(SAFE_IMAGE_URL.source)},"i").test(i)){var m=p.backgroundDim!=null?p.backgroundDim:(b.dim!=null?b.dim:40);r.style.setProperty("--user-bg-image",'url("'+i+'")');r.style.setProperty("--user-bg-dim",Math.min(90,Math.max(0,m))+"%");r.dataset.bg="image";}}}catch(e){}`;
+export const THEME_BOOT_SCRIPT = `try{var p=JSON.parse(localStorage.getItem("${STORAGE_KEY}")||"null")||{theme:localStorage.getItem("${LEGACY_KEY}")||"system"};var b=JSON.parse(localStorage.getItem("${BRAND_KEY}")||"null")||{};var r=document.documentElement;var d=p.theme==="dark"||(p.theme!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);r.classList.toggle("dark",d);var a=b.lockAccent?b.accent:(p.accent||b.accent);if(a)r.dataset.accent=a;if(p.fontScale)r.dataset.font=p.fontScale;if(p.density)r.dataset.density=p.density;r.dataset.motion=p.reduceMotion?"reduce":"normal";if(p.sidebarPosition)r.dataset.sidebarPosition=p.sidebarPosition;if(p.sidebarMode)r.dataset.sidebarMode=p.sidebarMode;if(p.sidebarAlign)r.dataset.sidebarAlign=p.sidebarAlign;if(p.navbarStyle)r.dataset.navbarStyle=p.navbarStyle;if(p.iconLibrary)r.dataset.iconLibrary=p.iconLibrary;var D=${JSON.stringify(STYLE_DEFAULTS)};var s=b.lock?b.style:(p.style||b.style);if(!D[s])s="classic";r.dataset.style=s;r.dataset.typeface=p.font&&p.font!=="auto"?p.font:D[s].font;r.dataset.sidebar=p.sidebar&&p.sidebar!=="auto"?p.sidebar:D[s].sidebar;var g=location.pathname.split("/");if(b.slug&&decodeURIComponent(g[1]||"").toLowerCase()===b.slug&&${JSON.stringify(NON_APP_PAGES)}.indexOf(g[2]||"")<0){var i=p.backgroundImage==="none"?null:(p.backgroundImage||b.bg);if(i&&i.length<=1000&&new RegExp(${JSON.stringify(SAFE_IMAGE_URL.source)},"i").test(i)){var m=p.backgroundDim!=null?p.backgroundDim:(b.dim!=null?b.dim:40);r.style.setProperty("--user-bg-image",'url("'+i+'")');r.style.setProperty("--user-bg-dim",Math.min(90,Math.max(0,m))+"%");r.dataset.bg="image";var tc=p.backgroundTextColor||b.textColor;if(tc&&tc.length<=50&&/^#[0-9a-fA-F]{3,8}$/.test(tc)){r.style.setProperty("--user-bg-text-color",tc);r.dataset.bgTextColor="custom";}}}}catch(e){}`;
 
 interface ThemeContextValue {
   theme: ThemeMode;
@@ -213,7 +225,18 @@ function isRememberedAppPage() {
   }
 }
 
-function apply(preferences: AppearancePreferences, accent: Accent, style: StylePreset, background: { image: string | null; dim: number }) {
+function isLightColor(color: string): boolean {
+  const hex = color.replace("#", "").trim();
+  const full = hex.length === 3 ? hex.split("").map(c => c + c).join("") : hex;
+  const num = parseInt(full, 16);
+  if (isNaN(num)) return true;
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return 0.299 * r + 0.587 * g + 0.114 * b >= 128;
+}
+
+function apply(preferences: AppearancePreferences, accent: Accent, style: StylePreset, background: { image: string | null; dim: number; textColor: string | null }) {
   const root = document.documentElement;
   const dark = preferences.theme === "dark" || (preferences.theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const defaults = STYLE_DEFAULTS[style];
@@ -238,9 +261,25 @@ function apply(preferences: AppearancePreferences, accent: Accent, style: StyleP
     root.style.setProperty("--user-bg-image", `url("${background.image}")`);
     root.style.setProperty("--user-bg-dim", `${Math.min(90, Math.max(0, background.dim))}%`);
     root.dataset.bg = "image";
+    if (background.textColor) {
+      root.style.setProperty("--user-bg-text-color", background.textColor);
+      root.dataset.bgTextColor = "custom";
+      const light = isLightColor(background.textColor);
+      root.style.setProperty(
+        "--user-bg-text-shadow",
+        light ? "0 1px 3px rgba(0, 0, 0, 0.65), 0 0 1px rgba(0, 0, 0, 0.4)" : "0 1px 2px rgba(255, 255, 255, 0.7), 0 0 1px rgba(255, 255, 255, 0.4)"
+      );
+    } else {
+      root.style.removeProperty("--user-bg-text-color");
+      root.style.removeProperty("--user-bg-text-shadow");
+      delete root.dataset.bgTextColor;
+    }
   } else {
     root.style.removeProperty("--user-bg-image");
+    root.style.removeProperty("--user-bg-text-color");
+    root.style.removeProperty("--user-bg-text-shadow");
     delete root.dataset.bg;
+    delete root.dataset.bgTextColor;
   }
 }
 
@@ -259,6 +298,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Outside the signed-in app (sign-in pages, the console, public pages) there is no background picture.
   const backgroundImage = appActive === false ? null : resolved.image;
   const backgroundDim = resolved.dim;
+  const backgroundTextColor = resolved.textColor;
 
   // Reading localStorage is a sync with an external system, so it happens in an effect after hydration.
   useEffect(() => {
@@ -271,14 +311,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!loaded) return undefined;
     // Before ThemeSync mounts, follow the boot script's rule (and drop the picture if the page moved off the app).
-    const background = { image: appActive === null && !isRememberedAppPage() ? null : backgroundImage, dim: backgroundDim };
+    const background = {
+      image: appActive === null && !isRememberedAppPage() ? null : backgroundImage,
+      dim: backgroundDim,
+      textColor: backgroundTextColor,
+    };
     apply(preferences, accent, style, background);
     if (preferences.theme !== "system") return undefined;
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const onChange = () => apply(preferences, accent, style, background);
     media.addEventListener("change", onChange);
     return () => media.removeEventListener("change", onChange);
-  }, [preferences, accent, style, loaded, backgroundImage, backgroundDim, appActive, pathname]);
+  }, [preferences, accent, style, loaded, backgroundImage, backgroundDim, backgroundTextColor, appActive, pathname]);
 
   /** Change one preference locally (callers also save it to the account). */
   const setPreference = useCallback(<K extends keyof AppearancePreferences>(key: K, value: AppearancePreferences[K]) => {
@@ -310,6 +354,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         lockAccent: next.lockAccent,
         bg: next.backgroundImage ?? "",
         dim: next.backgroundDim ?? 40,
+        textColor: next.backgroundTextColor ?? "",
         slug: next.slug ?? null,
       });
     }

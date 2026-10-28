@@ -307,6 +307,70 @@ html[data-bg="image"] body {
   background-attachment: fixed;
 }
 
+/* ---- Background picture text contrast customization ---- */
+html[data-bg="image"][data-bg-text-color] main[data-tf="page"] {
+  --canvas-fg: var(--user-bg-text-color);
+  --canvas-muted: color-mix(in srgb, var(--user-bg-text-color) 85%, transparent);
+  --canvas-border: color-mix(in srgb, var(--user-bg-text-color) 30%, transparent);
+  --canvas-shadow: var(--user-bg-text-shadow, 0 1px 3px rgba(0, 0, 0, 0.6));
+}
+
+/* Canvas headings (Settings, Good evening, etc.) outside solid cards */
+html[data-bg="image"][data-bg-text-color] main[data-tf="page"] :is(h1, h2, h3, [data-tour="page-title"]):not(.bg-card *, [role="dialog"] *, [role="alertdialog"] *, [data-settings-tab] *, table *) {
+  color: var(--canvas-fg);
+  text-shadow: var(--canvas-shadow);
+}
+
+/* Canvas descriptions, dates, and subtitle text */
+html[data-bg="image"][data-bg-text-color] main[data-tf="page"] p.text-muted-foreground:not(.bg-card *, [role="dialog"] *, [role="alertdialog"] *, [data-settings-tab] *, table *),
+html[data-bg="image"][data-bg-text-color] main[data-tf="page"] span.text-muted-foreground:not(.bg-card *, [role="dialog"] *, [role="alertdialog"] *, [data-settings-tab] *, table *, button *, a *) {
+  color: var(--canvas-muted);
+  text-shadow: var(--canvas-shadow);
+}
+
+/* Site title and primary accents on canvas (e.g. "titan" in greeting) */
+html[data-bg="image"][data-bg-text-color] main[data-tf="page"] :is(p, div) > span.text-primary:not(.bg-card *, [role="dialog"] *, [role="alertdialog"] *, [data-settings-tab] *, button *, a *) {
+  color: var(--canvas-fg);
+  text-shadow: var(--canvas-shadow);
+}
+
+/* Section titles on home page & canvas */
+html[data-bg="image"][data-bg-text-color] main[data-tf="page"] section > div > h2:not(.bg-card *) {
+  color: var(--canvas-fg) !important;
+  text-shadow: var(--canvas-shadow);
+}
+html[data-bg="image"][data-bg-text-color] main[data-tf="page"] section > div > a:not(.bg-card *) {
+  color: var(--canvas-fg) !important;
+  text-shadow: var(--canvas-shadow);
+}
+
+/* BackBar link on canvas */
+html[data-bg="image"][data-bg-text-color] main[data-tf="page"] nav[aria-label="Back"] a {
+  color: var(--canvas-fg) !important;
+  text-shadow: var(--canvas-shadow);
+}
+html[data-bg="image"][data-bg-text-color] main[data-tf="page"] nav[aria-label="Back"] a:hover {
+  background-color: color-mix(in srgb, var(--user-bg-text-color) 12%, transparent);
+}
+
+/* Tab bar border and tab buttons */
+html[data-bg="image"][data-bg-text-color] main[data-tf="page"] div[role="tablist"][data-tour="tabs"] {
+  border-bottom-color: var(--canvas-border) !important;
+}
+html[data-bg="image"][data-bg-text-color] main[data-tf="page"] div[role="tablist"][data-tour="tabs"] button[role="tab"] {
+  text-shadow: var(--canvas-shadow);
+}
+html[data-bg="image"][data-bg-text-color] main[data-tf="page"] div[role="tablist"][data-tour="tabs"] button[role="tab"]:not([aria-selected="true"]) {
+  color: var(--canvas-muted) !important;
+}
+html[data-bg="image"][data-bg-text-color] main[data-tf="page"] div[role="tablist"][data-tour="tabs"] button[role="tab"]:not([aria-selected="true"]):hover {
+  color: var(--canvas-fg) !important;
+}
+html[data-bg="image"][data-bg-text-color] main[data-tf="page"] div[role="tablist"][data-tour="tabs"] button[role="tab"][aria-selected="true"] {
+  color: var(--canvas-fg) !important;
+  border-bottom-color: var(--canvas-fg) !important;
+}
+
 /* Shadows: every preset's depth (classic keeps Tailwind's own). */
 html[data-style]:not([data-style="classic"]) :is(.shadow-sm, .shadow) { --tw-shadow: var(--shadow-1); }
 html[data-style]:not([data-style="classic"]) :is(.shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl) { --tw-shadow: var(--shadow-2); }

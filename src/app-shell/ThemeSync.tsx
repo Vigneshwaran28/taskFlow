@@ -52,6 +52,7 @@ export function ThemeSync() {
     lockStyle: Boolean(branding?.lockStyle),
     backgroundImage: branding?.backgroundImage ?? "",
     backgroundDim: branding?.backgroundDim ?? 40,
+    backgroundTextColor: branding?.backgroundTextColor ?? "",
     slug: user?.tenant?.slug,
   });
 
@@ -65,7 +66,7 @@ export function ThemeSync() {
   }, [saved, applyServerPreferences]);
 
   useEffect(() => {
-    const brand = JSON.parse(brandKey) as { accent: Accent; lockAccent: boolean; style: StylePreset; lockStyle: boolean; backgroundImage: string; backgroundDim: number; slug?: string };
+    const brand = JSON.parse(brandKey) as { accent: Accent; lockAccent: boolean; style: StylePreset; lockStyle: boolean; backgroundImage: string; backgroundDim: number; backgroundTextColor?: string; slug?: string };
     setBrand(brand);
   }, [brandKey, setBrand]);
 

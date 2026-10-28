@@ -142,6 +142,7 @@ export interface WorkspaceSettings {
     /** The app's background picture link ("" = none) and how much the page colour dims it (0-90) */
     backgroundImage?: string;
     backgroundDim?: number;
+    backgroundTextColor?: string | null;
     /** Look and feel of every UI element (features/workspace/utils/uiOptions.ts); missing values are the defaults */
     ui?: Partial<Record<string, string>>;
   };
