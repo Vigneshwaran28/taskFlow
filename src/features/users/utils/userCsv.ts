@@ -33,10 +33,11 @@ export function importRowsFromCsv(text: string): ImportRow[] {
 
 export const usersToCsv = (users: ManagedUser[]) =>
   toCsv([
-    ["name", "email", "job title", "roles", "status", "last sign-in", "joined on", "created"],
+    ["name", "email", "login key code", "job title", "roles", "status", "last sign-in", "joined on", "created"],
     ...users.map(user => [
       user.name,
       user.email,
+      user.loginCode ?? "",
       user.jobTitle,
       user.roles.map(role => role.name).join("; "),
       user.isActive ? (user.mustChangePassword ? "temporary password" : "active") : "deactivated",

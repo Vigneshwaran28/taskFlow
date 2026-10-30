@@ -238,6 +238,29 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
           {user && user.id === currentUserId && <p className="text-xs text-muted-foreground">Changing your own roles can remove your access to this page.</p>}
         </form>
 
+        {user && user.loginCode && (
+          <div className="flex items-center justify-between rounded-lg border border-amber-500/25 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-900 dark:text-amber-200">
+            <div className="flex items-center gap-2">
+              <KeyRound className="h-4 w-4 text-amber-700 dark:text-amber-400" />
+              <span>
+                Login key code: <strong className="font-mono text-sm tracking-wider font-semibold">{user.loginCode}</strong>
+              </span>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs text-amber-800 dark:text-amber-200 hover:bg-amber-500/20"
+              onClick={() => {
+                navigator.clipboard.writeText(user.loginCode!);
+                toast.success("Copied login key code", user.loginCode!);
+              }}
+            >
+              Copy code
+            </Button>
+          </div>
+        )}
+
         {user && (
           <section aria-labelledby="reset-password-heading" className="flex flex-col gap-3 border-t pt-5">
             <h3 id="reset-password-heading" className="flex items-center gap-2 text-sm font-semibold">

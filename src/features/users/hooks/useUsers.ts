@@ -47,6 +47,7 @@ export function useImportUsers() {
   });
 }
 export const useUpdateUser = () => useUserChange(userService.update);
+export const useRegenerateUserLoginCode = () => useUserChange(userService.regenerateLoginCode);
 /** Setting a temporary password also closes the person's reset requests: refresh everything under ["users"]. */
 export function useResetUserPassword() {
   const queryClient = useQueryClient();

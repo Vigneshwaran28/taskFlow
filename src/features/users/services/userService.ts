@@ -18,6 +18,8 @@ export interface ManagedUser {
   isActive: boolean;
   /** Last successful sign-in (null = never signed in) */
   lastLoginAt: string | null;
+  /** Direct login key code / PIN (TF-XXXXXX) assigned to this user */
+  loginCode: string | null;
   createdAt: string;
 }
 
@@ -74,6 +76,9 @@ export const userService = {
 
   /** Ends the person's sessions on every device (their password stays). */
   signOutEverywhere: (id: number) => apiClient.post<null>(`/users/${id}/sign-out`),
+
+  /** Regenerates a unique login key code for a specific user. */
+  regenerateLoginCode: (id: number) => apiClient.post<{ ok: true; id: number; loginCode: string }>(`/users/${id}/login-code/regenerate`),
 
   /** Many accounts at once, all with one temporary password. dryRun checks every row without creating anything. */
   importUsers: (input: ImportUsersInput) => apiClient.post<ImportUsersResult>("/users/import", input, { timeout: 60000 }),

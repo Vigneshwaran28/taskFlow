@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import { Download, FileUp, KeyRound, LogOut, Pencil, Search, UserCheck, UserPlus, UserX, Users } from "lucide-react";
+import { Check, Copy, Download, FileUp, KeyRound, LogOut, Pencil, RefreshCw, Search, UserCheck, UserPlus, UserX, Users } from "lucide-react";
 import { Avatar } from "@/components/shared/Avatar";
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared/States";
 import { useToast } from "@/components/shared/Toaster";
@@ -13,7 +13,7 @@ import { cn } from "@/lib/cn";
 import { downloadCsv } from "@/lib/csv";
 import { formatDateTime, formatTimeAgo } from "@/lib/dates";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useManagedUsers, useSignOutEverywhere, useUpdateUser } from "../hooks/useUsers";
+import { useManagedUsers, useRegenerateUserLoginCode, useSignOutEverywhere, useUpdateUser } from "../hooks/useUsers";
 import type { ManagedUser } from "../services/userService";
 import { usersToCsv } from "../utils/userCsv";
 import { ImportUsersDialog } from "./ImportUsersDialog";
@@ -48,11 +48,14 @@ export function UsersManager() {
   const { data, isPending, error, refetch } = useManagedUsers();
   const updateUser = useUpdateUser();
   const signOutEverywhere = useSignOutEverywhere();
+  const regenerateLoginCode = useRegenerateUserLoginCode();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [roleId, setRoleId] = useState("");
   const [importing, setImporting] = useState(false);
   const [signingOut, setSigningOut] = useState<ManagedUser | null>(null);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [regeneratingUser, setRegeneratingUser] = useState<ManagedUser | null>(null);
   const query = useDebounce(search.trim().toLowerCase(), 150);
 
   const allUsers = data?.users;
@@ -67,7 +70,11 @@ export function UsersManager() {
         user =>
           matchesStatus(user, status) &&
           (!roleId || user.roles.some(role => String(role.id) === roleId)) &&
-          (!query || user.name.toLowerCase().includes(query) || user.email.includes(query) || (user.jobTitle ?? "").toLowerCase().includes(query))
+          (!query ||
+            user.name.toLowerCase().includes(query) ||
+            user.email.includes(query) ||
+            (user.jobTitle ?? "").toLowerCase().includes(query) ||
+            (user.loginCode ?? "").toLowerCase().includes(query))
       ),
     [allUsers, status, roleId, query]
   );
@@ -102,6 +109,31 @@ export function UsersManager() {
         onError: err => toast.error("Couldn't change access", err.message),
       }
     );
+  }
+
+  function copyLoginCode(code: string, userName: string) {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    toast.success("Login key code copied", `${code} copied for ${userName}.`);
+    setTimeout(() => {
+      setCopiedCode(current => (current === code ? null : current));
+    }, 2000);
+  }
+
+  function confirmRegenerateCode() {
+    if (!regeneratingUser) return;
+    const user = regeneratingUser;
+    regenerateLoginCode.mutate(user.id, {
+      onSuccess: res => {
+        setRegeneratingUser(null);
+        toast.success(`Generated new login key code: ${res.loginCode}`, `Updated code for ${user.name}.`);
+        navigator.clipboard.writeText(res.loginCode);
+        setCopiedCode(res.loginCode);
+        setTimeout(() => setCopiedCode(null), 2000);
+      },
+      onError: err => toast.error("Couldn't regenerate code", err.message),
+    });
   }
 
   return (
@@ -143,7 +175,7 @@ export function UsersManager() {
             type="search"
             value={search}
             onChange={event => setSearch(event.target.value)}
-            placeholder="Search by name, email, or job title"
+            placeholder="Search by name, email, job title, or login code"
             className="h-9 min-w-0 flex-1 bg-transparent text-sm focus-visible:outline-none"
           />
         </label>
@@ -184,6 +216,44 @@ export function UsersManager() {
                       ))}
                       {!user.isActive && <Badge tone="danger">Deactivated</Badge>}
                       {user.isActive && user.mustChangePassword && <Badge tone="warning">Temporary password</Badge>}
+                      {user.loginCode && (
+                        <span
+                          className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-mono font-medium text-amber-800 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-300 shadow-2xs"
+                          title={`Login key code for ${user.name}`}
+                        >
+                          <KeyRound className="h-3 w-3 opacity-70" aria-hidden="true" />
+                          <span className="font-semibold tracking-wider">Key: {user.loginCode}</span>
+                          <button
+                            type="button"
+                            onClick={e => {
+                              e.stopPropagation();
+                              copyLoginCode(user.loginCode!, user.name);
+                            }}
+                            className="ml-0.5 rounded p-0.5 hover:bg-amber-500/20 text-amber-800 dark:text-amber-200 transition-colors cursor-pointer"
+                            title={`Copy login key code for ${user.name}`}
+                            aria-label={`Copy login key code for ${user.name}`}
+                          >
+                            {copiedCode === user.loginCode ? (
+                              <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                            ) : (
+                              <Copy className="h-3 w-3 opacity-70 hover:opacity-100" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setRegeneratingUser(user);
+                            }}
+                            disabled={regenerateLoginCode.isPending || (!me?.isOwner && user.roles.some(role => role.key === "owner"))}
+                            className="rounded p-0.5 hover:bg-amber-500/20 text-amber-800 dark:text-amber-200 transition-colors cursor-pointer disabled:opacity-40"
+                            title={!me?.isOwner && user.roles.some(role => role.key === "owner") ? "Only an owner can regenerate an owner's code." : `Regenerate login key code for ${user.name}`}
+                            aria-label={`Regenerate login key code for ${user.name}`}
+                          >
+                            <RefreshCw className={cn("h-3 w-3 opacity-70 hover:opacity-100", regenerateLoginCode.isPending && regeneratingUser?.id === user.id && "animate-spin")} />
+                          </button>
+                        </span>
+                      )}
                     </p>
                     <p className="truncate text-sm text-muted-foreground">
                       {user.email}
@@ -252,6 +322,16 @@ export function UsersManager() {
         pending={signOutEverywhere.isPending}
         onConfirm={confirmSignOut}
         onCancel={() => setSigningOut(null)}
+      />
+
+      <ConfirmDialog
+        open={Boolean(regeneratingUser)}
+        title={`Regenerate login key code for ${regeneratingUser?.name ?? "this user"}?`}
+        message={`This will invalidate their existing login code (${regeneratingUser?.loginCode}) and generate a new unique login key code immediately.`}
+        confirmLabel="Regenerate code"
+        pending={regenerateLoginCode.isPending}
+        onConfirm={confirmRegenerateCode}
+        onCancel={() => setRegeneratingUser(null)}
       />
 
       {dialog && <UserFormDialog key={dialog.key} user={dialog.user} currentUserId={me?.id} onClose={() => setDialog(null)} />}
