@@ -15,9 +15,9 @@ export interface RolePickerProps {
 export function RolePicker({ roles, value, onChange, blockedReason, error }: RolePickerProps) {
   const toggle = (id: number) => onChange(value.includes(id) ? value.filter(item => item !== id) : [...value, id]);
   return (
-    <fieldset aria-describedby={error ? "role-picker-error" : undefined}>
-      <legend className="mb-1.5 text-sm font-medium">Roles</legend>
-      <ul className="max-h-64 divide-y overflow-y-auto rounded-lg border">
+    <fieldset aria-describedby={error ? "role-picker-error" : undefined} className="flex flex-col">
+      <legend className="mb-1.5 text-sm font-medium text-foreground">Roles</legend>
+      <ul className="max-h-60 divide-y overflow-y-auto rounded-lg border bg-card">
         {roles.map(role => {
           const checked = value.includes(role.id);
           const reason = blockedReason(role);
@@ -25,8 +25,8 @@ export function RolePicker({ roles, value, onChange, blockedReason, error }: Rol
           const disabled = Boolean(reason) && !checked;
           return (
             <li key={role.id}>
-              <label className={cn("flex items-start gap-3 px-3 py-2", disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:bg-muted/50")}>
-                <input type="checkbox" checked={checked} disabled={disabled} onChange={() => toggle(role.id)} className="mt-0.5 h-4 w-4 rounded border-input accent-primary" />
+              <label className={cn("flex items-start gap-3 px-3.5 py-2.5", disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:bg-muted/50")}>
+                <input type="checkbox" checked={checked} disabled={disabled} onChange={() => toggle(role.id)} className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-primary cursor-pointer" />
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2 text-sm font-medium">
                     {role.name}

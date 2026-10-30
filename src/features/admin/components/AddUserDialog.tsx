@@ -74,14 +74,15 @@ export function AddUserDialog({ tenantId, tenantName, onClose }: { tenantId: num
     >
       <form id="admin-add-user" onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         <FormAlert message={formErrorOf(createUser.error)} />
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 items-start">
           <TextField label="Full name" id="au-name" required autoFocus maxLength={120} value={values.name} error={shown.name} onChange={event => set("name", event.target.value)} />
-          <TextField label="Email" id="au-email" required type="email" autoComplete="off" value={values.email} error={shown.email} onChange={event => set("email", event.target.value)} />
+          <TextField label="Email" id="au-email" required type="email" autoComplete="off" placeholder="name@company.com" value={values.email} error={shown.email} onChange={event => set("email", event.target.value)} />
           <SelectField
             label="Role"
             id="au-role"
             value={values.role}
             options={ROLE_OPTIONS}
+            hint="Access level in this workspace."
             onChange={event => set("role", ROLE_OPTIONS.find(option => option.value === event.target.value)?.value ?? "member")}
           />
           <TemporaryPasswordField

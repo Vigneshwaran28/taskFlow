@@ -94,7 +94,7 @@ export function TemporaryPasswordField({
   hint,
   required,
   autoFocus,
-  placeholder = "Enter or generate a temporary password",
+  placeholder = "Enter or generate password",
   className,
   disabled,
   autoComplete = "new-password",
@@ -138,48 +138,18 @@ export function TemporaryPasswordField({
   return (
     <FieldShell
       id={id}
-      label={
-        <div className="flex w-full items-center justify-between gap-2">
-          <span>{label}</span>
-          <div className="flex items-center gap-1.5 font-normal">
-            <button
-              type="button"
-              onClick={handleGenerate}
-              disabled={disabled}
-              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
-              title="Generate a secure random password and copy to clipboard"
-            >
-              <Sparkles className="h-3 w-3" aria-hidden="true" />
-              <span>Generate</span>
-            </button>
-            {value && (
-              <button
-                type="button"
-                onClick={handleCopy}
-                disabled={disabled}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40",
-                  copyState === "copied"
-                    ? "text-emerald-600 dark:text-emerald-400 font-semibold"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-                title="Copy password to clipboard"
-              >
-                {copyState === "copied" ? (
-                  <>
-                    <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                    <span>Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-3 w-3" aria-hidden="true" />
-                    <span>Copy</span>
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-        </div>
+      label={label}
+      action={
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={disabled}
+          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors select-none touch-manipulation cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
+          title="Generate a secure random password and copy to clipboard"
+        >
+          <Sparkles className="h-3 w-3" aria-hidden="true" />
+          <span>Generate</span>
+        </button>
       }
       hint={hint}
       error={error}
@@ -200,7 +170,7 @@ export function TemporaryPasswordField({
           maxLength={maxLength}
           aria-invalid={Boolean(error)}
           aria-describedby={describedBy(id, error, hint)}
-          className={controlClass(error, "h-10 font-mono text-sm tracking-normal pr-16")}
+          className={controlClass(error, cn("h-10 font-mono text-sm tracking-normal", value ? "pr-16" : "pr-9"))}
         />
         <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
           {value ? (
@@ -211,7 +181,7 @@ export function TemporaryPasswordField({
               aria-label={copyState === "copied" ? "Password copied" : "Copy password"}
               title={copyState === "copied" ? "Password copied" : "Copy password"}
               tabIndex={-1}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground select-none touch-manipulation cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40"
             >
               {copyState === "copied" ? (
                 <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
@@ -228,7 +198,7 @@ export function TemporaryPasswordField({
             aria-pressed={revealed}
             title={revealed ? "Mask password" : "Show password"}
             tabIndex={-1}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground select-none touch-manipulation cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40"
           >
             {revealed ? (
               <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />

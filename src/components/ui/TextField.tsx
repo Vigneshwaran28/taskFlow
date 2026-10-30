@@ -11,6 +11,7 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string | null;
   /** Set to false to disable the password reveal toggle button on type="password" fields. Defaults to true. */
   showPasswordToggle?: boolean;
+  action?: ReactNode;
 }
 
 export function TextField({
@@ -22,6 +23,7 @@ export function TextField({
   required,
   type,
   showPasswordToggle = true,
+  action,
   ...inputProps
 }: TextFieldProps) {
   const autoId = useId();
@@ -32,7 +34,7 @@ export function TextField({
   const effectiveType = isPassword ? (revealed ? "text" : "password") : type;
 
   return (
-    <FieldShell id={id} label={label} hint={hint} error={error} required={required} className={className}>
+    <FieldShell id={id} label={label} hint={hint} error={error} required={required} className={className} action={action}>
       <div className="relative w-full">
         <input
           id={id}

@@ -494,7 +494,7 @@ export function TenantFormDialog({ tenant = null, features: available, catalog =
               {!tenant && (
                 <fieldset className="flex min-w-0 flex-col gap-4 rounded-xl border p-4">
                   <legend className="px-1 text-sm font-medium">Owner account (the tenant&apos;s first admin)</legend>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 items-start">
                     <TextField label="Full name" id="tenant-owner-name" required maxLength={120} value={values.ownerName} error={ownerError("ownerName")} onChange={event => set("ownerName", event.target.value)} />
                     <TextField
                       label="Email"

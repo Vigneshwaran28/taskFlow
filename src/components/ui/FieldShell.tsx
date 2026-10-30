@@ -17,29 +17,34 @@ export interface FieldShellProps {
   required?: boolean;
   children: ReactNode;
   className?: string;
+  /** Right-aligned action in the label row (e.g. Generate button, counter, link) */
+  action?: ReactNode;
 }
 
-export function FieldShell({ id, label, hint, error, required, children, className }: FieldShellProps) {
+export function FieldShell({ id, label, hint, error, required, children, className, action }: FieldShellProps) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       {label && (
-        <label htmlFor={id} className="text-sm font-medium text-foreground">
-          {label}
-          {required && (
-            <span className="ml-0.5 text-destructive" aria-hidden="true">
-              *
-            </span>
-          )}
-        </label>
+        <div className="flex min-h-[1.375rem] items-center justify-between gap-2">
+          <label htmlFor={id} className="inline-flex items-center text-sm font-medium text-foreground">
+            <span>{label}</span>
+            {required && (
+              <span className="ml-1 text-destructive font-semibold" aria-hidden="true">
+                *
+              </span>
+            )}
+          </label>
+          {action && <div className="flex items-center gap-1.5 font-normal text-xs">{action}</div>}
+        </div>
       )}
       {children}
       {error ? (
-        <p id={`${id}-error`} className="text-sm text-destructive">
+        <p id={`${id}-error`} className="text-xs text-destructive">
           {error}
         </p>
       ) : (
         hint && (
-          <p id={`${id}-hint`} className="text-xs text-muted-foreground">
+          <p id={`${id}-hint`} className="text-xs text-muted-foreground leading-relaxed">
             {hint}
           </p>
         )

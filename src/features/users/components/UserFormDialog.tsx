@@ -171,11 +171,11 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
       <div className="flex flex-col gap-6">
         <form id="user-form" onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
           <FormAlert message={formErrorOf(mutation.error)} />
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 items-start">
             <TextField label="Full name" id="user-name" required autoFocus maxLength={120} value={values.name} error={errors.name} onChange={event => set("name", event.target.value)} />
             <TextField label="Job title" id="user-title" maxLength={120} placeholder="e.g. Store Manager" value={values.jobTitle} error={errors.jobTitle} onChange={event => set("jobTitle", event.target.value)} />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 items-start">
             <TextField
               label="Date of birth"
               id="user-dob"
@@ -183,7 +183,7 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
               max={localDay()}
               value={values.dateOfBirth}
               error={errors.dateOfBirth}
-              hint={age !== null && age >= 0 ? `Age ${age}. Used for birthday greetings; colleagues never see the year.` : "Optional. Used for birthday greetings."}
+              hint={age !== null && age >= 0 ? `Age ${age}. Used for birthday greetings.` : "Optional. Used for birthday greetings."}
               onChange={event => set("dateOfBirth", event.target.value)}
             />
             <TextField
@@ -197,14 +197,15 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
             />
           </div>
           {!isEdit && (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 items-start">
               <TextField
                 label="Work email"
                 id="user-email"
                 type="email"
                 required
                 autoComplete="off"
-                hint={domains.length ? `Your workspace allows ${domains.map(item => `@${item}`).join(", ")} addresses.` : undefined}
+                placeholder="name@company.com"
+                hint={domains.length ? `Allowed: ${domains.map(item => `@${item}`).join(", ")}` : "Sign-in email address for workspace access."}
                 value={values.email}
                 error={errors.email}
                 onChange={event => set("email", event.target.value)}
@@ -213,7 +214,7 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
                 label="Temporary password"
                 id="user-password"
                 required
-                hint={passwordRule.hint}
+                hint={passwordRule.hint || "At least 8 characters."}
                 value={values.password}
                 error={errors.password}
                 onChange={val => set("password", val)}
