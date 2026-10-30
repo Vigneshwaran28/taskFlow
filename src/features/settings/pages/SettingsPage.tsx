@@ -10,7 +10,7 @@ import { ErrorState, LoadingState } from "@/components/shared/States";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
 import { SubscriptionSummaryCard } from "@/features/broadcasts";
 import { useCan, useCurrentUser } from "@/features/auth";
-import { ModuleSettingsPanel, SecuritySettingsPanel, type EditableSettingsKey } from "@/features/workspace";
+import { ModuleSettingsPanel, SecuritySettingsPanel, TenantSecurityPinCard, type EditableSettingsKey } from "@/features/workspace";
 import { useSearchParam } from "@/lib/navigation";
 import type { SessionUser } from "@/types/session";
 import { AppearanceSettings } from "../components/AppearanceSettings";
@@ -119,6 +119,11 @@ function useSettingsTabs(user: SessionUser | null | undefined): SettingsTab[] {
           {canUsers && current.tenant && (
             <SettingsSection title="Workspace" description="Your company's plan. Modules and user limits are set by your provider. Modules you switched off show as not included.">
               <WorkspaceInfo tenant={current.tenant} />
+            </SettingsSection>
+          )}
+          {canUsers && (
+            <SettingsSection title="Workspace Security PIN" description="Random unique security PIN used for user creations, invitations, and direct tenant login.">
+              <TenantSecurityPinCard />
             </SettingsSection>
           )}
           <SubscriptionSummaryCard />

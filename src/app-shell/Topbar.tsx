@@ -1,7 +1,7 @@
 "use client";
 import NextLink from "next/link";
 import { usePathname, useRouter } from "@/lib/navigation";
-import { useState, type FocusEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeftRight, LayoutGrid, LogOut, Menu, Plus, Settings, SlidersHorizontal } from "lucide-react";
 import { Avatar, initials } from "@/components/shared/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -13,6 +13,7 @@ import { NotificationBell } from "@/features/notifications";
 import { useTaskDialog } from "@/features/tasks";
 import { useTheme } from "@/hooks/useTheme";
 import { cn } from "@/lib/cn";
+import { currentWorkspace } from "@/lib/tenantPath";
 import { CommandPalette } from "./CommandPalette";
 import { ThemeMenu } from "./ThemeMenu";
 import { canOpenModule } from "./modules";
@@ -28,6 +29,27 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
   const logout = useLogout();
   const { openCreate, openEditById } = useTaskDialog();
   const [menuOpen, setMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close account menu on outside pointerdown and Escape (reliable on mobile & desktop, unlike onBlur)
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onPointer = (event: PointerEvent) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target as Node | null)) {
+        setMenuOpen(false);
+      }
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
   // Other workspaces this browser is signed in to: switching opens them (each keeps its own sign-in).
   const { data: sessions } = useWorkspaceSessions({ enabled: menuOpen && Boolean(user?.isOwner || user?.permissions?.includes("workspace.users.manage")) });
   // Switching is for admins of several workspaces: the same email, an admin here and in the other workspace.
@@ -39,12 +61,8 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
   function handleLogout() {
     setMenuOpen(false);
     // Back to the workspace's own sign-in page (/<slug>/login).
-    const slug = user?.tenant?.slug;
+    const slug = user?.tenant?.slug || currentWorkspace();
     logout.mutate(undefined, { onSuccess: () => router.replace(slug ? `/${encodeURIComponent(slug)}/login` : "/login") });
-  }
-
-  function handleMenuBlur(event: FocusEvent<HTMLButtonElement>) {
-    if (!event.currentTarget.parentElement?.contains(event.relatedTarget as Node | null)) setMenuOpen(false);
   }
 
   const { preferences } = useTheme();
@@ -64,7 +82,12 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
 
   return (
     <header data-tf="topbar" className={topbarClass}>
-      <button type="button" onClick={onOpenMenu} aria-label="Open menu" className="rounded-lg p-2 text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden">
+      <button
+        type="button"
+        onClick={onOpenMenu}
+        aria-label="Open menu"
+        className="rounded-lg p-2 text-muted-foreground hover:bg-muted select-none touch-manipulation cursor-pointer active:scale-95 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
+      >
         <Menu className="h-5 w-5" aria-hidden="true" />
       </button>
 
@@ -102,20 +125,19 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
           onClick={() => router.push("/settings?tab=navigation")}
           title="Customize navbar & navigation in Settings"
           aria-label="Customize navbar & navigation in Settings"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-all duration-150 hover:bg-muted hover:text-foreground select-none touch-manipulation cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
         </button>
 
-        <div className="relative" data-tour="account">
+        <div className="relative" data-tour="account" ref={accountMenuRef}>
           <button
             type="button"
             onClick={() => setMenuOpen(current => !current)}
-            onBlur={handleMenuBlur}
             aria-expanded={menuOpen}
             aria-haspopup="true"
             aria-label="Account menu"
-            className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-sm font-semibold text-primary-foreground select-none touch-manipulation cursor-pointer active:scale-95 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {user?.avatarUrl ? <Avatar name={user.name} imageUrl={user.avatarUrl} /> : initials(user?.name) || "?"}
           </button>
@@ -135,7 +157,7 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
                     <a
                       key={session.slug}
                       href={`/${encodeURIComponent(session.slug)}`}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none select-none touch-manipulation cursor-pointer transition-colors"
                     >
                       <ArrowLeftRight className="h-4 w-4 shrink-0" aria-hidden="true" />
                       <span className="min-w-0 flex-1">
@@ -151,7 +173,7 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
                 {others.length > 0 && (
                   <NextLink
                     href="/"
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none select-none touch-manipulation cursor-pointer transition-colors"
                   >
                     <LayoutGrid className="h-4 w-4" aria-hidden="true" />
                     All workspaces
@@ -163,7 +185,7 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
                     setMenuOpen(false);
                     router.push("/settings");
                   }}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none select-none touch-manipulation cursor-pointer transition-colors"
                 >
                   <Settings className="h-4 w-4" aria-hidden="true" />
                   Settings
@@ -171,7 +193,7 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-destructive hover:bg-destructive/10 focus-visible:bg-destructive/10 focus-visible:outline-none"
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-destructive hover:bg-destructive/10 focus-visible:bg-destructive/10 focus-visible:outline-none select-none touch-manipulation cursor-pointer transition-colors"
                 >
                   <LogOut className="h-4 w-4" aria-hidden="true" />
                   Sign out

@@ -62,7 +62,7 @@ export function NotificationBell({ onOpenTask, onOpenTicket }: NotificationBellP
         aria-expanded={open}
         aria-haspopup="true"
         aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
-        className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="relative rounded-lg p-2 text-muted-foreground transition-all duration-150 select-none touch-manipulation cursor-pointer active:scale-95 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Bell className="h-5 w-5" aria-hidden="true" />
         {unread > 0 && (
@@ -81,7 +81,8 @@ export function NotificationBell({ onOpenTask, onOpenTicket }: NotificationBellP
                 type="button"
                 disabled={markAllRead.isPending}
                 onClick={() => markAllRead.mutate(undefined, { onError: error => toast.error("Couldn't mark notifications read", error.message) })}
-                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline select-none touch-manipulation cursor-pointer active:scale-95 transition-all"
+              >
                 <CheckCheck className="h-3.5 w-3.5" aria-hidden="true" />
                 Mark all read
               </button>
@@ -100,7 +101,7 @@ export function NotificationBell({ onOpenTask, onOpenTicket }: NotificationBellP
                   <button
                     type="button"
                     onClick={() => handleSelect(item)}
-                    className="flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                    className="flex w-full gap-3 px-4 py-3 text-left transition-colors select-none touch-manipulation cursor-pointer active:bg-muted/80 hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
                   >
                     <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", item.isRead ? "bg-transparent" : "bg-primary")} aria-hidden="true" />
                     <span className="min-w-0 flex-1">

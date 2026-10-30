@@ -13,6 +13,7 @@ export { ModuleSettingsPanel } from "./components/ModuleSettingsPanel";
 export type { ModuleSettingsPanelProps } from "./components/ModuleSettingsPanel";
 export { SecuritySettingsPanel } from "./components/SecuritySettingsPanel";
 export type { SecuritySettingsPanelProps } from "./components/SecuritySettingsPanel";
+export { TenantSecurityPinCard } from "./components/TenantSecurityPinCard";
 export { BrandAssetsFields, validateBrandAssets } from "./components/BrandAssetsFields";
 export type { BrandAssets, BrandAssetsErrors, BrandAssetsFieldsProps } from "./components/BrandAssetsFields";
 export { CustomCssFields, customCssErrors } from "./components/CustomCssFields";
@@ -35,8 +36,8 @@ export {
   userCssProblem,
 } from "./utils/customCss";
 export { WorkspaceAdminPage } from "./pages/WorkspaceAdminPage";
-export { useUpdateWorkspaceSettings, useWorkspaceOverview, useWorkspaceSettings, workspaceKeys } from "./hooks/useWorkspace";
-export type { SettingsPatch, WorkspaceOverview, WorkspaceSettingsResponse } from "./services/workspaceService";
+export { useTenantAccessCode, useRegenerateTenantAccessCode, useUpdateWorkspaceSettings, useWorkspaceOverview, useWorkspaceSettings, workspaceKeys } from "./hooks/useWorkspace";
+export type { SettingsPatch, TenantAccessCode, WorkspaceOverview, WorkspaceSettingsResponse } from "./services/workspaceService";
 export { TenantUi } from "./components/TenantUi";
 export type { TenantUiProps } from "./components/TenantUi";
 export { UiCustomizationFields } from "./components/UiCustomizationFields";

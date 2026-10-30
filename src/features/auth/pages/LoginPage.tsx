@@ -4,8 +4,10 @@ import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/lib/navigation";
 import { withTenant } from "@/lib/tenantPath";
 import { ArrowRight } from "lucide-react";
+import { useState } from "react";
 import { AuthLayout } from "../components/AuthLayout";
 import { LoginForm } from "../components/LoginForm";
+import { PinAccessLogin } from "../components/PinAccessLogin";
 import { WorkspaceAddressForm } from "../components/WorkspaceAddressForm";
 import { usePublicWorkspace } from "../hooks/useAuth";
 import { safeRedirect, useRememberedWorkspace, workspaceLoginPath } from "../utils/rememberedWorkspace";
@@ -35,16 +37,53 @@ export function LoginPage() {
   const redirectTo = safeRedirect(from);
   const generic = params.get("generic") === "1";
   const remembered = useRememberedWorkspace();
+  const [authMode, setAuthMode] = useState<"standard" | "pin">("standard");
+
+  const handleSuccess = (user: { tenant?: { slug?: string } } | null) => {
+    router.replace(user?.tenant?.slug ? withTenant(user.tenant.slug, redirectTo) : "/");
+  };
 
   return (
     <AuthLayout title="Welcome back" subtitle="Sign in to continue to your workspace.">
       {remembered && !generic && <ContinueToWorkspace slug={remembered} from={from} />}
-      {/* An email in several workspaces: LoginForm offers "pick one" (409 CHOOSE_WORKSPACE). */}
-      {/* Into the workspace just signed in to (an app path like /billing opens inside it). */}
-      <LoginForm onSuccess={user => router.replace(user?.tenant?.slug ? withTenant(user.tenant.slug, redirectTo) : "/")} from={from} />
+
+      {/* Login Mode Selector: Standard or Workspace PIN */}
+      <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-muted/60 p-1 text-xs font-medium">
+        <button
+          type="button"
+          onClick={() => setAuthMode("standard")}
+          className={`flex items-center justify-center gap-1.5 rounded-lg py-2 transition-all ${
+            authMode === "standard"
+              ? "bg-background text-foreground shadow-sm font-semibold"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <span>Email &amp; Password</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setAuthMode("pin")}
+          className={`flex items-center justify-center gap-1.5 rounded-lg py-2 transition-all ${
+            authMode === "pin"
+              ? "bg-background text-foreground shadow-sm font-semibold"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <span>Workspace PIN / Code</span>
+        </button>
+      </div>
+
+      {authMode === "standard" ? (
+        <LoginForm onSuccess={handleSuccess} from={from} />
+      ) : (
+        <PinAccessLogin onSuccess={handleSuccess} from={from} />
+      )}
+
       <div className="mt-6 flex flex-col gap-4">
         <WorkspaceAddressForm from={from} collapsible />
-        <p className="text-center text-sm text-muted-foreground">Don&apos;t have an account? Ask your workspace administrator to create one for you.</p>
+        <p className="text-center text-xs text-muted-foreground">
+          Don&apos;t have an account? Ask your workspace administrator for an invite or security PIN code.
+        </p>
       </div>
     </AuthLayout>
   );

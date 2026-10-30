@@ -35,6 +35,10 @@ export { ForgotPasswordDialog } from "./components/ForgotPasswordDialog";
 export type { ForgotPasswordDialogProps } from "./components/ForgotPasswordDialog";
 export {
   useCurrentUser,
+  useLogin,
+  useCodeLogin,
+  useRegisterWithCode,
+  useVerifyAccessCode,
   useLogout,
   useUpdateProfile,
   useChangePassword,

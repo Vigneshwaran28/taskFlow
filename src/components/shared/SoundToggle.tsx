@@ -37,7 +37,7 @@ export function SoundToggle({ className }: { className?: string }) {
       aria-label={muted ? "Unmute sound alerts" : "Mute sound alerts"}
       className={
         className ||
-        "relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        "relative rounded-lg p-2 text-muted-foreground transition-all duration-150 select-none touch-manipulation cursor-pointer active:scale-95 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       }
     >
       {muted ? <VolumeX className="h-5 w-5 text-muted-foreground/70" aria-hidden="true" /> : <Volume2 className="h-5 w-5 text-primary" aria-hidden="true" />}

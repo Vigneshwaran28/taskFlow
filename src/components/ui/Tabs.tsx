@@ -44,8 +44,8 @@ export function Tabs({ name, label, tabs, active, onChange, children }: TabsProp
             tabIndex={active === item.id ? 0 : -1}
             onClick={() => onChange(item.id)}
             className={cn(
-              "-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-              active === item.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+              "-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium select-none touch-manipulation cursor-pointer transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+              active === item.id ? "border-primary text-primary font-semibold" : "border-transparent text-muted-foreground hover:text-foreground"
             )}
           >
             {item.icon && <item.icon className="h-4 w-4" aria-hidden="true" />}

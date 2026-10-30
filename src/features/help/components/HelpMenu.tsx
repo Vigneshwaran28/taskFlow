@@ -19,12 +19,12 @@ export function HelpMenu() {
   // Closes on a click outside or Esc (a document listener is an external system: an effect is right).
   useEffect(() => {
     if (!open) return;
-    const onDown = (event: MouseEvent) => !ref.current?.contains(event.target as Node) && setOpen(false);
+    const onDown = (event: PointerEvent) => !ref.current?.contains(event.target as Node) && setOpen(false);
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
-    document.addEventListener("mousedown", onDown);
+    document.addEventListener("pointerdown", onDown);
     document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("pointerdown", onDown);
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
@@ -35,7 +35,7 @@ export function HelpMenu() {
     setOpen(false);
     action();
   };
-  const item = "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none";
+  const item = "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none select-none touch-manipulation cursor-pointer transition-colors";
 
   return (
     <div ref={ref} className="relative" data-tour="help">
@@ -46,7 +46,7 @@ export function HelpMenu() {
         aria-haspopup="menu"
         aria-label="Help"
         title="Help"
-        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground select-none touch-manipulation cursor-pointer active:scale-95 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <CircleHelp className="h-5 w-5" aria-hidden="true" />
       </button>

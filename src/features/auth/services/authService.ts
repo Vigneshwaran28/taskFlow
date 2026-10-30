@@ -21,8 +21,20 @@ export const authService = {
     }
   },
 
-  /** `workspace`: the slug when signing in on a workspace's own page (accounts of other workspaces are refused). */
-  login: (credentials: { email: string; password: string; workspace?: string }) => apiClient.post<SessionUser>("/auth/login", credentials),
+  /** `workspace`: the slug or security code when signing in on a workspace's own page. */
+  login: (credentials: { email: string; password: string; workspace?: string; code?: string }) => apiClient.post<SessionUser>("/auth/login", credentials),
+
+  /** Verifies a tenant security PIN/code from the common table across tenants. */
+  verifyCode: (code: string) =>
+    apiClient.post<{ valid: boolean; code: string; tenant: { id: number; name: string; slug: string } }>("/auth/verify-code", { code }),
+
+  /** Logs into a tenant using the tenant security PIN. */
+  codeLogin: (input: { code: string; email?: string; password?: string }) =>
+    apiClient.post<SessionUser>("/auth/code-login", input),
+
+  /** Creates and joins a tenant account using the tenant security PIN. */
+  registerWithCode: (input: { code: string; name: string; email: string; password: string; jobTitle?: string | null }) =>
+    apiClient.post<SessionUser>("/auth/register-with-code", input),
 
   /** A workspace's public sign-in branding (no sign-in needed); 404 for unknown addresses. */
   publicWorkspace: (slug: string, { signal }: { signal?: AbortSignal } = {}) => apiClient.get<PublicWorkspace>(`/public/workspaces/${encodeURIComponent(slug)}`, { signal }),

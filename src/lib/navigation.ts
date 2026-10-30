@@ -3,13 +3,14 @@
 // shareable and survive a refresh.
 import { useParams, usePathname as useRawPathname, useRouter as useNextRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
-import { stripTenant, withTenant } from "./tenantPath";
+import { stripTenant, withTenant, currentWorkspace } from "./tenantPath";
 
 /** The workspace address in the current URL (/acme/...), or null outside workspace pages. */
 export function useTenantSlug(): string | null {
-  const params = useParams<{ tenant?: string | string[] }>();
-  const value = params?.tenant;
-  return typeof value === "string" ? value : null;
+  const params = useParams<{ tenant?: string | string[]; slug?: string | string[] }>();
+  const val = params?.tenant ?? params?.slug;
+  const fromParam = typeof val === "string" ? val : Array.isArray(val) ? val[0] : null;
+  return fromParam || currentWorkspace();
 }
 
 /** Turns app paths ("/billing") into this workspace's URLs ("/acme/billing"). */
@@ -24,7 +25,9 @@ export function useRouter() {
   const toHref = useTenantHref();
   return useMemo(
     () => ({
-      ...router,
+      back: () => router.back(),
+      forward: () => router.forward(),
+      refresh: () => router.refresh(),
       push: (href: string, options?: Parameters<typeof router.push>[1]) => router.push(toHref(href), options),
       replace: (href: string, options?: Parameters<typeof router.replace>[1]) => router.replace(toHref(href), options),
       prefetch: (href: string, options?: Parameters<typeof router.prefetch>[1]) => router.prefetch(toHref(href), options),

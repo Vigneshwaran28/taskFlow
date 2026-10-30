@@ -11,12 +11,36 @@ export function WorkspaceAddressForm({ from = null, collapsible = false }: { fro
   const [open, setOpen] = useState(!collapsible);
   const [address, setAddress] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    const trimmed = address.trim();
+    if (!trimmed) {
+      setError("Enter a workspace address or security PIN.");
+      return;
+    }
+
+    if (trimmed.toUpperCase().startsWith("TF-") || /^\d{6}$/.test(trimmed)) {
+      setLoading(true);
+      try {
+        const { apiClient } = await import("@/lib/apiClient");
+        const res = await apiClient.post<{ valid: boolean; tenant: { slug: string } }>("/auth/verify-code", { code: trimmed });
+        if (res?.valid && res.tenant?.slug) {
+          router.push(`${workspaceLoginPath(res.tenant.slug)}${from ? `?from=${encodeURIComponent(from)}` : ""}`);
+          return;
+        }
+      } catch {
+        setError("Invalid or expired workspace PIN.");
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
+    }
+
     const slug = parseWorkspaceAddress(address);
     if (!slug) {
-      setError("Use the workspace address, e.g. acme (letters, numbers, and dashes).");
+      setError("Use the workspace address (e.g. acme) or security PIN (e.g. TF-749210).");
       return;
     }
     router.push(`${workspaceLoginPath(slug)}${from ? `?from=${encodeURIComponent(from)}` : ""}`);
@@ -36,7 +60,7 @@ export function WorkspaceAddressForm({ from = null, collapsible = false }: { fro
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-1.5 rounded-xl border bg-card p-4">
       <label htmlFor={`${id}-address`} className="text-sm font-medium">
-        Workspace address
+        Workspace address or Security PIN
       </label>
       <div className="flex gap-2">
         <div className="flex min-w-0 flex-1 items-center rounded-lg border border-input bg-card pl-3 text-sm shadow-sm focus-within:ring-2 focus-within:ring-ring">
@@ -49,7 +73,7 @@ export function WorkspaceAddressForm({ from = null, collapsible = false }: { fro
             autoComplete="off"
             autoCapitalize="none"
             spellCheck={false}
-            placeholder="acme"
+            placeholder="acme or TF-749210"
             maxLength={200}
             value={address}
             aria-invalid={Boolean(error)}
@@ -61,7 +85,7 @@ export function WorkspaceAddressForm({ from = null, collapsible = false }: { fro
             className="h-9 min-w-0 flex-1 bg-transparent pr-3 focus-visible:outline-none"
           />
         </div>
-        <Button type="submit" size="md" className="h-9">
+        <Button type="submit" size="md" className="h-9" loading={loading}>
           Go
         </Button>
       </div>

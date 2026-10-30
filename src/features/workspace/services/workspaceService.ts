@@ -30,6 +30,26 @@ export interface WorkspaceOverview {
   recentActivity: { id: number; action: string; target: string | null; actor: string | null; createdAt: string }[] | null;
 }
 
+export interface TenantAccessCode {
+  id: number;
+  tenantId: number;
+  tenantName: string;
+  tenantSlug: string;
+  code: string;
+  name: string;
+  type: string;
+  description: string | null;
+  isActive: boolean;
+  isDeleted: boolean;
+  usageCount: number;
+  maxUses: number | null;
+  expiresAt: string | null;
+  lastUsedAt: string | null;
+  createdBy: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const workspaceService = {
   /** Settings plus which modules are licensed (the session only carries the usable ones). */
   getSettings: ({ signal }: { signal?: AbortSignal } = {}) => apiClient.get<WorkspaceSettingsResponse>("/workspace/settings", { signal }),
@@ -38,4 +58,10 @@ export const workspaceService = {
   updateSettings: (patch: SettingsPatch) => apiClient.patch<WorkspaceSettingsResponse>("/workspace/settings", patch),
 
   overview: ({ signal }: { signal?: AbortSignal } = {}) => apiClient.get<WorkspaceOverview>("/workspace/overview", { signal }),
+
+  /** The workspace security PIN / access code for login and user creation. */
+  getAccessCode: ({ signal }: { signal?: AbortSignal } = {}) => apiClient.get<TenantAccessCode>("/workspace/access-code", { signal }),
+
+  /** Regenerates the workspace security PIN / access code, soft-deleting the old one. */
+  regenerateAccessCode: () => apiClient.post<TenantAccessCode>("/workspace/access-code/regenerate"),
 };

@@ -65,6 +65,9 @@ function useSessionMutation<TInput>(mutationFn: (input: TInput) => Promise<Sessi
 }
 
 export const useLogin = () => useSessionMutation(authService.login);
+export const useCodeLogin = () => useSessionMutation(authService.codeLogin);
+export const useRegisterWithCode = () => useSessionMutation(authService.registerWithCode);
+export const useVerifyAccessCode = () => useMutation({ mutationFn: authService.verifyCode });
 /** Signs out of the workspace this tab shows; other workspaces on this browser stay signed in. */
 export const useLogout = () =>
   useSessionMutation(async () => {

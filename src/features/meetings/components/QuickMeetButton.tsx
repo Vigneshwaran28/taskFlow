@@ -18,9 +18,16 @@ export function QuickMeetButton() {
         setDropdownOpen(false);
       }
     }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setDropdownOpen(false);
+    }
     if (dropdownOpen) {
       document.addEventListener("pointerdown", onPointerDown);
-      return () => document.removeEventListener("pointerdown", onPointerDown);
+      document.addEventListener("keydown", onKeyDown);
+      return () => {
+        document.removeEventListener("pointerdown", onPointerDown);
+        document.removeEventListener("keydown", onKeyDown);
+      };
     }
   }, [dropdownOpen]);
 
@@ -71,7 +78,7 @@ export function QuickMeetButton() {
             <button
               type="button"
               onClick={() => handleInstantMeet("google_meet")}
-              className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-foreground transition hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+              className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-foreground transition select-none touch-manipulation cursor-pointer active:scale-95 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
             >
               <div className="flex items-center gap-2">
                 <PlatformIcon platform="google_meet" />
@@ -83,7 +90,7 @@ export function QuickMeetButton() {
             <button
               type="button"
               onClick={() => handleInstantMeet("zoom")}
-              className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-foreground transition hover:bg-sky-50 dark:hover:bg-sky-950/40"
+              className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-foreground transition select-none touch-manipulation cursor-pointer active:scale-95 hover:bg-sky-50 dark:hover:bg-sky-950/40"
             >
               <div className="flex items-center gap-2">
                 <PlatformIcon platform="zoom" />
@@ -95,7 +102,7 @@ export function QuickMeetButton() {
             <button
               type="button"
               onClick={() => handleInstantMeet("teams")}
-              className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-foreground transition hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+              className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-foreground transition select-none touch-manipulation cursor-pointer active:scale-95 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
             >
               <div className="flex items-center gap-2">
                 <PlatformIcon platform="teams" />
@@ -109,7 +116,7 @@ export function QuickMeetButton() {
             <button
               type="button"
               onClick={() => handleOpenSchedule()}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-primary hover:bg-primary/10 transition"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-primary hover:bg-primary/10 transition select-none touch-manipulation cursor-pointer active:scale-95"
             >
               <CalendarPlus className="h-4 w-4" />
               <span>Schedule & Set 5m Reminder</span>

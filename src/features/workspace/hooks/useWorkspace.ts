@@ -6,7 +6,24 @@ export const workspaceKeys = {
   all: ["workspace"] as const,
   settings: ["workspace", "settings"] as const,
   overview: ["workspace", "overview"] as const,
+  accessCode: ["workspace", "accessCode"] as const,
 };
+
+/** The workspace security PIN / access code for login and user creation. */
+export function useTenantAccessCode({ enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({ queryKey: workspaceKeys.accessCode, queryFn: ({ signal }) => workspaceService.getAccessCode({ signal }), enabled });
+}
+
+/** Regenerates the workspace security PIN / access code. */
+export function useRegenerateTenantAccessCode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: workspaceService.regenerateAccessCode,
+    onSuccess: data => {
+      queryClient.setQueryData(workspaceKeys.accessCode, data);
+    },
+  });
+}
 
 /** Settings with the licensed module list (for the restrictions panel). */
 export function useWorkspaceSettings({ enabled = true }: { enabled?: boolean } = {}) {

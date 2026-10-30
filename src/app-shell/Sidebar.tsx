@@ -130,7 +130,7 @@ function NavItem({
           aria-current={active ? "page" : undefined}
           aria-label={typeof children === "string" ? children : undefined}
           className={cn(
-            "relative flex h-10 w-10 items-center justify-center rounded-xl mx-auto transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "relative flex h-10 w-10 items-center justify-center rounded-xl mx-auto transition-all duration-150 select-none touch-manipulation cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             active
               ? "bg-accent text-accent-foreground font-semibold shadow-xs"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -185,7 +185,7 @@ function NavItem({
       onClick={onClose}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 select-none touch-manipulation cursor-pointer active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         align === "center"
           ? "justify-center text-center gap-2.5"
           : "justify-start text-left gap-3",
@@ -343,7 +343,7 @@ function ListLink({
       onClick={onClose}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 select-none touch-manipulation cursor-pointer active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         align === "center"
           ? "justify-center text-center gap-2.5"
           : "justify-start text-left gap-3",
@@ -510,7 +510,7 @@ function SidebarBody() {
             type="button"
             onClick={onClose}
             aria-label="Close menu"
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
+            className="rounded-lg p-2 text-muted-foreground hover:bg-muted select-none touch-manipulation cursor-pointer active:scale-95 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
