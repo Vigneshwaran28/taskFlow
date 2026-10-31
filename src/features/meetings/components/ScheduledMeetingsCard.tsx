@@ -81,7 +81,6 @@ export function ScheduledMeetingsCard({
 
   function handleCycleMonth() {
     // Advance month by 1 or cycle through
-    setMonthOffset(prev => (prev >= 11 ? 0 : prev + 1));
     const nextMonth = new Date(selectedDate);
     nextMonth.setMonth(nextMonth.getMonth() + 1);
     setSelectedDate(nextMonth);
