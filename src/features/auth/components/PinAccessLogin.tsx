@@ -1,13 +1,13 @@
 "use client";
 import { useState, type FormEvent } from "react";
-import { ArrowRight, CheckCircle2, KeyRound, Lock, UserPlus, LogIn, ChevronLeft } from "lucide-react";
+import { ArrowRight, CheckCircle2, KeyRound, UserPlus, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { FormAlert } from "@/components/shared/States";
 import { fieldErrorsOf, formErrorOf } from "@/lib/apiClient";
 import type { SessionUser } from "@/types/session";
 import { useCodeLogin, useRegisterWithCode, useVerifyAccessCode } from "../hooks/useAuth";
-import { rememberWorkspace, workspaceLoginPath } from "../utils/rememberedWorkspace";
+import { rememberWorkspace } from "../utils/rememberedWorkspace";
 
 export interface PinAccessLoginProps {
   onSuccess: (user: SessionUser | null) => void;
@@ -16,7 +16,7 @@ export interface PinAccessLoginProps {
 
 type Mode = "verify" | "login" | "register";
 
-export function PinAccessLogin({ onSuccess, from }: PinAccessLoginProps) {
+export function PinAccessLogin({ onSuccess }: PinAccessLoginProps) {
   const verify = useVerifyAccessCode();
   const codeLogin = useCodeLogin();
   const registerWithCode = useRegisterWithCode();
@@ -42,7 +42,7 @@ export function PinAccessLogin({ onSuccess, from }: PinAccessLoginProps) {
     setClientError(null);
     const cleanCode = code.trim();
     if (!cleanCode) {
-      setClientError("Enter your workspace security PIN or access code.");
+      setClientError("Enter your workspace security PIN or personal login access code.");
       return;
     }
 
@@ -50,7 +50,25 @@ export function PinAccessLogin({ onSuccess, from }: PinAccessLoginProps) {
       onSuccess: data => {
         setTenant(data.tenant);
         rememberWorkspace(data.tenant.slug);
-        setMode("login");
+        if (data.type === "user" && data.user) {
+          setEmail(data.user.email);
+          // Directly log in user with their personal login access code
+          codeLogin.mutate(
+            { code: cleanCode },
+            {
+              onSuccess: user => {
+                rememberWorkspace(data.tenant.slug ?? user?.tenant?.slug);
+                onSuccess(user);
+              },
+              onError: () => {
+                // If password is required by security policy, gracefully switch to password input
+                setMode("login");
+              },
+            }
+          );
+        } else {
+          setMode("login");
+        }
       },
     });
   }
@@ -123,9 +141,9 @@ export function PinAccessLogin({ onSuccess, from }: PinAccessLoginProps) {
           <KeyRound className="h-4 w-4" aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-foreground">Workspace Security PIN Access</h2>
+          <h2 className="text-sm font-semibold text-foreground">Workspace PIN & Login Code Access</h2>
           <p className="text-xs text-muted-foreground truncate">
-            {tenant ? `Connected to ${tenant.name}` : "Sign in or register using your workspace PIN"}
+            {tenant ? `Connected to ${tenant.name}` : "Sign in directly with your login code or workspace PIN"}
           </p>
         </div>
       </div>
@@ -137,7 +155,7 @@ export function PinAccessLogin({ onSuccess, from }: PinAccessLoginProps) {
         <form onSubmit={handleVerify} noValidate className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="access-pin-input" className="text-xs font-medium text-foreground">
-              Security PIN / Access Code
+              Security PIN or Login Key Code
             </label>
             <input
               id="access-pin-input"
@@ -155,12 +173,12 @@ export function PinAccessLogin({ onSuccess, from }: PinAccessLoginProps) {
               className="h-10 rounded-lg border border-input bg-background px-3 font-mono text-base font-semibold tracking-wider text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <p className="text-xs text-muted-foreground">
-              Your tenant administrator can provide this PIN code from workspace settings.
+              Enter your personal TF-XXXXXX login key code or your workspace security PIN.
             </p>
           </div>
 
-          <Button type="submit" size="md" loading={verify.isPending} className="mt-1 w-full">
-            <span>Find Workspace</span>
+          <Button type="submit" size="md" loading={verify.isPending || codeLogin.isPending} className="mt-1 w-full">
+            <span>Sign in with Code</span>
             <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
           </Button>
         </form>

@@ -1,7 +1,6 @@
 "use client";
 import Link from "@/components/navigation/Link";
 import { useSearchParams } from "next/navigation";
-import { useRouter } from "@/lib/navigation";
 import { withTenant } from "@/lib/tenantPath";
 import { ArrowRight } from "lucide-react";
 import { useState } from "react";
@@ -31,7 +30,6 @@ function ContinueToWorkspace({ slug, from }: { slug: string; from: string | null
 }
 
 export function LoginPage() {
-  const router = useRouter();
   const params = useSearchParams();
   const from = params.get("from");
   const redirectTo = safeRedirect(from);
@@ -40,7 +38,8 @@ export function LoginPage() {
   const [authMode, setAuthMode] = useState<"standard" | "pin">("standard");
 
   const handleSuccess = (user: { tenant?: { slug?: string } } | null) => {
-    router.replace(user?.tenant?.slug ? withTenant(user.tenant.slug, redirectTo) : "/");
+    const dest = user?.tenant?.slug ? withTenant(user.tenant.slug, redirectTo) : "/";
+    window.location.href = dest;
   };
 
   return (

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { ApiError, fieldErrorsOf, formErrorOf } from "@/lib/apiClient";
 import type { SessionUser } from "@/types/session";
-import { useLogin } from "../hooks/useAuth";
+import { useCodeLogin, useLogin } from "../hooks/useAuth";
 import { rememberWorkspace, workspaceLoginPath } from "../utils/rememberedWorkspace";
 import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
 
@@ -61,14 +61,16 @@ export interface LoginFormProps {
 
 export function LoginForm({ onSuccess, workspace, from }: LoginFormProps) {
   const login = useLogin();
+  const codeLogin = useCodeLogin();
   const [values, setValues] = useState({ email: "", password: "" });
   const [clientErrors, setClientErrors] = useState<{ email?: string; password?: string }>({});
   const [forgotOpen, setForgotOpen] = useState(false);
   // Several workspaces accepted this email and password: kept until the person edits the form again.
   const [choices, setChoices] = useState<WorkspaceChoice[] | null>(null);
   const [picking, setPicking] = useState<string | null>(null);
-  const errors = { ...fieldErrorsOf(login.error), ...clientErrors };
-  const formError = workspaceChoicesOf(login.error) ? null : formErrorOf(login.error);
+  const activeError = login.error || codeLogin.error;
+  const errors = { ...fieldErrorsOf(activeError), ...clientErrors };
+  const formError = workspaceChoicesOf(activeError) ? null : formErrorOf(activeError);
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
@@ -76,6 +78,7 @@ export function LoginForm({ onSuccess, workspace, from }: LoginFormProps) {
     setClientErrors(current => ({ ...current, [name]: undefined }));
     setChoices(null);
     if (login.error) login.reset();
+    if (codeLogin.error) codeLogin.reset();
   }
 
   function signIn(email: string, slug: string | undefined) {
@@ -98,33 +101,75 @@ export function LoginForm({ onSuccess, workspace, from }: LoginFormProps) {
   }
 
   function pickWorkspace(slug: string) {
-    if (login.isPending) return;
+    if (login.isPending || codeLogin.isPending) return;
     setPicking(slug);
     signIn(values.email.trim(), slug);
   }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (login.isPending) return;
-    const email = values.email.trim();
+    if (login.isPending || codeLogin.isPending) return;
+    const inputVal = values.email.trim();
+    if (!inputVal) {
+      setClientErrors({ email: "Email or login key code is required." });
+      return;
+    }
+
+    // Direct Login Key Code handling (TF-XXXXXX or 6-digit PIN)
+    if (inputVal.toUpperCase().startsWith("TF-") || /^\d{6}$/.test(inputVal)) {
+      codeLogin.mutate(
+        { code: inputVal.toUpperCase(), password: values.password || undefined },
+        {
+          onSuccess: user => {
+            rememberWorkspace(workspace ?? user?.tenant?.slug);
+            onSuccess(user);
+          },
+          onError: err => {
+            setClientErrors({ email: formErrorOf(err) ?? err.message });
+          },
+        }
+      );
+      return;
+    }
+
     const nextErrors: { email?: string; password?: string } = {};
-    if (!email) nextErrors.email = "Email is required.";
-    else if (!EMAIL.test(email)) nextErrors.email = "Enter a valid email address.";
+    if (!EMAIL.test(inputVal)) nextErrors.email = "Enter a valid email address or login code.";
     if (!values.password) nextErrors.password = "Password is required.";
     setClientErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
     setChoices(null);
-    signIn(email, workspace);
+    signIn(inputVal, workspace);
   }
+
+  const isEnteringCode = values.email.trim().toUpperCase().startsWith("TF-") || /^\d{6}$/.test(values.email.trim());
 
   return (
     <>
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         <FormAlert message={formError} />
         {choices && !workspace && <ChooseWorkspace choices={choices} pending={picking} from={from} onPick={pickWorkspace} />}
-        <TextField label="Email" name="email" type="email" autoComplete="email" autoFocus value={values.email} error={errors.email} onChange={handleChange} />
+        <TextField
+          label="Email or Login Key Code"
+          name="email"
+          type="text"
+          autoComplete="username"
+          autoFocus
+          placeholder="you@company.com or TF-XXXXXX"
+          value={values.email}
+          error={errors.email}
+          onChange={handleChange}
+        />
         <div className="flex flex-col gap-1.5">
-          <TextField label="Password" name="password" type="password" autoComplete="current-password" value={values.password} error={errors.password} onChange={handleChange} />
+          <TextField
+            label="Password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            hint={isEnteringCode ? "Optional if signing in with your access code" : undefined}
+            value={values.password}
+            error={errors.password}
+            onChange={handleChange}
+          />
           <button
             type="button"
             onClick={() => setForgotOpen(true)}
@@ -133,7 +178,7 @@ export function LoginForm({ onSuccess, workspace, from }: LoginFormProps) {
             Forgot password?
           </button>
         </div>
-        <Button type="submit" size="lg" loading={login.isPending} className="mt-1 w-full">
+        <Button type="submit" size="lg" loading={login.isPending || codeLogin.isPending} className="mt-1 w-full">
           Sign in
         </Button>
       </form>

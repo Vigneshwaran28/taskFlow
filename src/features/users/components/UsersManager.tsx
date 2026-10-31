@@ -111,6 +111,17 @@ export function UsersManager() {
     );
   }
 
+  function toggleCodeLogin(user: ManagedUser) {
+    const next = user.isCodeLoginEnabled === false;
+    updateUser.mutate(
+      { id: user.id, changes: { isCodeLoginEnabled: next } },
+      {
+        onSuccess: () => toast.success(next ? `Code login enabled for ${user.name}` : `Code login disabled for ${user.name}`),
+        onError: err => toast.error("Couldn't change code login status", err.message),
+      }
+    );
+  }
+
   function copyLoginCode(code: string, userName: string) {
     if (!code) return;
     navigator.clipboard.writeText(code);
@@ -218,8 +229,13 @@ export function UsersManager() {
                       {user.isActive && user.mustChangePassword && <Badge tone="warning">Temporary password</Badge>}
                       {user.loginCode && (
                         <span
-                          className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-mono font-medium text-amber-800 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-300 shadow-2xs"
-                          title={`Login key code for ${user.name}`}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-mono font-medium shadow-2xs",
+                            user.isCodeLoginEnabled === false
+                              ? "border-muted bg-muted/40 text-muted-foreground line-through opacity-75"
+                              : "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-300"
+                          )}
+                          title={`Login key code for ${user.name}${user.isCodeLoginEnabled === false ? " (disabled for this user)" : " (enabled)"}`}
                         >
                           <KeyRound className="h-3 w-3 opacity-70" aria-hidden="true" />
                           <span className="font-semibold tracking-wider">Key: {user.loginCode}</span>
@@ -253,6 +269,31 @@ export function UsersManager() {
                             <RefreshCw className={cn("h-3 w-3 opacity-70 hover:opacity-100", regenerateLoginCode.isPending && regeneratingUser?.id === user.id && "animate-spin")} />
                           </button>
                         </span>
+                      )}
+                      {user.isCodeLoginEnabled === false ? (
+                        <button
+                          type="button"
+                          onClick={e => {
+                            e.stopPropagation();
+                            toggleCodeLogin(user);
+                          }}
+                          className="rounded-md border border-destructive/20 bg-destructive/10 px-1.5 py-0.5 text-[11px] font-medium text-destructive hover:bg-destructive/20 transition-colors cursor-pointer"
+                          title="Click to enable code login for this user"
+                        >
+                          Code login disabled
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={e => {
+                            e.stopPropagation();
+                            toggleCodeLogin(user);
+                          }}
+                          className="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                          title="Click to disable code login for this user"
+                        >
+                          Code enabled
+                        </button>
                       )}
                     </p>
                     <p className="truncate text-sm text-muted-foreground">

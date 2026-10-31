@@ -1,6 +1,5 @@
-"use client";
 import { useState, type FormEvent } from "react";
-import { KeyRound } from "lucide-react";
+import { Check, Copy, KeyRound, RefreshCw } from "lucide-react";
 import { FormAlert, LoadingState } from "@/components/shared/States";
 import { useToast } from "@/components/shared/Toaster";
 import { Button } from "@/components/ui/Button";
@@ -12,7 +11,7 @@ import { useAllowedEmailDomains, usePasswordRule } from "@/features/auth";
 import { fieldErrorsOf, formErrorOf } from "@/lib/apiClient";
 import { yearsSince } from "@/lib/dates";
 import { localDay } from "@/lib/format";
-import { useCreateUser, useResetUserPassword, useUpdateUser } from "../hooks/useUsers";
+import { useCreateUser, useRegenerateUserLoginCode, useResetUserPassword, useUpdateUser } from "../hooks/useUsers";
 import type { ManagedUser } from "../services/userService";
 import { RolePicker } from "./RolePicker";
 
@@ -39,6 +38,7 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const resetPassword = useResetUserPassword();
+  const regenerateCode = useRegenerateUserLoginCode();
   const { data: access, isPending: loadingRoles } = useRoles();
   const mutation = isEdit ? updateUser : createUser;
   const passwordRule = usePasswordRule();
@@ -52,6 +52,10 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
     joinedOn: user?.joinedOn ?? "",
     password: "",
   });
+  const [isCodeLoginEnabled, setIsCodeLoginEnabled] = useState(user ? user.isCodeLoginEnabled !== false : true);
+  const [loginCode, setLoginCode] = useState(user?.loginCode ?? null);
+  const [copiedCode, setCopiedCode] = useState(false);
+
   // null = default (Member) until roles load
   const [roleIds, setRoleIds] = useState<number[] | null>(user?.roles.map(role => role.id) ?? null);
   const [clientErrors, setClientErrors] = useState<Partial<Record<ErrorKey, string>>>({});
@@ -97,7 +101,13 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
     setClientErrors(next);
     if (Object.keys(next).length) return;
 
-    const base = { name: values.name.trim(), jobTitle: values.jobTitle.trim() || null, dateOfBirth: values.dateOfBirth || null, joinedOn: values.joinedOn || null };
+    const base = {
+      name: values.name.trim(),
+      jobTitle: values.jobTitle.trim() || null,
+      dateOfBirth: values.dateOfBirth || null,
+      joinedOn: values.joinedOn || null,
+      isCodeLoginEnabled,
+    };
     if (user) {
       const rolesChanged =
         [...selected].sort((a, b) => a - b).join() !==
@@ -105,8 +115,9 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
           .map(role => role.id)
           .sort((a, b) => a - b)
           .join();
+      const codeChanged = isCodeLoginEnabled !== (user.isCodeLoginEnabled !== false);
       updateUser.mutate(
-        { id: user.id, changes: rolesChanged ? { ...base, roleIds: selected } : base },
+        { id: user.id, changes: { ...base, ...(rolesChanged ? { roleIds: selected } : {}), ...(codeChanged ? { isCodeLoginEnabled } : {}) } },
         {
           onSuccess: () => {
             toast.success("User updated", rolesChanged ? "New access applies immediately." : undefined);
@@ -116,7 +127,7 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
       );
     } else {
       createUser.mutate(
-        { ...base, email: values.email.trim(), password: values.password, roleIds: selected },
+        { ...base, email: values.email.trim(), password: values.password, roleIds: selected, isCodeLoginEnabled },
         {
           onSuccess: created => {
             toast.success(`${created.name} can now sign in`, "Share their email and temporary password; they'll choose their own at first sign-in.");
@@ -148,6 +159,17 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
         },
       }
     );
+  }
+
+  function handleRegenerateCode() {
+    if (!user || regenerateCode.isPending) return;
+    regenerateCode.mutate(user.id, {
+      onSuccess: res => {
+        setLoginCode(res.loginCode);
+        toast.success("Login access code regenerated", res.loginCode);
+      },
+      onError: err => toast.error("Couldn't regenerate code", err.message),
+    });
   }
 
   return (
@@ -221,6 +243,20 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
               />
             </div>
           )}
+
+          <label className="flex items-start gap-2 pt-1 text-sm">
+            <input
+              type="checkbox"
+              checked={isCodeLoginEnabled}
+              onChange={event => setIsCodeLoginEnabled(event.target.checked)}
+              className="mt-0.5 h-4 w-4 accent-primary"
+            />
+            <span>
+              Enable login with access code / PIN
+              <span className="block text-xs text-muted-foreground">Allows this user to sign in using their unique personal access code.</span>
+            </span>
+          </label>
+
           {loadingRoles ? (
             <LoadingState label="Loading roles…" className="py-6" />
           ) : (
@@ -238,26 +274,50 @@ export function UserFormDialog({ user = null, currentUserId, onClose }: UserForm
           {user && user.id === currentUserId && <p className="text-xs text-muted-foreground">Changing your own roles can remove your access to this page.</p>}
         </form>
 
-        {user && user.loginCode && (
-          <div className="flex items-center justify-between rounded-lg border border-amber-500/25 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-900 dark:text-amber-200">
-            <div className="flex items-center gap-2">
-              <KeyRound className="h-4 w-4 text-amber-700 dark:text-amber-400" />
-              <span>
-                Login key code: <strong className="font-mono text-sm tracking-wider font-semibold">{user.loginCode}</strong>
-              </span>
+        {user && loginCode && (
+          <div className="flex flex-col gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 p-3.5 text-xs text-amber-900 dark:text-amber-200">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <KeyRound className="h-4 w-4 text-amber-700 dark:text-amber-400" />
+                <span>
+                  Login access code: <strong className="font-mono text-sm tracking-wider font-semibold">{loginCode}</strong>
+                </span>
+                {!isCodeLoginEnabled && (
+                  <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-semibold text-destructive">Disabled</span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs text-amber-800 dark:text-amber-200 hover:bg-amber-500/20"
+                  onClick={() => {
+                    navigator.clipboard.writeText(loginCode);
+                    setCopiedCode(true);
+                    setTimeout(() => setCopiedCode(false), 2000);
+                    toast.success("Copied login key code", loginCode);
+                  }}
+                >
+                  {copiedCode ? <Check className="mr-1 h-3.5 w-3.5 text-success" /> : <Copy className="mr-1 h-3.5 w-3.5" />}
+                  {copiedCode ? "Copied" : "Copy code"}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  loading={regenerateCode.isPending}
+                  className="h-7 text-xs text-amber-800 dark:text-amber-200 hover:bg-amber-500/20"
+                  onClick={handleRegenerateCode}
+                >
+                  <RefreshCw className="mr-1 h-3 w-3" />
+                  Reset code
+                </Button>
+              </div>
             </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="h-7 text-xs text-amber-800 dark:text-amber-200 hover:bg-amber-500/20"
-              onClick={() => {
-                navigator.clipboard.writeText(user.loginCode!);
-                toast.success("Copied login key code", user.loginCode!);
-              }}
-            >
-              Copy code
-            </Button>
+            <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
+              Unique PIN indexed in the central registry. Used for direct member sign-in.
+            </p>
           </div>
         )}
 

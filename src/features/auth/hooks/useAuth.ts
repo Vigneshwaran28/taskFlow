@@ -105,7 +105,7 @@ export function useChangePassword() {
     onSuccess: () => {
       const user = queryClient.getQueryData<SessionUser | null>(authKeys.session(currentWorkspace()));
       if (user?.mustChangePassword) {
-        setCurrentSession(queryClient, { ...user, mustChangePassword: false });
+        setCurrentSession(queryClient, { ...user, mustChangePassword: false, isCodeLogin: false });
         // Queries that failed while the password was temporary can run now.
         queryClient.invalidateQueries({ predicate: query => query.queryKey[0] !== "auth" });
       }

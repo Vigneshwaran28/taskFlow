@@ -2,9 +2,11 @@
 import { useRouter } from "@/lib/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
-import { parseWorkspaceAddress, workspaceLoginPath } from "../utils/rememberedWorkspace";
+import { withTenant } from "@/lib/tenantPath";
+import type { SessionUser } from "@/types/session";
+import { parseWorkspaceAddress, rememberWorkspace, safeRedirect, workspaceLoginPath } from "../utils/rememberedWorkspace";
 
-/** "Signing in to a specific workspace?": type its address, go to its own sign-in page. */
+/** "Signing in to a specific workspace?": type its address, go to its own sign-in page, or log in with code. */
 export function WorkspaceAddressForm({ from = null, collapsible = false }: { from?: string | null; collapsible?: boolean }) {
   const router = useRouter();
   const id = useId();
@@ -17,7 +19,7 @@ export function WorkspaceAddressForm({ from = null, collapsible = false }: { fro
     event.preventDefault();
     const trimmed = address.trim();
     if (!trimmed) {
-      setError("Enter a workspace address or security PIN.");
+      setError("Enter a workspace address or login access code.");
       return;
     }
 
@@ -25,13 +27,28 @@ export function WorkspaceAddressForm({ from = null, collapsible = false }: { fro
       setLoading(true);
       try {
         const { apiClient } = await import("@/lib/apiClient");
-        const res = await apiClient.post<{ valid: boolean; tenant: { slug: string } }>("/auth/verify-code", { code: trimmed });
-        if (res?.valid && res.tenant?.slug) {
-          router.push(`${workspaceLoginPath(res.tenant.slug)}${from ? `?from=${encodeURIComponent(from)}` : ""}`);
+        // Attempt direct user login using the unique code
+        const loggedInUser = await apiClient.post<SessionUser>("/auth/code-login", { code: trimmed });
+        if (loggedInUser?.tenant?.slug) {
+          rememberWorkspace(loggedInUser.tenant.slug);
+          window.location.href = withTenant(loggedInUser.tenant.slug, safeRedirect(from));
           return;
         }
-      } catch {
-        setError("Invalid or expired workspace PIN.");
+      } catch (err: unknown) {
+        // If not direct user login (e.g. requires password or tenant-level PIN), verify code
+        try {
+          const { apiClient } = await import("@/lib/apiClient");
+          const res = await apiClient.post<{ valid: boolean; tenant: { slug: string } }>("/auth/verify-code", { code: trimmed });
+          if (res?.valid && res.tenant?.slug) {
+            router.push(`${workspaceLoginPath(res.tenant.slug)}${from ? `?from=${encodeURIComponent(from)}` : ""}`);
+            return;
+          }
+        } catch {
+          setError(err instanceof Error ? err.message : "Invalid or expired login code / PIN.");
+          setLoading(false);
+          return;
+        }
+        setError(err instanceof Error ? err.message : "Invalid or expired login code / PIN.");
         setLoading(false);
         return;
       }
@@ -40,7 +57,7 @@ export function WorkspaceAddressForm({ from = null, collapsible = false }: { fro
 
     const slug = parseWorkspaceAddress(address);
     if (!slug) {
-      setError("Use the workspace address (e.g. acme) or security PIN (e.g. TF-749210).");
+      setError("Use the workspace address (e.g. acme) or login code (e.g. TF-491297).");
       return;
     }
     router.push(`${workspaceLoginPath(slug)}${from ? `?from=${encodeURIComponent(from)}` : ""}`);

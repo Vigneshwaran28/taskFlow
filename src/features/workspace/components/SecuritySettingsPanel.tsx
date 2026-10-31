@@ -42,12 +42,23 @@ export function SecuritySettingsPanel({ onDirtyChange }: SecuritySettingsPanelPr
   return <SecurityForm key={JSON.stringify(data.settings.security)} security={data.settings.security} licensed={data.licensed} onDirtyChange={onDirtyChange} />;
 }
 
+const ACTIVE_SESSION_OPTIONS = [
+  { value: "", label: "Unlimited concurrent sessions" },
+  { value: "1", label: "1 session (strict single device)" },
+  { value: "2", label: "2 concurrent sessions" },
+  { value: "3", label: "3 concurrent sessions" },
+  { value: "5", label: "5 concurrent sessions" },
+  { value: "10", label: "10 concurrent sessions" },
+];
+
 function SecurityForm({ security, licensed, onDirtyChange }: { security: Security; licensed: FeatureKey[]; onDirtyChange?: (dirty: boolean) => void }) {
   const toast = useToast();
   const update = useUpdateWorkspaceSettings();
   const [minLength, setMinLength] = useState(String(security.passwordMinLength));
   const [requireMixed, setRequireMixed] = useState(security.passwordRequireMixed);
   const [sessionHours, setSessionHours] = useState(String(security.sessionHours));
+  const [maxActiveSessions, setMaxActiveSessions] = useState(security.maxActiveSessions != null ? String(security.maxActiveSessions) : "");
+  const [allowCodeLogin, setAllowCodeLogin] = useState(security.allowCodeLogin !== false);
   const [domains, setDomains] = useState(security.allowedEmailDomains.join(", "));
   const [enabled, setEnabled] = useState<FeatureKey[]>(licensed.filter(key => !security.disabledModules.includes(key)));
   const [errors, setErrors] = useState<{ minLength?: string; domains?: string; modules?: string }>({});
@@ -56,6 +67,8 @@ function SecurityForm({ security, licensed, onDirtyChange }: { security: Securit
     minLength !== String(security.passwordMinLength) ||
     requireMixed !== security.passwordRequireMixed ||
     sessionHours !== String(security.sessionHours) ||
+    maxActiveSessions !== (security.maxActiveSessions != null ? String(security.maxActiveSessions) : "") ||
+    allowCodeLogin !== (security.allowCodeLogin !== false) ||
     parseDomains(domains).join() !== security.allowedEmailDomains.join() ||
     [...enabled].sort().join() !== licensed.filter(key => !security.disabledModules.includes(key)).sort().join();
 
@@ -89,6 +102,8 @@ function SecurityForm({ security, licensed, onDirtyChange }: { security: Securit
           passwordMinLength: length,
           passwordRequireMixed: requireMixed,
           sessionHours: Number(sessionHours),
+          maxActiveSessions: maxActiveSessions ? Number(maxActiveSessions) : null,
+          allowCodeLogin,
           allowedEmailDomains: domainList,
           disabledModules: licensed.filter(key => !enabled.includes(key)),
         },
@@ -129,7 +144,7 @@ function SecurityForm({ security, licensed, onDirtyChange }: { security: Securit
       </fieldset>
 
       <fieldset className="flex flex-col gap-3">
-        <legend className="mb-1 text-sm font-semibold">Sign-in</legend>
+        <legend className="mb-1 text-sm font-semibold">Sign-in &amp; Active Sessions</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectField
             label="Sessions last"
@@ -138,17 +153,39 @@ function SecurityForm({ security, licensed, onDirtyChange }: { security: Securit
             hint="After this, people sign in again. Shortening it also ends older sessions."
             onChange={event => setSessionHours(event.target.value)}
           />
+          <SelectField
+            label="Max active sessions per user"
+            options={ACTIVE_SESSION_OPTIONS}
+            value={maxActiveSessions}
+            hint="When exceeded on a new device, the oldest session is automatically ended."
+            onChange={event => setMaxActiveSessions(event.target.value)}
+          />
           <TextField
             label="Allowed email domains"
             placeholder="example.com, example.in"
             value={domains}
             error={errors.domains}
+            className="sm:col-span-2"
             hint="New and imported accounts must use one of these. Leave empty to allow any."
             onChange={event => {
               setDomains(event.target.value);
               setErrors(current => ({ ...current, domains: undefined }));
             }}
           />
+          <label className="flex items-start gap-2 pt-2 text-sm sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={allowCodeLogin}
+              onChange={event => setAllowCodeLogin(event.target.checked)}
+              className="mt-0.5 h-4 w-4 accent-primary"
+            />
+            <span>
+              Enable login with access codes &amp; security PINs
+              <span className="block text-xs text-muted-foreground">
+                Allows tenant members to sign in directly with their personal login access code or workspace PIN.
+              </span>
+            </span>
+          </label>
         </div>
       </fieldset>
 

@@ -10,6 +10,14 @@ export interface ProfileInput {
   avatarUrl?: string | null;
 }
 
+export interface VerifyCodeResult {
+  valid: boolean;
+  type: "user" | "tenant";
+  code: string;
+  user: { id: number; name: string; email: string } | null;
+  tenant: { id: number; name: string; slug: string };
+}
+
 export const authService = {
   /** Current user, or null when signed out. */
   async me({ signal }: { signal?: AbortSignal } = {}): Promise<SessionUser | null> {
@@ -26,7 +34,7 @@ export const authService = {
 
   /** Verifies a tenant security PIN/code from the common table across tenants. */
   verifyCode: (code: string) =>
-    apiClient.post<{ valid: boolean; code: string; tenant: { id: number; name: string; slug: string } }>("/auth/verify-code", { code }),
+    apiClient.post<VerifyCodeResult>("/auth/verify-code", { code }),
 
   /** Logs into a tenant using the tenant security PIN. */
   codeLogin: (input: { code: string; email?: string; password?: string }) =>
@@ -56,5 +64,5 @@ export const authService = {
   /** Saves appearance preferences and the home layout on the account (so they follow the person to any device). */
   updatePreferences: (preferences: AccountPreferences) => apiClient.patch<AccountPreferences>("/auth/me/preferences", preferences),
 
-  changePassword: (input: { currentPassword: string; newPassword: string }) => apiClient.post<null>("/auth/me/password", input),
+  changePassword: (input: { currentPassword?: string; newPassword: string }) => apiClient.post<null>("/auth/me/password", input),
 };

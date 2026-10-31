@@ -21,6 +21,8 @@ export function ForcePasswordChange() {
   const [clientErrors, setClientErrors] = useState<Partial<Record<keyof Values, string>>>({});
   const errors = { ...fieldErrorsOf(changePassword.error), ...clientErrors };
 
+  const isCodeFirstTime = Boolean(user?.isCodeLogin && user?.mustChangePassword);
+
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
     setValues(current => ({ ...current, [name]: value }));
@@ -32,23 +34,69 @@ export function ForcePasswordChange() {
     event.preventDefault();
     if (changePassword.isPending) return;
     const next: Partial<Record<keyof Values, string>> = {};
-    if (!values.currentPassword) next.currentPassword = "Enter the temporary password you signed in with.";
+    if (!isCodeFirstTime && !values.currentPassword) {
+      next.currentPassword = "Enter the temporary password you signed in with.";
+    }
     const problem = passwordRule.problem(values.newPassword);
-    if (problem) next.newPassword = problem;
-    else if (values.newPassword === values.currentPassword) next.newPassword = "Choose a password different from the temporary one.";
+    if (problem) {
+      next.newPassword = problem;
+    } else if (!isCodeFirstTime && values.newPassword === values.currentPassword) {
+      next.newPassword = "Choose a password different from the temporary one.";
+    }
     if (values.confirm !== values.newPassword) next.confirm = "The passwords don't match.";
     setClientErrors(next);
     if (Object.keys(next).length) return;
-    changePassword.mutate({ currentPassword: values.currentPassword, newPassword: values.newPassword });
+    changePassword.mutate(
+      isCodeFirstTime
+        ? { newPassword: values.newPassword }
+        : { currentPassword: values.currentPassword, newPassword: values.newPassword }
+    );
   }
 
+  const subtitle = isCodeFirstTime
+    ? `Welcome${user?.name ? `, ${user.name.split(" ")[0]}` : ""}. Set your personal password to get started.`
+    : `Welcome${user?.name ? `, ${user.name.split(" ")[0]}` : ""}. You signed in with a temporary password; pick your own to continue.`;
+
   return (
-    <WorkspaceAuthShell slug={user?.tenant?.slug} title="Choose your password" subtitle={`Welcome${user?.name ? `, ${user.name.split(" ")[0]}` : ""}. You signed in with a temporary password; pick your own to continue.`}>
+    <WorkspaceAuthShell
+      slug={user?.tenant?.slug}
+      title={isCodeFirstTime ? "Create your password" : "Choose your password"}
+      subtitle={subtitle}
+    >
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         <FormAlert message={formErrorOf(changePassword.error)} />
-        <TextField label="Temporary password" name="currentPassword" type="password" autoComplete="current-password" autoFocus value={values.currentPassword} error={errors.currentPassword} onChange={handleChange} />
-        <TextField label="New password" name="newPassword" type="password" autoComplete="new-password" hint={passwordRule.hint} value={values.newPassword} error={errors.newPassword} onChange={handleChange} />
-        <TextField label="Confirm new password" name="confirm" type="password" autoComplete="new-password" value={values.confirm} error={errors.confirm} onChange={handleChange} />
+        {!isCodeFirstTime && (
+          <TextField
+            label="Temporary password"
+            name="currentPassword"
+            type="password"
+            autoComplete="current-password"
+            autoFocus
+            value={values.currentPassword}
+            error={errors.currentPassword}
+            onChange={handleChange}
+          />
+        )}
+        <TextField
+          label="New password"
+          name="newPassword"
+          type="password"
+          autoComplete="new-password"
+          autoFocus={isCodeFirstTime}
+          hint={passwordRule.hint}
+          value={values.newPassword}
+          error={errors.newPassword}
+          onChange={handleChange}
+        />
+        <TextField
+          label="Confirm new password"
+          name="confirm"
+          type="password"
+          autoComplete="new-password"
+          value={values.confirm}
+          error={errors.confirm}
+          onChange={handleChange}
+        />
         <Button type="submit" size="lg" loading={changePassword.isPending} className="mt-2 w-full">
           <KeyRound className="h-4 w-4" aria-hidden="true" />
           Save and continue

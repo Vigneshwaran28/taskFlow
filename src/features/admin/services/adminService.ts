@@ -636,7 +636,36 @@ export const adminService = {
   getDatabaseSchema: ({ signal }: Signal = {}) => apiClient.get<DatabaseSchema>("/bunny/databases/schema", { signal }),
 
   getTenantDatabase: (id: number, { signal }: Signal = {}) => apiClient.get<TenantDatabaseInfo>(`/bunny/databases/tenants/${id}`, { signal }),
+
+  /** Tenant admin password reset requests across all workspaces */
+  async passwordRequests({ signal }: Signal = {}): Promise<TenantAdminPasswordRequest[]> {
+    const data = await apiClient.get<TenantAdminPasswordRequest[] | null>("/bunny/password-requests", { signal });
+    return Array.isArray(data) ? data : [];
+  },
+
+  /** Issue a secure one-time password reset link for a tenant admin or user in /bunny */
+  createResetLink: ({ id, tenantId, expiresInHours = 24 }: { id: number; tenantId?: number; expiresInHours?: number }) =>
+    apiClient.post<ResetLink>(`/bunny/users/${id}/reset-link`, { expiresInHours, tenantId }),
+
+  dismissPasswordRequest: (id: number) => apiClient.post<null>(`/bunny/password-requests/${id}/dismiss`),
 };
+
+export interface TenantAdminPasswordRequest {
+  id: number;
+  status: "requested" | "issued" | "used" | "dismissed" | "expired";
+  requestedAt: string | null;
+  requestedIp: string | null;
+  issuedAt: string | null;
+  expiresAt: string | null;
+  user: { id: number; name: string; email: string; jobTitle: string | null };
+  tenant: { id: number; name: string; slug: string };
+}
+
+export interface ResetLink {
+  url: string;
+  token: string;
+  expiresAt: string;
+}
 
 // ---- Maintenance windows (server: routes/adminMaintenance.js) ----
 export type MaintenanceState = "off" | "scheduled" | "active" | "ended";

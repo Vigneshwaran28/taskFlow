@@ -13,6 +13,7 @@ import { useAdminOverview } from "../hooks/useAdmin";
 import type { OverviewAll, OverviewTenant, TableModule, TableSummary, TenantCard } from "../services/adminService";
 import { moduleMeta, TABLE_ICONS } from "../utils/tableMeta";
 import { TenantStatusPill } from "./TenantStatusPill";
+import { TenantAdminPasswordRequestsPanel } from "./TenantAdminPasswordRequestsPanel";
 import type { TenantFilter } from "./TenantsView";
 
 export interface AdminOverviewProps {
@@ -99,6 +100,8 @@ function AllTenantsOverview({ data, onOpenTenant, onOpenTenants }: { data: Overv
           <StatCard label="In the recycle bin" value={totals.recycleBin} icon={Trash2} tone="primary" hint="Deleted, restorable" />
         </button>
       </div>
+
+      <TenantAdminPasswordRequestsPanel />
 
       <section aria-labelledby="overview-tenants-heading" className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -204,6 +207,7 @@ function TenantOverview({ data, onOpenTable, onOpenUsers }: { data: OverviewTena
 
   return (
     <div className="flex flex-col gap-6">
+      <TenantAdminPasswordRequestsPanel />
       <section aria-label={`${tenant.name} summary`} className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-5">
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">

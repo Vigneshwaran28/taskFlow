@@ -25,10 +25,11 @@ export function SelectField({ label, hint, error, className, id: idProp, options
         <select
           id={id}
           required={required}
+          data-custom-icon="true"
           aria-invalid={Boolean(error)}
           aria-describedby={describedBy(id, error, hint)}
           className={cn(
-            controlClass(error, "h-10 cursor-pointer appearance-none pl-3.5 pr-10 font-normal shadow-sm"),
+            controlClass(error, "h-10 cursor-pointer appearance-none pl-3.5 pr-10 font-normal shadow-sm [background-image:none]!"),
             "transition-all duration-150 hover:border-primary/50"
           )}
           {...selectProps}

@@ -159,6 +159,10 @@ export interface WorkspaceSettings {
     allowedEmailDomains: string[];
     /** Licensed modules the workspace switched off for everyone */
     disabledModules: FeatureKey[];
+    /** Maximum active sessions per user (null or undefined = unlimited) */
+    maxActiveSessions?: number | null;
+    /** Whether members can log in using access codes / PINs */
+    allowCodeLogin?: boolean;
   };
 }
 
@@ -204,6 +208,8 @@ export interface SessionUser {
   isOwner: boolean;
   /** Signed in with a temporary password */
   mustChangePassword: boolean;
+  /** Whether the user signed in with their personal access code / codeKey */
+  isCodeLogin?: boolean;
   dateOfBirth: string | null;
   age: number | null;
   joinedOn: string | null;

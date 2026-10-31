@@ -18,6 +18,7 @@ export const adminKeys = {
   databases: ["admin", "databases"] as const,
   databaseSchema: ["admin", "database-schema"] as const,
   tenantDatabase: (id: number) => ["admin", "tenant-database", id] as const,
+  passwordRequests: ["admin", "password-requests"] as const,
 };
 
 /** Every cached admin query except the session itself. */
@@ -185,3 +186,14 @@ export function useTenantDatabase(tenantId: number | undefined) {
 
 export const useTestDatabase = () => useMutation({ mutationFn: adminService.testDatabase });
 export const useSwitchPlatformDatabase = () => useAdminChange(adminService.switchPlatformDatabase);
+
+// ---- Password Reset Requests (Tenant Admins) ----
+export function useTenantAdminPasswordRequests() {
+  return useQuery({
+    queryKey: adminKeys.passwordRequests,
+    queryFn: ({ signal }) => adminService.passwordRequests({ signal }),
+    refetchInterval: 30_000,
+  });
+}
+export const useCreateAdminResetLink = () => useAdminChange(adminService.createResetLink);
+export const useDismissAdminPasswordRequest = () => useAdminChange(adminService.dismissPasswordRequest);

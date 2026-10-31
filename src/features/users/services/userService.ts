@@ -16,6 +16,8 @@ export interface ManagedUser {
   /** YYYY-MM-DD */
   joinedOn: string | null;
   isActive: boolean;
+  /** Whether login with code is enabled for this user */
+  isCodeLoginEnabled?: boolean;
   /** Last successful sign-in (null = never signed in) */
   lastLoginAt: string | null;
   /** Direct login key code / PIN (TF-XXXXXX) assigned to this user */
@@ -46,9 +48,10 @@ export interface CreateUserInput extends UserDetailsInput {
   /** Temporary password: they choose their own at first sign-in */
   password: string;
   roleIds: number[];
+  isCodeLoginEnabled?: boolean;
 }
 
-export type UpdateUserInput = Partial<UserDetailsInput & { roleIds: number[]; isActive: boolean }>;
+export type UpdateUserInput = Partial<UserDetailsInput & { roleIds: number[]; isActive: boolean; isCodeLoginEnabled: boolean }>;
 
 export const userService = {
   async list({ signal }: { signal?: AbortSignal } = {}): Promise<ManagedUsersResponse> {

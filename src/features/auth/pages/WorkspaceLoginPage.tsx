@@ -2,7 +2,6 @@
 // A workspace's own sign-in page (/<slug>/login), in the layout its admin picked.
 import Link from "@/components/navigation/Link";
 import { useParams, useSearchParams } from "next/navigation";
-import { useRouter } from "@/lib/navigation";
 import { useEffect, type ReactNode } from "react";
 import { PauseCircle, SearchX, Wrench } from "lucide-react";
 import { FullPageError, LoadingState } from "@/components/shared/States";
@@ -34,7 +33,6 @@ function StatusCard({ icon: Icon, title, children }: { icon: typeof SearchX; tit
 }
 
 export function WorkspaceLoginPage() {
-  const router = useRouter();
   const params = useParams<{ tenant?: string; slug?: string }>();
   const search = useSearchParams();
   const slug = String(params.tenant ?? params.slug ?? "").toLowerCase();
@@ -102,7 +100,7 @@ export function WorkspaceLoginPage() {
             <span>Down for maintenance{closed.message ? `: ${closed.message}` : ""}. Only owners and admins can sign in right now.</span>
           </p>
         )}
-        <LoginForm workspace={workspace.slug} onSuccess={() => router.replace(redirectTo)} />
+        <LoginForm workspace={workspace.slug} onSuccess={() => { window.location.href = redirectTo; }} />
       </LoginTemplateView>
     </>
   );

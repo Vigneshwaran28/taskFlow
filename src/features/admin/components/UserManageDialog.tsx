@@ -1,6 +1,6 @@
 "use client";
 import { useState, type FormEvent } from "react";
-import { KeyRound, Power, ShieldCheck, Trash2 } from "lucide-react";
+import { Check, Copy, KeyRound, Link2, Power, ShieldCheck, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useToast } from "@/components/shared/Toaster";
 import { Badge } from "@/components/ui/Badge";
@@ -9,8 +9,8 @@ import { Dialog } from "@/components/ui/Dialog";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/TextField";
 import { ApiError } from "@/lib/apiClient";
-import { useChangeRole, useDeleteRow, useResetPassword, useSetUserActive } from "../hooks/useAdmin";
-import type { ConsoleRole, UserSummary } from "../services/adminService";
+import { useChangeRole, useCreateAdminResetLink, useDeleteRow, useResetPassword, useSetUserActive } from "../hooks/useAdmin";
+import type { ConsoleRole, ResetLink, UserSummary } from "../services/adminService";
 
 const ROLE_OPTIONS: { value: ConsoleRole; label: string }[] = [
   { value: "member", label: "Member (raises tickets, manages own tasks)" },
@@ -36,6 +36,7 @@ export function UserManageDialog({ tenantId, user, seatsFull = false, onClose }:
   const resetPassword = useResetPassword();
   const setActive = useSetUserActive();
   const deleteUser = useDeleteRow();
+  const createResetLink = useCreateAdminResetLink();
   // The console sets one built-in role (an Owner role, if any, is kept); custom roles are managed in the workspace.
   const currentRole: ConsoleRole | null = user.roles.map(item => item.key).find(isConsoleRole) ?? null;
   const isOwner = user.roles.some(item => item.key === "owner");
@@ -43,6 +44,30 @@ export function UserManageDialog({ tenantId, user, seatsFull = false, onClose }:
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirming, setConfirming] = useState<"delete" | "deactivate" | null>(null);
+  const [resetLink, setResetLink] = useState<ResetLink | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  function handleCreateResetLink() {
+    createResetLink.mutate(
+      { id: user.id, tenantId, expiresInHours: 24 },
+      {
+        onSuccess: link => {
+          setResetLink(link);
+          toast.success("Reset link created", `One-time link generated for ${user.name}.`);
+        },
+        onError: err => toast.error("Couldn't create reset link", err.message),
+      }
+    );
+  }
+
+  function handleCopyResetLink() {
+    if (!resetLink) return;
+    const full = typeof window !== "undefined" ? `${window.location.origin}${resetLink.url}` : resetLink.url;
+    navigator.clipboard.writeText(full);
+    setCopiedLink(true);
+    toast.success("Link copied", "One-time link copied to clipboard.");
+    setTimeout(() => setCopiedLink(false), 2000);
+  }
 
   function handleRole(event: FormEvent) {
     event.preventDefault();
@@ -164,6 +189,36 @@ export function UserManageDialog({ tenantId, user, seatsFull = false, onClose }:
               <Button type="submit" variant="secondary" loading={resetPassword.isPending} className="sm:mt-6.5">
                 Set password
               </Button>
+            </div>
+            <div className="flex flex-col gap-2 pt-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Or send them a one-time link:</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  loading={createResetLink.isPending}
+                  onClick={handleCreateResetLink}
+                >
+                  <Link2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  {resetLink ? "Generate another link" : "Create one-time reset link"}
+                </Button>
+              </div>
+              {resetLink && (
+                <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 p-2.5">
+                  <input
+                    type="text"
+                    readOnly
+                    value={typeof window !== "undefined" ? `${window.location.origin}${resetLink.url}` : resetLink.url}
+                    className="flex-1 bg-transparent font-mono text-xs text-foreground focus:outline-none"
+                    onFocus={e => e.currentTarget.select()}
+                  />
+                  <Button type="button" variant="secondary" size="sm" onClick={handleCopyResetLink}>
+                    {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copiedLink ? "Copied" : "Copy"}
+                  </Button>
+                </div>
+              )}
             </div>
           </form>
 
