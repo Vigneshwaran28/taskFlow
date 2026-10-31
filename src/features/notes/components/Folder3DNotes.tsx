@@ -18,17 +18,27 @@ import {
   Layers,
   RotateCcw,
   Check,
+  Folder,
+  FolderPlus,
+  FolderEdit,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { TextField } from "@/components/ui/TextField";
 import { SelectField } from "@/components/ui/SelectField";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useToast } from "@/components/shared/Toaster";
 import { cn } from "@/lib/cn";
 import type { Note } from "../services/noteService";
 import { canDelete, COLOR_META } from "../utils/noteMeta";
 import { ShareNoteDialog } from "./ShareNoteDialog";
 import { useArchiveNote } from "../hooks/useNotes";
+import {
+  useNoteFolders,
+  FOLDER_THEMES,
+  type FolderColorKey,
+  type NoteFolder,
+} from "../hooks/useNoteFolders";
 import styles from "./Folder3DNotes.module.css";
 
 export type NotesViewMode = "grid" | "list" | "compact";
@@ -37,7 +47,7 @@ export type NotesSortBy = "updated" | "created" | "title_asc" | "title_desc" | "
 
 const PREFS_CHANGE_EVENT = "tf-notes-prefs-change";
 
-function subscribeStorage(callback: () => void) {
+function subscribePrefs(callback: () => void) {
   window.addEventListener("storage", callback);
   window.addEventListener(PREFS_CHANGE_EVENT, callback);
   return () => {
@@ -54,7 +64,7 @@ function notifyPrefChange() {
 
 export interface Folder3DNotesProps {
   notes: Note[];
-  onOpenNote: (note: Note | null, mode?: "read" | "edit") => void;
+  onOpenNote: (note: Note | null, mode?: "read" | "edit", folderId?: string) => void;
   canCreateNote?: boolean;
 }
 
@@ -69,33 +79,43 @@ export function Folder3DNotes({
   const [sharingNote, setSharingNote] = useState<Note | null>(null);
   const archiveNote = useArchiveNote();
 
-  // Folder Customization (Synchronized with localStorage via useSyncExternalStore)
-  const folderTitle = useSyncExternalStore(
-    subscribeStorage,
-    () => {
-      try {
-        return localStorage.getItem("tf_memo_folder_title") || "Daily Memo";
-      } catch {
-        return "Daily Memo";
-      }
-    },
-    () => "Daily Memo"
-  );
+  // Multi-Folder management hook
+  const {
+    folders,
+    activeFolderId,
+    activeFolder,
+    setActiveFolderId,
+    createFolder,
+    updateFolder,
+    deleteFolder,
+    assignNoteToFolder,
+    getNoteFolder,
+    getNoteFolderId,
+    filterNotesByFolder,
+  } = useNoteFolders();
 
-  const folderDesc = useSyncExternalStore(
-    subscribeStorage,
-    () => {
-      try {
-        return localStorage.getItem("tf_memo_folder_desc") || "Notes & Journaling";
-      } catch {
-        return "Notes & Journaling";
-      }
-    },
-    () => "Notes & Journaling"
-  );
+  // Folder Modals State
+  const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
+  const [createForm, setCreateForm] = useState<{ title: string; desc: string; color: FolderColorKey }>({
+    title: "",
+    desc: "",
+    color: "blue",
+  });
+
+  const [editingFolder, setEditingFolder] = useState<NoteFolder | null>(null);
+  const [editForm, setEditForm] = useState<{ title: string; desc: string; color: FolderColorKey }>({
+    title: "",
+    desc: "",
+    color: "blue",
+  });
+
+  const [deletingFolder, setDeletingFolder] = useState<NoteFolder | null>(null);
+
+  // Document Viewer Settings (synchronized via useSyncExternalStore)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const viewMode = useSyncExternalStore(
-    subscribeStorage,
+    subscribePrefs,
     () => {
       try {
         const val = localStorage.getItem("tf_notes_view_mode");
@@ -109,7 +129,7 @@ export function Folder3DNotes({
   );
 
   const cardSize = useSyncExternalStore(
-    subscribeStorage,
+    subscribePrefs,
     () => {
       try {
         const val = localStorage.getItem("tf_notes_card_size");
@@ -123,7 +143,7 @@ export function Folder3DNotes({
   );
 
   const sortBy = useSyncExternalStore(
-    subscribeStorage,
+    subscribePrefs,
     () => {
       try {
         const val = localStorage.getItem("tf_notes_sort_by");
@@ -139,7 +159,7 @@ export function Folder3DNotes({
   );
 
   const pinnedFirst = useSyncExternalStore(
-    subscribeStorage,
+    subscribePrefs,
     () => {
       try {
         const val = localStorage.getItem("tf_notes_pinned_first");
@@ -152,46 +172,7 @@ export function Folder3DNotes({
     () => true
   );
 
-  const [isRenameOpen, setIsRenameOpen] = useState(false);
-  const [renameForm, setRenameForm] = useState({ title: folderTitle, desc: folderDesc });
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-  const now = new Date();
-  const formattedDate = now.toLocaleDateString("en-US", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-  const formattedTime = now.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  function handleSaveRename(e?: React.FormEvent) {
-    if (e) e.preventDefault();
-    const finalTitle = renameForm.title.trim() || "Daily Memo";
-    const finalDesc = renameForm.desc.trim() || "Notes & Journaling";
-    try {
-      localStorage.setItem("tf_memo_folder_title", finalTitle);
-      localStorage.setItem("tf_memo_folder_desc", finalDesc);
-    } catch {}
-    notifyPrefChange();
-    setIsRenameOpen(false);
-    toast.success("Folder updated", `Renamed to "${finalTitle}"`);
-  }
-
-  function handleResetFolder() {
-    try {
-      localStorage.removeItem("tf_memo_folder_title");
-      localStorage.removeItem("tf_memo_folder_desc");
-    } catch {}
-    setRenameForm({ title: "Daily Memo", desc: "Notes & Journaling" });
-    notifyPrefChange();
-    setIsRenameOpen(false);
-    toast.info("Folder reset", "Restored default name and description");
-  }
-
+  // Settings update helpers
   function updateViewMode(next: NotesViewMode) {
     try {
       localStorage.setItem("tf_notes_view_mode", next);
@@ -221,7 +202,50 @@ export function Folder3DNotes({
     notifyPrefChange();
   }
 
-  function handleDelete(note: Note, e: React.MouseEvent) {
+  // Folder Actions
+  function handleCreateFolder(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    const title = createForm.title.trim();
+    if (!title) {
+      toast.error("Folder title required", "Please enter a name for the folder.");
+      return;
+    }
+    const created = createFolder(createForm);
+    setIsCreateFolderOpen(false);
+    toast.success("Folder created", `"${created.title}" is ready.`);
+  }
+
+  function openEditFolder(folder: NoteFolder) {
+    setEditingFolder(folder);
+    setEditForm({
+      title: folder.title,
+      desc: folder.desc,
+      color: folder.color,
+    });
+  }
+
+  function handleSaveEditFolder(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    if (!editingFolder) return;
+    const title = editForm.title.trim();
+    if (!title) {
+      toast.error("Folder title required", "Please enter a name for the folder.");
+      return;
+    }
+    updateFolder(editingFolder.id, editForm);
+    setEditingFolder(null);
+    toast.success("Folder updated", `"${title}" has been saved.`);
+  }
+
+  function handleConfirmDeleteFolder() {
+    if (!deletingFolder) return;
+    deleteFolder(deletingFolder.id);
+    setDeletingFolder(null);
+    setEditingFolder(null);
+    toast.info("Folder deleted", `"${deletingFolder.title}" deleted. Notes safely moved to Daily Memo.`);
+  }
+
+  function handleDeleteNote(note: Note, e: React.MouseEvent) {
     e.stopPropagation();
     if (!canDelete(note.access)) {
       toast.error("Permission denied", "You do not have permission to delete this note.");
@@ -240,8 +264,11 @@ export function Folder3DNotes({
     setSharingNote(note);
   }
 
-  // Sorted documents based on current preferences
-  const sortedNotes = [...notes].sort((a, b) => {
+  // Filter notes for active folder selection
+  const folderNotes = filterNotesByFolder(notes, activeFolderId);
+
+  // Sort notes according to sort preference & pinned
+  const sortedNotes = [...folderNotes].sort((a, b) => {
     if (pinnedFirst) {
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
@@ -262,9 +289,131 @@ export function Folder3DNotes({
     }
   });
 
+  // Current active folder theme
+  const currentTheme = activeFolder
+    ? (FOLDER_THEMES[activeFolder.color] || FOLDER_THEMES.blue)
+    : FOLDER_THEMES.blue;
+
+  const folderCssVariables = {
+    "--folder-main": currentTheme.main,
+    "--folder-light": currentTheme.light,
+    "--folder-dark": currentTheme.dark,
+    "--folder-glow": currentTheme.glow,
+  } as React.CSSProperties;
+
+  const now = new Date();
+  const formattedDate = now.toLocaleDateString("en-US", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const formattedTime = now.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   return (
     <div className="flex flex-col gap-8 w-full">
-      {/* 3D Animated Folder Hero Viewport */}
+      {/* 1. Multi-Folder Selector & Management Bar */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/70 p-4 shadow-2xs backdrop-blur-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                <Folder className="h-5 w-5 text-primary" />
+                Workspace Folders
+              </h2>
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                {folders.length} {folders.length === 1 ? "folder" : "folders"}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Organize notes into multiple 3D memo folders. Click any folder to inspect its documents.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* New Folder Button */}
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                setCreateForm({ title: "", desc: "", color: "blue" });
+                setIsCreateFolderOpen(true);
+              }}
+              className="h-8 gap-1.5 text-xs font-semibold"
+            >
+              <FolderPlus className="h-3.5 w-3.5" />
+              <span>New Folder</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Folder Pills List */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 scrollbar-thin">
+          {/* All Folders Option */}
+          <button
+            type="button"
+            onClick={() => setActiveFolderId("all")}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-bold transition shrink-0 border",
+              activeFolderId === "all"
+                ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                : "bg-card text-muted-foreground hover:bg-muted hover:text-foreground border-border"
+            )}
+          >
+            <Layers className="h-3.5 w-3.5" />
+            <span>All Folders</span>
+            <span
+              className={cn(
+                "rounded-full px-1.5 py-0.2 text-[10px] font-bold",
+                activeFolderId === "all" ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+              )}
+            >
+              {notes.length}
+            </span>
+          </button>
+
+          {/* Individual Folder Tabs */}
+          {folders.map(f => {
+            const theme = FOLDER_THEMES[f.color] || FOLDER_THEMES.blue;
+            const count = notes.filter(n => getNoteFolderId(n.id) === f.id).length;
+            const isActive = activeFolderId === f.id;
+
+            return (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setActiveFolderId(f.id)}
+                className={cn(
+                  "group inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-bold transition shrink-0 border",
+                  isActive
+                    ? "bg-card text-foreground ring-2 shadow-xs"
+                    : "bg-card text-muted-foreground hover:bg-muted hover:text-foreground border-border"
+                )}
+                style={isActive ? { borderColor: theme.main, outlineColor: theme.main } : undefined}
+              >
+                <span
+                  className="h-2.5 w-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: theme.main }}
+                />
+                <span className="truncate max-w-[130px]">{f.title}</span>
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 py-0.2 text-[10px] font-bold",
+                    isActive ? theme.badge : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 2. 3D Animated Folder Hero Viewport (Themed to Active Folder) */}
       <div className={styles.cardViewport}>
         <input
           type="checkbox"
@@ -274,7 +423,7 @@ export function Folder3DNotes({
           onChange={e => setIsOpen(e.target.checked)}
         />
 
-        <div className={styles.folderContainer}>
+        <div className={styles.folderContainer} style={folderCssVariables}>
           <div className={styles.folderGlow} />
 
           <div className={styles.backCover} />
@@ -302,13 +451,15 @@ export function Folder3DNotes({
 
             <div className={styles.memoBody}>
               <div className={styles.memoTitle}>
-                <span>Workspace Documents ({notes.length})</span>
+                <span className="truncate max-w-[180px]">
+                  {activeFolder ? activeFolder.title : "All Documents"} ({folderNotes.length})
+                </span>
                 {canCreateNote && (
                   <button
                     type="button"
-                    onClick={() => onOpenNote(null, "edit")}
+                    onClick={() => onOpenNote(null, "edit", activeFolder?.id || "default")}
                     className="inline-flex items-center gap-0.5 text-[8.5px] font-semibold text-amber-700 hover:text-amber-900"
-                    title="Add new note"
+                    title="Add new note to this folder"
                   >
                     <Plus className="h-2.5 w-2.5" /> New Note
                   </button>
@@ -316,12 +467,12 @@ export function Folder3DNotes({
               </div>
 
               <div className={styles.todoList}>
-                {notes.length === 0 ? (
+                {folderNotes.length === 0 ? (
                   <div className="py-6 text-center text-[10px] text-gray-500">
-                    No notes in folder yet. Click &quot;New Note&quot; to add.
+                    No notes in this folder yet. Click &quot;New Note&quot; to add.
                   </div>
                 ) : (
-                  notes.slice(0, 8).map(note => (
+                  folderNotes.slice(0, 8).map(note => (
                     <button
                       key={note.id}
                       type="button"
@@ -363,7 +514,7 @@ export function Folder3DNotes({
 
               <div className={styles.memoFooter}>
                 <span className={styles.footerTxt}>
-                  Arranged in <span className={styles.hashtag}>#doc-style</span> folder
+                  Arranged in <span className={styles.hashtag}>#{activeFolder ? activeFolder.title.toLowerCase().replace(/\s+/g, "-") : "all"}</span>
                 </span>
                 <span className="text-[7.5px] text-gray-400">Click to open</span>
               </div>
@@ -374,23 +525,28 @@ export function Folder3DNotes({
             <div className={styles.coverHighlight} />
             <div className={styles.header}>
               <div className={styles.titleGroup}>
-                <span className={styles.coverMainTitle} title="Click settings or 3-dots to rename">
-                  {folderTitle}
+                <span className={styles.coverMainTitle} title="Click 3-dots to rename or customize">
+                  {activeFolder ? activeFolder.title : "All Workspace Notes"}
                 </span>
-                <span className={styles.coverSubtitle}>{folderDesc}</span>
+                <span className={styles.coverSubtitle}>
+                  {activeFolder ? activeFolder.desc : "Viewing notes from all folders"}
+                </span>
               </div>
               <div className={styles.iconGroup}>
-                {/* 3-dots Rename Button */}
+                {/* 3-dots Edit / Rename Folder Button */}
                 <button
                   type="button"
-                  aria-label="Rename folder"
-                  title="Rename memo title & description"
+                  aria-label="Edit folder"
+                  title="Rename folder & change theme"
                   className={styles.folderIconButton}
                   onClick={e => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setRenameForm({ title: folderTitle, desc: folderDesc });
-                    setIsRenameOpen(true);
+                    if (activeFolder) {
+                      openEditFolder(activeFolder);
+                    } else if (folders[0]) {
+                      openEditFolder(folders[0]);
+                    }
                   }}
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -418,13 +574,13 @@ export function Folder3DNotes({
             </div>
 
             <div className={styles.footer}>
-              <span className={styles.coverNotesCount}>{notes.length} notes</span>
+              <span className={styles.coverNotesCount}>{folderNotes.length} notes</span>
             </div>
           </label>
         </div>
       </div>
 
-      {/* Doc-Style Arrangement View */}
+      {/* 3. Doc-Style Arrangement View (Format Layout, Arrange, Size) */}
       <div className="space-y-4">
         {/* Header & Controls Toolbar */}
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between border-b pb-4">
@@ -435,15 +591,33 @@ export function Folder3DNotes({
                 Document Style Arrangement
               </h2>
               <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                {notes.length} {notes.length === 1 ? "doc" : "docs"}
+                {folderNotes.length} {folderNotes.length === 1 ? "doc" : "docs"}
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Click any document to view in Read Mode or click the edit pencil icon to modify. Arrange in grid or list view.
+              Viewing {activeFolder ? `"${activeFolder.title}"` : "All Folders"}. Click any document to view in Read Mode or edit with pencil.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {/* Folder Filter Selector */}
+            <select
+              value={activeFolderId}
+              onChange={e => setActiveFolderId(e.target.value)}
+              aria-label="Filter by folder"
+              className="h-8 rounded-lg border border-border bg-card px-2 text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shadow-2xs"
+            >
+              <option value="all">📂 All Folders ({notes.length})</option>
+              {folders.map(f => {
+                const count = notes.filter(n => getNoteFolderId(n.id) === f.id).length;
+                return (
+                  <option key={f.id} value={f.id}>
+                    📁 {f.title} ({count})
+                  </option>
+                );
+              })}
+            </select>
+
             {/* View Mode Toggle Buttons */}
             <div role="group" aria-label="Viewer layout" className="inline-flex rounded-lg border bg-card p-0.5 shadow-2xs">
               <button
@@ -540,7 +714,7 @@ export function Folder3DNotes({
               <Button
                 type="button"
                 size="sm"
-                onClick={() => onOpenNote(null, "edit")}
+                onClick={() => onOpenNote(null, "edit", activeFolder?.id || "default")}
                 className="h-8 gap-1.5 text-xs"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -551,16 +725,22 @@ export function Folder3DNotes({
         </div>
 
         {/* Content Display: Empty State / Grid View / Compact View / List View */}
-        {notes.length === 0 ? (
+        {folderNotes.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border p-12 text-center">
             <FileText className="mx-auto h-8 w-8 text-muted-foreground/60" />
-            <h3 className="mt-2 text-sm font-semibold text-foreground">No documents found</h3>
+            <h3 className="mt-2 text-sm font-semibold text-foreground">
+              {activeFolder ? `No documents in "${activeFolder.title}"` : "No documents found"}
+            </h3>
             <p className="text-xs text-muted-foreground mt-1">
               Add multiple notes to see them arranged in system doc viewer style.
             </p>
             {canCreateNote && (
-              <Button size="sm" onClick={() => onOpenNote(null, "edit")} className="mt-3">
-                <Plus className="h-4 w-4 mr-1" /> Create Note
+              <Button
+                size="sm"
+                onClick={() => onOpenNote(null, "edit", activeFolder?.id || "default")}
+                className="mt-3"
+              >
+                <Plus className="h-4 w-4 mr-1" /> Create Note in this Folder
               </Button>
             )}
           </div>
@@ -576,6 +756,8 @@ export function Folder3DNotes({
           >
             {sortedNotes.map(note => {
               const colorInfo = COLOR_META[note.color] || COLOR_META.yellow;
+              const noteFolder = getNoteFolder(note.id);
+              const noteFolderTheme = FOLDER_THEMES[noteFolder.color] || FOLDER_THEMES.blue;
               const lines = note.body ? note.body.split("\n") : [];
               const totalCount = lines.filter(l => l.trim().startsWith("- [ ]") || l.trim().startsWith("- [x]")).length;
               const completedCount = lines.filter(l => l.trim().startsWith("- [x]")).length;
@@ -595,8 +777,8 @@ export function Folder3DNotes({
                   <div className={cn("absolute top-0 left-0 right-0 h-1.5 opacity-90", colorInfo.swatch)} />
 
                   <div>
-                    {/* Header Row: Document Pip & Badges */}
-                    <div className="flex items-start justify-between gap-2 pt-1 mb-2.5">
+                    {/* Header Row: Document Pip, Folder Badge, & Access Badges */}
+                    <div className="flex items-start justify-between gap-2 pt-1 mb-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <div
                           className={cn(
@@ -653,6 +835,14 @@ export function Folder3DNotes({
                       </div>
                     </div>
 
+                    {/* Folder Pill on Card */}
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <span className={cn("inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold border", noteFolderTheme.badge)}>
+                        <Folder className="h-2.5 w-2.5" />
+                        <span className="truncate max-w-[120px]">{noteFolder.title}</span>
+                      </span>
+                    </div>
+
                     {/* Content Preview / Checklist Progress */}
                     {hasChecklist ? (
                       <div className="my-2 space-y-1.5 rounded-xl bg-muted/30 p-2 border border-border/40">
@@ -705,6 +895,26 @@ export function Folder3DNotes({
                     </span>
 
                     <div className="flex items-center gap-1 shrink-0">
+                      {/* Move Folder Quick Selector */}
+                      <select
+                        value={noteFolder.id}
+                        onClick={e => e.stopPropagation()}
+                        onChange={e => {
+                          e.stopPropagation();
+                          assignNoteToFolder(note.id, e.target.value);
+                          const target = folders.find(f => f.id === e.target.value);
+                          toast.success("Folder updated", `Moved to "${target?.title || "folder"}"`);
+                        }}
+                        className="h-6 rounded border border-border/80 bg-card/90 px-1 text-[10px] text-muted-foreground hover:text-foreground focus:outline-none cursor-pointer max-w-[85px] truncate"
+                        title="Move to another folder"
+                      >
+                        {folders.map(f => (
+                          <option key={f.id} value={f.id}>
+                            📁 {f.title}
+                          </option>
+                        ))}
+                      </select>
+
                       {/* View in Read Mode Button */}
                       <button
                         type="button"
@@ -745,7 +955,7 @@ export function Folder3DNotes({
                       {canUserDelete && (
                         <button
                           type="button"
-                          onClick={e => handleDelete(note, e)}
+                          onClick={e => handleDeleteNote(note, e)}
                           className="inline-flex items-center rounded-md p-1.5 text-xs text-destructive hover:bg-destructive/10 transition"
                           title="Archive / Delete document"
                         >
@@ -770,6 +980,7 @@ export function Folder3DNotes({
           >
             {sortedNotes.map(note => {
               const colorInfo = COLOR_META[note.color] || COLOR_META.yellow;
+              const noteFolder = getNoteFolder(note.id);
               return (
                 <div
                   key={note.id}
@@ -780,9 +991,14 @@ export function Folder3DNotes({
                     <div className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-2xs", colorInfo.card)}>
                       <FileText className="h-3.5 w-3.5" />
                     </div>
-                    <span className="text-xs font-semibold text-foreground truncate group-hover:text-primary transition">
-                      {note.title || "Untitled"}
-                    </span>
+                    <div className="min-w-0">
+                      <span className="text-xs font-semibold text-foreground truncate block group-hover:text-primary transition">
+                        {note.title || "Untitled"}
+                      </span>
+                      <span className="text-[9.5px] text-muted-foreground truncate block">
+                        {noteFolder.title}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <button
@@ -806,6 +1022,8 @@ export function Folder3DNotes({
           <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs divide-y divide-border/60">
             {sortedNotes.map(note => {
               const colorInfo = COLOR_META[note.color] || COLOR_META.yellow;
+              const noteFolder = getNoteFolder(note.id);
+              const noteFolderTheme = FOLDER_THEMES[noteFolder.color] || FOLDER_THEMES.blue;
               const lines = note.body ? note.body.split("\n") : [];
               const totalCount = lines.filter(l => l.trim().startsWith("- [ ]") || l.trim().startsWith("- [x]")).length;
               const completedCount = lines.filter(l => l.trim().startsWith("- [x]")).length;
@@ -827,6 +1045,10 @@ export function Folder3DNotes({
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-sm text-foreground group-hover:text-primary transition truncate">
                           {note.title || "Untitled Document"}
+                        </span>
+                        <span className={cn("inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold border", noteFolderTheme.badge)}>
+                          <Folder className="h-2.5 w-2.5" />
+                          <span>{noteFolder.title}</span>
                         </span>
                         {note.pinned && (
                           <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
@@ -892,6 +1114,26 @@ export function Folder3DNotes({
                   </div>
 
                   <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                    {/* Move Folder Quick Selector */}
+                    <select
+                      value={noteFolder.id}
+                      onClick={e => e.stopPropagation()}
+                      onChange={e => {
+                        e.stopPropagation();
+                        assignNoteToFolder(note.id, e.target.value);
+                        const target = folders.find(f => f.id === e.target.value);
+                        toast.success("Folder updated", `Moved to "${target?.title || "folder"}"`);
+                      }}
+                      className="h-8 rounded-lg border border-border/80 bg-card px-2 text-xs text-muted-foreground hover:text-foreground focus:outline-none cursor-pointer"
+                      title="Move to another folder"
+                    >
+                      {folders.map(f => (
+                        <option key={f.id} value={f.id}>
+                          📁 {f.title}
+                        </option>
+                      ))}
+                    </select>
+
                     <Button
                       type="button"
                       variant="ghost"
@@ -924,7 +1166,7 @@ export function Folder3DNotes({
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={e => handleDelete(note, e)}
+                        onClick={e => handleDeleteNote(note, e)}
                         title="Archive/Delete this document"
                         className="h-8 text-xs font-medium text-destructive hover:bg-destructive/10"
                       >
@@ -962,57 +1204,210 @@ export function Folder3DNotes({
         />
       )}
 
-      {/* Rename Memo Folder Dialog */}
-      {isRenameOpen && (
+      {/* 4. Create New Folder Dialog */}
+      {isCreateFolderOpen && (
         <Dialog
           open
-          onClose={() => setIsRenameOpen(false)}
-          title="Rename Memo Folder"
-          description="Update the folder title and description displayed on the 3D cover."
+          onClose={() => setIsCreateFolderOpen(false)}
+          title="Create New Memo Folder"
+          description="Create a custom 3D memo folder to categorize and organize workspace notes."
+          size="md"
+          footer={
+            <div className="flex w-full items-center justify-end gap-2">
+              <Button type="button" variant="secondary" size="sm" onClick={() => setIsCreateFolderOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="button" size="sm" onClick={() => handleCreateFolder()}>
+                Create Folder
+              </Button>
+            </div>
+          }
+        >
+          <form onSubmit={handleCreateFolder} className="flex flex-col gap-4 py-1">
+            <TextField
+              label="Folder Title"
+              value={createForm.title}
+              onChange={e => setCreateForm(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="e.g. Project Specs, Daily Journal, Team Tasks"
+              maxLength={40}
+              autoFocus
+              required
+            />
+            <TextField
+              label="Folder Description / Subtitle"
+              value={createForm.desc}
+              onChange={e => setCreateForm(prev => ({ ...prev, desc: e.target.value }))}
+              placeholder="e.g. Product requirements and technical notes"
+              maxLength={60}
+            />
+
+            {/* Folder Color Theme Picker */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-foreground">
+                3D Folder Color Theme
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {(Object.keys(FOLDER_THEMES) as FolderColorKey[]).map(key => {
+                  const theme = FOLDER_THEMES[key];
+                  const isSelected = createForm.color === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setCreateForm(prev => ({ ...prev, color: key }))}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition",
+                        isSelected
+                          ? "border-foreground bg-muted font-bold shadow-xs ring-1 ring-foreground"
+                          : "border-border hover:bg-muted/50"
+                      )}
+                    >
+                      <span
+                        className="h-3 w-3 rounded-full shrink-0 shadow-2xs"
+                        style={{ backgroundColor: theme.main }}
+                      />
+                      <span>{theme.label}</span>
+                      {isSelected && <Check className="h-3 w-3 ml-0.5" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Live 3D Cover Preview */}
+            <div className="rounded-xl border bg-muted/20 p-3 space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Cover Preview</span>
+              <div
+                className="rounded-xl p-4 text-white shadow-sm flex flex-col justify-between"
+                style={{
+                  background: `linear-gradient(150deg, ${FOLDER_THEMES[createForm.color].light} 0%, ${FOLDER_THEMES[createForm.color].dark} 100%)`,
+                }}
+              >
+                <span className="text-base font-bold">{createForm.title || "New Folder"}</span>
+                <span className="text-xs text-white/85 mt-1">{createForm.desc || "Notes & Journaling"}</span>
+              </div>
+            </div>
+          </form>
+        </Dialog>
+      )}
+
+      {/* 5. Edit Folder Dialog */}
+      {editingFolder && (
+        <Dialog
+          open
+          onClose={() => setEditingFolder(null)}
+          title={`Edit Folder: "${editingFolder.title}"`}
+          description="Update folder name, description, and 3D cover color theme."
           size="md"
           footer={
             <div className="flex w-full items-center justify-between gap-2">
-              <Button type="button" variant="ghost" size="sm" onClick={handleResetFolder} className="gap-1.5 text-xs">
-                <RotateCcw className="h-3.5 w-3.5" />
-                Reset Default
-              </Button>
+              {editingFolder.id !== "default" ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDeletingFolder(editingFolder)}
+                  className="text-destructive hover:bg-destructive/10 text-xs gap-1"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete Folder
+                </Button>
+              ) : (
+                <div />
+              )}
               <div className="flex items-center gap-2">
-                <Button type="button" variant="secondary" size="sm" onClick={() => setIsRenameOpen(false)}>
+                <Button type="button" variant="secondary" size="sm" onClick={() => setEditingFolder(null)}>
                   Cancel
                 </Button>
-                <Button type="button" size="sm" onClick={() => handleSaveRename()}>
+                <Button type="button" size="sm" onClick={() => handleSaveEditFolder()}>
                   Save Changes
                 </Button>
               </div>
             </div>
           }
         >
-          <form onSubmit={handleSaveRename} className="flex flex-col gap-4 py-1">
+          <form onSubmit={handleSaveEditFolder} className="flex flex-col gap-4 py-1">
             <TextField
               label="Folder Title"
-              value={renameForm.title}
-              onChange={e => setRenameForm(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Daily Memo"
+              value={editForm.title}
+              onChange={e => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="e.g. Daily Memo"
               maxLength={40}
               autoFocus
+              required
             />
             <TextField
               label="Folder Description / Subtitle"
-              value={renameForm.desc}
-              onChange={e => setRenameForm(prev => ({ ...prev, desc: e.target.value }))}
-              placeholder="Notes & Journaling"
+              value={editForm.desc}
+              onChange={e => setEditForm(prev => ({ ...prev, desc: e.target.value }))}
+              placeholder="e.g. Notes & Journaling"
               maxLength={60}
             />
-            <div className="rounded-xl border bg-muted/30 p-3 text-xs text-muted-foreground">
-              <p className="font-semibold text-foreground mb-1">Preview on 3D Cover</p>
-              <p className="text-base font-bold text-foreground">{renameForm.title || "Daily Memo"}</p>
-              <p className="text-xs text-muted-foreground">{renameForm.desc || "Notes & Journaling"}</p>
+
+            {/* Folder Color Theme Picker */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-foreground">
+                3D Folder Color Theme
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {(Object.keys(FOLDER_THEMES) as FolderColorKey[]).map(key => {
+                  const theme = FOLDER_THEMES[key];
+                  const isSelected = editForm.color === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setEditForm(prev => ({ ...prev, color: key }))}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition",
+                        isSelected
+                          ? "border-foreground bg-muted font-bold shadow-xs ring-1 ring-foreground"
+                          : "border-border hover:bg-muted/50"
+                      )}
+                    >
+                      <span
+                        className="h-3 w-3 rounded-full shrink-0 shadow-2xs"
+                        style={{ backgroundColor: theme.main }}
+                      />
+                      <span>{theme.label}</span>
+                      {isSelected && <Check className="h-3 w-3 ml-0.5" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Live 3D Cover Preview */}
+            <div className="rounded-xl border bg-muted/20 p-3 space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Cover Preview</span>
+              <div
+                className="rounded-xl p-4 text-white shadow-sm flex flex-col justify-between"
+                style={{
+                  background: `linear-gradient(150deg, ${FOLDER_THEMES[editForm.color].light} 0%, ${FOLDER_THEMES[editForm.color].dark} 100%)`,
+                }}
+              >
+                <span className="text-base font-bold">{editForm.title || "Folder Title"}</span>
+                <span className="text-xs text-white/85 mt-1">{editForm.desc || "Folder Subtitle"}</span>
+              </div>
             </div>
           </form>
         </Dialog>
       )}
 
-      {/* Settings Dialog */}
+      {/* 6. Delete Folder Confirmation Dialog */}
+      {deletingFolder && (
+        <ConfirmDialog
+          open
+          title={`Delete "${deletingFolder.title}"?`}
+          message="Are you sure you want to delete this folder? All notes currently in this folder will be safely moved to Daily Memo."
+          confirmLabel="Delete Folder"
+          tone="danger"
+          onConfirm={handleConfirmDeleteFolder}
+          onCancel={() => setDeletingFolder(null)}
+        />
+      )}
+
+      {/* 7. Document Viewer Settings Dialog */}
       {isSettingsOpen && (
         <Dialog
           open
@@ -1169,15 +1564,15 @@ export function Folder3DNotes({
               </div>
             </div>
 
-            {/* Folder Customization */}
+            {/* Manage Folders in Settings */}
             <div className="space-y-3 border-t pt-4">
               <div className="flex items-center justify-between">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Folder Branding (3D Folder Title & Description)
+                    Manage Workspace Folders ({folders.length})
                   </label>
                   <p className="text-xs text-muted-foreground">
-                    Customize the text shown on the blue 3D memo folder cover.
+                    Create, edit, or customize your 3D memo folders.
                   </p>
                 </div>
                 <Button
@@ -1185,23 +1580,53 @@ export function Folder3DNotes({
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setRenameForm({ title: folderTitle, desc: folderDesc });
-                    setIsRenameOpen(true);
+                    setCreateForm({ title: "", desc: "", color: "blue" });
+                    setIsCreateFolderOpen(true);
                   }}
-                  className="text-xs gap-1"
+                  className="text-xs gap-1 font-semibold"
                 >
-                  <Edit3 className="h-3.5 w-3.5" />
-                  Rename Folder
+                  <FolderPlus className="h-3.5 w-3.5" />
+                  New Folder
                 </Button>
               </div>
-              <div className="rounded-xl border bg-muted/20 p-3 flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-bold text-foreground">{folderTitle}</p>
-                  <p className="text-xs text-muted-foreground">{folderDesc}</p>
-                </div>
-                <span className="text-xs font-medium text-muted-foreground bg-background px-2.5 py-1 rounded-md border">
-                  {notes.length} documents
-                </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {folders.map(f => {
+                  const theme = FOLDER_THEMES[f.color] || FOLDER_THEMES.blue;
+                  const count = notes.filter(n => getNoteFolderId(n.id) === f.id).length;
+                  return (
+                    <div
+                      key={f.id}
+                      className="flex items-center justify-between rounded-xl border bg-muted/20 p-2.5 gap-2"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="h-3 w-3 rounded-full shrink-0"
+                          style={{ backgroundColor: theme.main }}
+                        />
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-foreground truncate">{f.title}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{f.desc}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="text-[10px] font-semibold text-muted-foreground bg-card border px-1.5 py-0.5 rounded">
+                          {count} docs
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditFolder(f)}
+                          className="h-7 w-7 p-0"
+                          title="Edit this folder"
+                        >
+                          <FolderEdit className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

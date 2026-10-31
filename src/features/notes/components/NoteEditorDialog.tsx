@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { AlertTriangle, Archive, ArchiveRestore, Check, CloudOff, Edit3, Eye, FileText, Loader2, Pin, Share2, Trash2, UserRoundCog } from "lucide-react";
+import { AlertTriangle, Archive, ArchiveRestore, Check, CloudOff, Edit3, Eye, FileText, Folder, Loader2, Pin, Share2, Trash2, UserRoundCog } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { ErrorState, LoadingState } from "@/components/shared/States";
 import { useToast } from "@/components/shared/Toaster";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/cn";
 import { formatDateTime, formatTimeAgo } from "@/lib/dates";
 import { useRealtimeEvent } from "@/realtime";
 import { useArchiveNote, useCreateNote, useDeleteNote, useNote, useNotePresence, useRestoreNote, useUpdateNote } from "../hooks/useNotes";
+import { useNoteFolders } from "../hooks/useNoteFolders";
 import type { Note, NoteColor, NoteConflictBody } from "../services/noteService";
 import { COLOR_META, NOTE_BODY_MAX, NOTE_TITLE_MAX, canControl, canDelete, canEdit, noteHeading, shareLabel, validateNote, type NoteErrors } from "../utils/noteMeta";
 import { ColorPicker } from "./ColorPicker";
@@ -40,22 +41,29 @@ function nowMs() {
 /**
  * Feature component: view or edit one note (pass `initial = null` for a new one; it is created on the first autosave).
  * Text autosaves ~800 ms after typing stops and sends the version it started from. Saves run one at a time.
- * Supports viewing in Read Mode with interactive checklists and switching to Edit Mode via edit pencil icon.
+ * Supports viewing in Read Mode with interactive checklists, switching to Edit Mode via edit pencil icon,
+ * and organizing across multiple folders.
  */
 export function NoteEditorDialog({
   initial,
   onClose,
   initialMode,
+  defaultFolderId,
 }: {
   initial: Note | null;
   onClose: () => void;
   initialMode?: "read" | "edit";
+  defaultFolderId?: string;
 }) {
   const toast = useToast();
   const { data: me } = useCurrentUser();
   const [noteId, setNoteId] = useState<number | null>(initial?.id ?? null);
   const detail = useNote(noteId, initial);
   const note = detail.data ?? null;
+
+  const { folders, getNoteFolderId, assignNoteToFolder } = useNoteFolders();
+  const currentFolderId = noteId != null ? getNoteFolderId(noteId) : (defaultFolderId || "default");
+  const [selectedFolderId, setSelectedFolderId] = useState<string>(currentFolderId);
 
   const [isEditing, setIsEditing] = useState<boolean>(() => {
     if (initial == null) return true;
@@ -163,6 +171,7 @@ export function NoteEditorDialog({
           result = await create.mutateAsync({ title: sent.title, body: sent.body, color: extra.color ?? draftColor });
           idRef.current = result.id;
           setNoteId(result.id);
+          assignNoteToFolder(result.id, selectedFolderId);
         } else {
           result = await update.mutateAsync({ id: idRef.current, changes: { title: sent.title, body: sent.body, ...extra, version: versionRef.current } });
         }
@@ -256,6 +265,15 @@ export function NoteEditorDialog({
   function setColor(next: NoteColor) {
     if (idRef.current == null) setDraftColor(next);
     else save({ color: next });
+  }
+
+  function handleFolderChange(nextFolderId: string) {
+    setSelectedFolderId(nextFolderId);
+    if (idRef.current != null) {
+      assignNoteToFolder(idRef.current, nextFolderId);
+      const target = folders.find(f => f.id === nextFolderId);
+      toast.success("Folder updated", `Moved note to "${target?.title || "folder"}"`);
+    }
   }
 
   function handleClose() {
@@ -384,7 +402,25 @@ export function NoteEditorDialog({
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <ColorPicker value={color} onChange={setColor} disabled={readOnly || update.isPending} label="Note colour" />
+            <div className="flex flex-wrap items-center gap-2.5">
+              <ColorPicker value={color} onChange={setColor} disabled={readOnly || update.isPending} label="Note colour" />
+              <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card/90 px-2.5 py-1 text-xs shadow-2xs">
+                <Folder className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <select
+                  value={selectedFolderId}
+                  onChange={e => handleFolderChange(e.target.value)}
+                  disabled={readOnly}
+                  aria-label="Assign to folder"
+                  className="bg-transparent font-medium text-foreground text-xs focus:outline-none cursor-pointer"
+                >
+                  {folders.map(f => (
+                    <option key={f.id} value={f.id} className="bg-card text-foreground">
+                      📁 {f.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <div className="flex flex-wrap items-center gap-1.5">
               {/* Prominent Edit Pencil Icon / Read Mode Toggle */}
               {canUserEdit && (
