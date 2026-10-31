@@ -5,7 +5,7 @@ import { Archive, Expand, MoreHorizontal, Pin, PinOff, Share2, Trash2 } from "lu
 import { cn } from "@/lib/cn";
 import { NOTE_FONTS, NOTE_TEXT_SIZES, type Note, type NoteUpdateInput } from "../../services/noteService";
 import { FONT_META, TEXT_SIZE_META } from "../../utils/fonts";
-import { canControl, canEdit } from "../../utils/noteMeta";
+import { canControl, canDelete, canEdit } from "../../utils/noteMeta";
 import { ColorPicker } from "../ColorPicker";
 
 export interface NoteMenuActions {
@@ -27,6 +27,7 @@ export function NoteMenu({ note, actions, label }: { note: Note; actions: NoteMe
   const button = useRef<HTMLButtonElement>(null);
   const editable = canEdit(note.access) && !note.archivedAt;
   const control = canControl(note.access);
+  const mayDelete = canDelete(note.access);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -117,6 +118,10 @@ export function NoteMenu({ note, actions, label }: { note: Note; actions: NoteMe
                   <Share2 className="h-4 w-4" aria-hidden="true" />
                   Share
                 </button>
+              </>
+            )}
+            {(control || mayDelete) && (
+              <>
                 <button type="button" className={itemClass} onClick={() => run(() => actions.archive(note))}>
                   <Archive className="h-4 w-4" aria-hidden="true" />
                   Archive

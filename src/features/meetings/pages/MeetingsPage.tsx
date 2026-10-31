@@ -15,6 +15,7 @@ import { playMeetingChime } from "@/lib/sound";
 import { PlatformIcon } from "../components/PlatformBadge";
 import { MeetingCard } from "../components/MeetingCard";
 import { MeetingDialog } from "../components/MeetingDialog";
+import { ScheduledMeetingsCard } from "../components/ScheduledMeetingsCard";
 import { useMeetings } from "../hooks/useMeetings";
 import type { Meeting, MeetingPlatform } from "../services/meetingService";
 
@@ -101,85 +102,105 @@ export function MeetingsPage() {
         </div>
       </div>
 
-      {/* Quick Launch Action Cards */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {/* Google Meet Card */}
-        <button
-          type="button"
-          onClick={() => handleInstantLaunch("google_meet")}
-          className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-emerald-500/20 bg-emerald-50/50 p-4 text-left transition hover:border-emerald-500/50 hover:bg-emerald-50 dark:border-emerald-900/30 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card shadow-xs">
-              <PlatformIcon platform="google_meet" className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-semibold text-foreground">Google Meet</span>
-                <span className="rounded-full bg-emerald-600/10 px-1.5 py-0.2 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
-                  Instant
-                </span>
+      {/* Featured Scheduled Meeting Card & Launch Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="lg:col-span-5 flex justify-center lg:justify-start">
+          <ScheduledMeetingsCard
+            meetings={meetings}
+            onScheduleClick={() => {
+              setMeetingToEdit(null);
+              setDialogPlatform("google_meet");
+              setDialogOpen(true);
+            }}
+            onEditMeeting={m => {
+              setMeetingToEdit(m);
+              setDialogOpen(true);
+            }}
+          />
+        </div>
+
+        <div className="lg:col-span-7 flex flex-col gap-4">
+          {/* Quick Launch Action Cards */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {/* Google Meet Card */}
+            <button
+              type="button"
+              onClick={() => handleInstantLaunch("google_meet")}
+              className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-emerald-500/20 bg-emerald-50/50 p-4 text-left transition hover:border-emerald-500/50 hover:bg-emerald-50 dark:border-emerald-900/30 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card shadow-xs">
+                  <PlatformIcon platform="google_meet" className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-semibold text-foreground">Google Meet</span>
+                    <span className="rounded-full bg-emerald-600/10 px-1.5 py-0.2 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+                      Instant
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Launch room & share</p>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">Launch room & share</p>
+              <ExternalLink className="h-4 w-4 text-muted-foreground opacity-60 transition group-hover:opacity-100 group-hover:text-emerald-600" />
+            </button>
+
+            {/* Zoom Card */}
+            <button
+              type="button"
+              onClick={() => handleInstantLaunch("zoom")}
+              className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-sky-500/20 bg-sky-50/50 p-4 text-left transition hover:border-sky-500/50 hover:bg-sky-50 dark:border-sky-900/30 dark:bg-sky-950/20 dark:hover:bg-sky-950/30"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card shadow-xs">
+                  <PlatformIcon platform="zoom" className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-semibold text-foreground">Zoom</span>
+                    <span className="rounded-full bg-sky-600/10 px-1.5 py-0.2 text-[10px] font-medium text-sky-700 dark:text-sky-400">
+                      Instant
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Start personal room</p>
+                </div>
+              </div>
+              <ExternalLink className="h-4 w-4 text-muted-foreground opacity-60 transition group-hover:opacity-100 group-hover:text-sky-600" />
+            </button>
+
+            {/* Microsoft Teams Card */}
+            <button
+              type="button"
+              onClick={() => handleInstantLaunch("teams")}
+              className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-indigo-500/20 bg-indigo-50/50 p-4 text-left transition hover:border-indigo-500/50 hover:bg-indigo-50 dark:border-indigo-900/30 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/30"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card shadow-xs">
+                  <PlatformIcon platform="teams" className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-semibold text-foreground">Teams</span>
+                    <span className="rounded-full bg-indigo-600/10 px-1.5 py-0.2 text-[10px] font-medium text-indigo-700 dark:text-indigo-400">
+                      Instant
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Connect with team</p>
+                </div>
+              </div>
+              <ExternalLink className="h-4 w-4 text-muted-foreground opacity-60 transition group-hover:opacity-100 group-hover:text-indigo-600" />
+            </button>
+          </div>
+
+          {/* 5-minute reminder notice banner */}
+          <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+            <div className="flex items-center gap-2.5 text-xs text-foreground">
+              <Clock className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+              <span>
+                <strong>Automatic 5-Minute Alert:</strong> You and all participants receive a popup notification with an audible chime 5 minutes before any scheduled meeting.
+              </span>
             </div>
           </div>
-          <ExternalLink className="h-4 w-4 text-muted-foreground opacity-60 transition group-hover:opacity-100 group-hover:text-emerald-600" />
-        </button>
-
-        {/* Zoom Card */}
-        <button
-          type="button"
-          onClick={() => handleInstantLaunch("zoom")}
-          className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-sky-500/20 bg-sky-50/50 p-4 text-left transition hover:border-sky-500/50 hover:bg-sky-50 dark:border-sky-900/30 dark:bg-sky-950/20 dark:hover:bg-sky-950/30"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card shadow-xs">
-              <PlatformIcon platform="zoom" className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-semibold text-foreground">Zoom</span>
-                <span className="rounded-full bg-sky-600/10 px-1.5 py-0.2 text-[10px] font-medium text-sky-700 dark:text-sky-400">
-                  Instant
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">Start personal meeting</p>
-            </div>
-          </div>
-          <ExternalLink className="h-4 w-4 text-muted-foreground opacity-60 transition group-hover:opacity-100 group-hover:text-sky-600" />
-        </button>
-
-        {/* Microsoft Teams Card */}
-        <button
-          type="button"
-          onClick={() => handleInstantLaunch("teams")}
-          className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-indigo-500/20 bg-indigo-50/50 p-4 text-left transition hover:border-indigo-500/50 hover:bg-indigo-50 dark:border-indigo-900/30 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/30"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card shadow-xs">
-              <PlatformIcon platform="teams" className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-semibold text-foreground">Microsoft Teams</span>
-                <span className="rounded-full bg-indigo-600/10 px-1.5 py-0.2 text-[10px] font-medium text-indigo-700 dark:text-indigo-400">
-                  Instant
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">Connect with team</p>
-            </div>
-          </div>
-          <ExternalLink className="h-4 w-4 text-muted-foreground opacity-60 transition group-hover:opacity-100 group-hover:text-indigo-600" />
-        </button>
-      </div>
-
-      {/* 5-minute reminder notice banner */}
-      <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
-        <div className="flex items-center gap-2.5 text-xs text-foreground">
-          <Clock className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-          <span>
-            <strong>Automatic 5-Minute Alert:</strong> You and all participants receive a popup notification with an audible chime 5 minutes before any scheduled meeting.
-          </span>
         </div>
       </div>
 

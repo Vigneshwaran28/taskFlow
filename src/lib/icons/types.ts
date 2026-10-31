@@ -3,10 +3,8 @@ import type { ComponentType } from "react";
 export type IconLibraryKey =
   | "lucide"
   | "tabler"
-  | "material"
   | "heroicons"
-  | "phosphor"
-  | "remix";
+  | "phosphor";
 
 export type IconStyleKey = "outline" | "filled" | "bold" | "rounded";
 
@@ -14,7 +12,7 @@ export interface IconLibraryMeta {
   key: IconLibraryKey;
   name: string;
   license: string;
-  licenseType: "ISC" | "MIT" | "Apache 2.0";
+  licenseType: "ISC" | "MIT";
   description: string;
   browseUrl: string;
   licenseUrl: string;
@@ -102,20 +100,6 @@ export const ICON_LIBRARIES: readonly IconLibraryMeta[] = [
     sampleIconNames: ["Dashboard", "Checklist", "Messages", "Growth", "Stethoscope", "Adjust"],
   },
   {
-    key: "material",
-    name: "Google Material Symbols",
-    license: "Apache 2.0",
-    licenseType: "Apache 2.0",
-    description:
-      "A huge collection of standard interface icons, available in outlined, rounded, and sharp styles. Free commercial use. License conditions apply when redistributing icon files.",
-    browseUrl: "https://fonts.google.com/icons",
-    licenseUrl: "https://developers.google.com/fonts/docs/material_symbols",
-    attributionNote: "Free commercial use. License conditions apply when redistributing icon files.",
-    defaultStrokeWidth: 2,
-    hasFillVariant: true,
-    sampleIconNames: ["Overview", "Assignment", "Forum", "Trending", "Health", "Tune"],
-  },
-  {
     key: "heroicons",
     name: "Heroicons",
     license: "MIT license",
@@ -142,20 +126,6 @@ export const ICON_LIBRARIES: readonly IconLibraryMeta[] = [
     defaultStrokeWidth: 2,
     hasFillVariant: true,
     sampleIconNames: ["Grid", "Checks", "Teardrop", "Trend", "Pulse", "Sliders"],
-  },
-  {
-    key: "remix",
-    name: "Remix Icon",
-    license: "Apache 2.0",
-    licenseType: "Apache 2.0",
-    description:
-      "A versatile collection of outline and filled icons for websites, apps, and product interfaces.",
-    browseUrl: "https://remixicon.com/",
-    licenseUrl: "https://github.com/Remix-Design/RemixIcon/blob/master/License",
-    attributionNote: "Apache 2.0 license. Rich product interface iconography.",
-    defaultStrokeWidth: 1.75,
-    hasFillVariant: true,
-    sampleIconNames: ["Dashboard", "Checkbox", "Chat", "LineChart", "Medicine", "Settings"],
   },
 ] as const;
 

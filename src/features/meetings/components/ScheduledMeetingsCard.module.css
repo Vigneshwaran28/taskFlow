@@ -1,0 +1,359 @@
+.meetingCard {
+  background-color: #e9eeea;
+  border-radius: 2rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  color: #1a1a1a;
+  font-family: inherit;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.875rem;
+  font-weight: bold;
+  line-height: 1.2;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+.dateSelector {
+  background-color: #e9eeea;
+  border-radius: 9999px;
+  padding: 0.7rem 1.2rem;
+  cursor: pointer;
+  border: 1px solid #d0d0ce;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  color: #1f2937;
+  user-select: none;
+}
+
+.dateSelector:hover {
+  background-color: #dededd;
+}
+
+.dateSelector:active {
+  transform: scale(0.98);
+}
+
+.dateSelector span {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+.callsInfo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  color: #374151;
+}
+
+.callsInfo span {
+  margin-left: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.dateNavAndIndicators {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.dateNavContainer {
+  background-color: white;
+  border-radius: 16px;
+  padding: 12px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.dayItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.dayNumber,
+.dayName {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  background-color: transparent;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dayNumber {
+  font-size: 1.2rem;
+  font-weight: 600;
+  height: 28px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  padding-top: 5px;
+  color: #1f2937;
+}
+
+.dayName {
+  font-size: 0.7rem;
+  height: 20px;
+  color: #666;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.dayItem:hover .dayNumber,
+.dayItem:hover .dayName {
+  background-color: #f8f8f8;
+}
+
+.dayActive .dayNumber,
+.dayActive .dayName {
+  background-color: #f0ff7a !important;
+  color: #111827 !important;
+  font-weight: 700;
+}
+
+.indicatorContainer {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+  padding: 0 28px;
+  box-sizing: border-box;
+}
+
+.indicatorDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #d0d0ce;
+  position: relative;
+  z-index: 2;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.indicatorActive {
+  background-color: #000 !important;
+  transform: scale(1.25);
+}
+
+.indicatorHasMeetings {
+  background-color: #10b981;
+}
+
+.indicatorLine {
+  position: absolute;
+  top: 50%;
+  left: 32px;
+  right: 32px;
+  height: 1px;
+  border-top: 1.5px dashed #d0d0ce;
+  z-index: 1;
+}
+
+/* Call items list underneath date selector */
+.scheduledList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.callItem {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.callItem:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.callItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.callTimeBadge {
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  white-space: nowrap;
+}
+
+.callItemInfo {
+  min-width: 0;
+}
+
+.callTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.callMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.15rem;
+}
+
+.joinButton {
+  background-color: #111827;
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.joinButton:hover {
+  background-color: #374151;
+}
+
+.joinButton:active {
+  transform: scale(0.96);
+}
+
+.emptyCalls {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+@media screen and (max-width: 480px) {
+  .meetingCard {
+    max-width: 100%;
+    padding: 1rem;
+    border-radius: 1.5rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .dateSelector {
+    padding: 0.5rem 0.8rem;
+  }
+
+  .dateSelector span {
+    font-size: 0.9rem;
+  }
+
+  .dayNumber,
+  .dayName {
+    width: 36px;
+  }
+
+  .dayNumber {
+    font-size: 1rem;
+  }
+
+  .dayName {
+    font-size: 0.65rem;
+  }
+
+  .indicatorContainer {
+    padding: 0 24px;
+  }
+
+  .indicatorLine {
+    left: 28px;
+    right: 28px;
+  }
+
+  .callsInfo span {
+    font-size: 0.75rem;
+  }
+}
+
+@media screen and (max-width: 350px) {
+  .meetingCard {
+    padding: 0.8rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dateSelector {
+    margin-top: 0.5rem;
+  }
+
+  .dayNumber,
+  .dayName {
+    width: 30px;
+  }
+
+  .dayNumber {
+    font-size: 0.9rem;
+  }
+
+  .dayName {
+    font-size: 0.6rem;
+  }
+
+  .indicatorContainer {
+    padding: 0 20px;
+  }
+
+  .indicatorLine {
+    left: 24px;
+    right: 24px;
+  }
+}

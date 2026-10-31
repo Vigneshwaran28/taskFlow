@@ -3,6 +3,7 @@ import type { FeatureKey, SessionUser, SettingsKey, WorkspaceSettings } from "@/
 import { ApiError } from "@/lib/apiClient";
 import { useTenantSlug } from "@/lib/navigation";
 import { currentWorkspace } from "@/lib/tenantPath";
+import { nativeSecurity } from "@/lib/nativeSecurity";
 import { authService } from "../services/authService";
 
 export const authKeys = {
@@ -60,6 +61,11 @@ function useSessionMutation<TInput>(mutationFn: (input: TInput) => Promise<Sessi
       queryClient.setQueryData(authKeys.session(currentWorkspace()), user ?? null);
       // Signed in from a page outside the workspace (/login): its own pages start with this session too.
       if (user?.tenant?.slug) queryClient.setQueryData(authKeys.session(user.tenant.slug), user);
+      if (user) {
+        void nativeSecurity.setSecureItem(`session_${user.tenant?.slug || "default"}`, JSON.stringify(user));
+      } else {
+        void nativeSecurity.removeSecureItem("workspace_session");
+      }
     },
   });
 }

@@ -43,9 +43,15 @@ export const COLOR_META: Record<NoteColor, { label: string; card: string; swatch
   },
 };
 
-export const SHARE_ALL_LABELS: Record<ShareAll, string> = { none: "Off", view: "Can view", edit: "Can edit" };
+export const SHARE_ALL_LABELS: Record<ShareAll, string> = {
+  none: "Off",
+  view: "Read (View)",
+  edit: "Write (Edit)",
+  delete: "Full (Read, Write & Delete)",
+};
 
 export const canEdit = (access: NoteAccess) => access !== "view";
+export const canDelete = (access: NoteAccess) => access === "owner" || access === "manage" || access === "delete";
 export const canControl = (access: NoteAccess) => access === "owner" || access === "manage";
 
 /** Private / Shared with 3 / Everyone can view|edit */

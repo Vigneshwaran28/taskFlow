@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Archive, Inbox, LayoutDashboard, List, Plus, Search, StickyNote, User, Users } from "lucide-react";
+import { Archive, Folder, Inbox, LayoutDashboard, List, Plus, Search, StickyNote, User, Users } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared/States";
 import { Button } from "@/components/ui/Button";
@@ -14,6 +14,7 @@ import { useSearchParam } from "@/lib/navigation";
 import { NotesBoard } from "../components/board/NotesBoard";
 import { NoteCard } from "../components/NoteCard";
 import { NoteEditorDialog } from "../components/NoteEditorDialog";
+import { Folder3DNotes } from "../components/Folder3DNotes";
 import { useNotesView } from "../hooks/useBoardPrefs";
 import { useNotes } from "../hooks/useNotes";
 import { NOTE_COLORS, type Note, type NoteColor, type NoteScope } from "../services/noteService";
@@ -35,6 +36,7 @@ const EMPTY: Record<NoteScope, { title: string; message: string }> = {
 
 const VIEWS = [
   { id: "board", label: "Board", icon: LayoutDashboard },
+  { id: "folder", label: "Folder & Docs", icon: Folder },
   { id: "list", label: "List", icon: List },
 ] as const;
 
@@ -82,11 +84,11 @@ export function NotesPage() {
     <div className={cn("mx-auto flex w-full min-w-0 flex-col gap-6", view === "list" && "max-w-7xl")}>
       <PageHeader
         title="Notes"
-        description="Sticky notes for you, a few colleagues, or the whole workspace."
+        description="Sticky notes and doc-style arrangements for you, colleagues, or the whole workspace."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {viewToggle}
-            {canWrite && view === "list" && (
+            {canWrite && view !== "board" && (
               <Button onClick={() => open(null)}>
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 New note
@@ -97,6 +99,12 @@ export function NotesPage() {
       />
       {view === "board" ? (
         <NotesBoard onOpen={open} />
+      ) : view === "folder" ? (
+        <Folder3DNotes
+          notes={data?.items || []}
+          onOpenNote={open}
+          canCreateNote={canWrite}
+        />
       ) : (
       <Tabs name="notes" label="Note views" tabs={TABS} active={scope} onChange={id => setTab(id === "all" ? null : id)}>
         <div className="flex flex-col gap-4 pt-4">

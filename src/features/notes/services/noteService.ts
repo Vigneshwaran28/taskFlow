@@ -28,13 +28,20 @@ export interface NoteBoard {
   zoom: number;
 }
 export type NoteScope = "all" | "mine" | "shared" | "archived";
-export type NoteAccess = "owner" | "manage" | "edit" | "view";
-export type ShareLevel = "view" | "edit";
+export type NoteAccess = "owner" | "manage" | "delete" | "edit" | "view";
+export type ShareLevel = "view" | "edit" | "delete";
 export type ShareAll = "none" | ShareLevel;
+
+export interface NotePermissions {
+  read: boolean;
+  write: boolean;
+  delete: boolean;
+}
 
 export interface NoteShare {
   user: { id: number; name: string };
   access: ShareLevel;
+  permissions?: NotePermissions;
 }
 
 export interface Note {
@@ -47,6 +54,10 @@ export interface Note {
   pinned: boolean;
   owner: { id: number; name: string };
   access: NoteAccess;
+  canRead?: boolean;
+  canWrite?: boolean;
+  canDelete?: boolean;
+  permissions?: NotePermissions;
   shareAll: ShareAll;
   /** Only for the owner and note managers; null for everyone else */
   shares: NoteShare[] | null;
@@ -90,7 +101,11 @@ export interface NoteUpdateInput {
 
 export interface NoteSharingInput {
   shareAll: ShareAll;
-  users: { userId: number; access: ShareLevel }[];
+  users: {
+    userId: number;
+    access?: ShareLevel;
+    permissions?: Partial<NotePermissions>;
+  }[];
 }
 
 export interface ShareablePerson {

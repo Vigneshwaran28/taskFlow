@@ -1,10 +1,36 @@
 "use client";
 import type { ComponentType } from "react";
-import { Check, Monitor, Moon, PanelLeft, Sun } from "lucide-react";
+import {
+  Check,
+  Columns,
+  Layout,
+  LayoutGrid,
+  Maximize2,
+  Minimize2,
+  Monitor,
+  Moon,
+  PanelLeft,
+  PanelRight,
+  Sun,
+} from "lucide-react";
 import { STYLE_META, StylePreview } from "@/components/shared/StylePreview";
 import { useToast } from "@/components/shared/Toaster";
 import { useUpdatePreferences } from "@/features/auth";
-import { ACCENTS, STYLE_DEFAULTS, STYLES, useTheme, type Accent, type AppearancePreferences, type FontChoice, type SidebarChoice, type ThemeMode, ACCENT_META } from "@/hooks/useTheme";
+import {
+  ACCENTS,
+  STYLE_DEFAULTS,
+  STYLES,
+  useTheme,
+  type Accent,
+  type AppearancePreferences,
+  type CardRadius,
+  type FontChoice,
+  type LayoutWidth,
+  type NavbarStyle,
+  type SidebarChoice,
+  type ThemeMode,
+  ACCENT_META,
+} from "@/hooks/useTheme";
 import { cn } from "@/lib/cn";
 import type { SessionUser } from "@/types/session";
 import { BackgroundPicker } from "./BackgroundPicker";
@@ -15,6 +41,74 @@ const THEME_OPTIONS: readonly { value: ThemeMode; label: string; icon: Component
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
   { value: "system", label: "System", icon: Monitor },
+];
+
+const LAYOUT_WIDTH_OPTIONS: readonly {
+  value: LayoutWidth;
+  label: string;
+  description: string;
+  badge: string;
+  icon: ComponentType<{ className?: string }>;
+}[] = [
+  { value: "standard", label: "Standard (6xl)", description: "Balanced 1152px width, optimal for reading and task forms.", badge: "Default", icon: Minimize2 },
+  { value: "wide", label: "Spacious (7xl)", description: "Expansive 1380px canvas for multi-column boards and analytics.", badge: "Spacious", icon: Columns },
+  { value: "full", label: "Fluid (Max)", description: "Maximized 1600px+ width, edge-to-edge on large ultrawide displays.", badge: "Maximized", icon: Maximize2 },
+];
+
+const CARD_RADIUS_OPTIONS: readonly {
+  value: CardRadius;
+  label: string;
+  description: string;
+  previewClass: string;
+}[] = [
+  { value: "default", label: "Style default", description: "Adapts to the active preset.", previewClass: "rounded-md" },
+  { value: "sharp", label: "Sharp (2px)", description: "Clean, technical, crisp edges.", previewClass: "rounded-xs" },
+  { value: "rounded", label: "Rounded (12px)", description: "Balanced modern SaaS corners.", previewClass: "rounded-xl" },
+  { value: "pill", label: "Smooth (20px)", description: "Soft, organic, friendly curves.", previewClass: "rounded-2xl" },
+];
+
+const NAVBAR_STYLE_OPTIONS: readonly {
+  value: NavbarStyle;
+  label: string;
+  description: string;
+  badge: string;
+  previewClass: string;
+}[] = [
+  {
+    value: "glass",
+    label: "Glass / Frosted",
+    description: "Sleek frosted backdrop blur that lets page content subtly peek through.",
+    badge: "Default",
+    previewClass: "bg-background/70 backdrop-blur-md border-b border-border/80",
+  },
+  {
+    value: "solid",
+    label: "Solid Card",
+    description: "Clean, high-contrast opaque background with a defined bottom border.",
+    badge: "Clean",
+    previewClass: "bg-card border-b border-border shadow-xs",
+  },
+  {
+    value: "tinted",
+    label: "Tinted Accent",
+    description: "Warm, branded presence tinted with your workspace accent color.",
+    badge: "Branded",
+    previewClass: "bg-accent/40 border-b border-primary/25 backdrop-blur-sm",
+  },
+  {
+    value: "floating",
+    label: "Floating Island",
+    description: "Detached pill navbar with rounded corners and elevated shadow.",
+    badge: "Modern",
+    previewClass: "my-1 mx-2 rounded-xl bg-card/90 border border-border shadow-md backdrop-blur",
+  },
+  {
+    value: "dock",
+    label: "Glass Dock Pill",
+    description: "Ultra-glassmorphic rounded dock with specular 3D reflection and spring micro-interactions.",
+    badge: "Uiverse",
+    previewClass: "my-1 mx-auto max-w-[130px] rounded-full bg-primary/45 border border-white/30 shadow-md backdrop-blur saturate-150",
+  },
 ];
 
 // Swatch colours only (the full palettes live in globals.css). Complete class names for Tailwind.
@@ -89,7 +183,7 @@ export function AppearanceSettings({ user }: { user: SessionUser }) {
 
   return (
     <>
-      <SettingsSection id="theme" title="Theme & style" description="Light or dark, the overall look, and the sidebar. Changes apply right away and follow you to any device.">
+      <SettingsSection id="theme" title="Theme & style" description="Light or dark, the overall look, and the sidebar. Changes apply right away and follow you to any device." layout="stacked">
         <div className="flex flex-col gap-6">
           <fieldset>
             <legend className={legendClass}>Theme</legend>
@@ -165,6 +259,333 @@ export function AppearanceSettings({ user }: { user: SessionUser }) {
         </div>
       </SettingsSection>
 
+      <SettingsSection
+        id="layout"
+        title="Layout & structure"
+        description="Fine-tune your workspace canvas width, top navigation bar, sidebar placement, and card corner geometry. Fully responsive across devices."
+        layout="stacked"
+      >
+        <div className="flex flex-col gap-8">
+          {/* Real-time Layout Preview Canvas */}
+          <div className="rounded-xl border border-border/80 bg-muted/30 p-3 sm:p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10 text-primary">
+                  <Layout className="h-3.5 w-3.5" />
+                </span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Live Workspace Layout Preview
+                </span>
+              </div>
+              <span className="rounded-full bg-accent/80 px-2 py-0.5 text-[10px] font-medium text-accent-foreground">
+                {preferences.layoutWidth === "full" ? "Fluid Max Width" : preferences.layoutWidth === "wide" ? "Spacious 7xl" : "Standard 6xl"}
+              </span>
+            </div>
+
+            <div className="relative flex h-40 w-full overflow-hidden rounded-xl border border-border/80 bg-background shadow-inner">
+              {/* Top bar preview */}
+              <div
+                className={cn(
+                  "absolute inset-x-0 top-0 z-10 flex h-7 items-center justify-between px-2.5 transition-all",
+                  preferences.navbarStyle === "dock"
+                    ? "mx-auto my-1 h-6 max-w-[200px] rounded-full border border-primary/40 bg-primary/25 shadow-sm backdrop-blur"
+                    : preferences.navbarStyle === "floating"
+                    ? "mx-2 my-1 h-6 rounded-lg border border-border/80 bg-card/90 shadow-sm"
+                    : preferences.navbarStyle === "solid"
+                    ? "border-b border-border bg-card shadow-xs"
+                    : preferences.navbarStyle === "tinted"
+                    ? "border-b border-primary/20 bg-accent/40"
+                    : "border-b border-border/80 bg-background/80 backdrop-blur-xs"
+                )}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+                  <span className="h-1.5 w-12 rounded-xs bg-muted-foreground/40" />
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-primary/70" />
+                </div>
+              </div>
+
+              {/* Sidebar preview */}
+              <div
+                className={cn(
+                  "absolute inset-y-7 flex flex-col border-border/70 bg-card p-1.5 transition-all duration-300",
+                  preferences.sidebarPosition === "right" ? "right-0 border-l" : "left-0 border-r",
+                  preferences.sidebarMode === "compact" ? "w-10 items-center" : "w-28",
+                  preferences.sidebarAlign === "center" && "items-center"
+                )}
+              >
+                <div className="mt-1 flex w-full flex-col gap-1">
+                  <span className="h-2 w-full rounded-xs bg-accent/80" />
+                  <span className="h-1.5 w-4/5 rounded-xs bg-muted-foreground/40" />
+                  <span className="h-1.5 w-3/5 rounded-xs bg-muted-foreground/40" />
+                </div>
+              </div>
+
+              {/* Main content canvas preview */}
+              <div
+                className={cn(
+                  "absolute inset-y-7 flex flex-1 items-start justify-center p-3 transition-all duration-300",
+                  preferences.sidebarPosition === "right"
+                    ? preferences.sidebarMode === "compact" ? "left-0 right-10" : "left-0 right-28"
+                    : preferences.sidebarMode === "compact" ? "left-10 right-0" : "left-28 right-0"
+                )}
+              >
+                <div
+                  className={cn(
+                    "flex w-full flex-col gap-1.5 transition-all duration-300",
+                    preferences.layoutWidth === "wide" ? "max-w-[85%]" : preferences.layoutWidth === "full" ? "max-w-full" : "max-w-[70%]"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="h-2 w-16 rounded-xs bg-foreground/70" />
+                    <span className="h-2 w-8 rounded-xs bg-primary/70" />
+                  </div>
+                  <div
+                    className={cn(
+                      "flex flex-col gap-1 border border-border/80 bg-card p-2 shadow-xs",
+                      preferences.cardRadius === "sharp"
+                        ? "rounded-xs"
+                        : preferences.cardRadius === "rounded"
+                        ? "rounded-xl"
+                        : preferences.cardRadius === "pill"
+                        ? "rounded-2xl"
+                        : "rounded-lg"
+                    )}
+                  >
+                    <span className="h-1.5 w-24 rounded-xs bg-foreground/60" />
+                    <span className="h-1 w-full rounded-xs bg-muted-foreground/30" />
+                    <span className="h-1 w-3/4 rounded-xs bg-muted-foreground/30" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 1. Layout Content Max-Width */}
+          <fieldset>
+            <legend className={legendClass}>Workspace Content Width</legend>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Scale the maximum container width of your dashboard, task boards, and pages.
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {LAYOUT_WIDTH_OPTIONS.map(option => {
+                const isSelected = (preferences.layoutWidth || "standard") === option.value;
+                const Icon = option.icon;
+                return (
+                  <label
+                    key={option.value}
+                    className={cn(
+                      "flex cursor-pointer flex-col gap-2 rounded-xl border p-3.5 transition-all text-left has-focus-visible:ring-2 has-focus-visible:ring-ring",
+                      isSelected
+                        ? "border-primary bg-accent/50 shadow-xs"
+                        : "border-border hover:border-primary/40 hover:bg-muted/50"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="layout-width"
+                      value={option.value}
+                      checked={isSelected}
+                      onChange={() => change("layoutWidth", option.value)}
+                      className="sr-only"
+                    />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Icon className={cn("h-4 w-4", isSelected ? "text-primary" : "text-muted-foreground")} />
+                        <span className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                          {isSelected && <Check className="h-3.5 w-3.5 text-primary shrink-0" aria-hidden="true" />}
+                          {option.label}
+                        </span>
+                      </div>
+                      <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        {option.badge}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{option.description}</p>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {/* 2. Top Navigation Bar Style */}
+          <fieldset>
+            <legend className={legendClass}>Top Navigation Bar Style</legend>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Select the visual treatment of the top navigation bar across all workspace modules.
+            </p>
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+              {NAVBAR_STYLE_OPTIONS.map(option => {
+                const isSelected = (preferences.navbarStyle || "glass") === option.value;
+                return (
+                  <label
+                    key={option.value}
+                    className={cn(
+                      "relative flex min-w-0 cursor-pointer flex-col justify-between gap-3 rounded-xl border p-3.5 transition-all text-left has-focus-visible:ring-2 has-focus-visible:ring-ring",
+                      isSelected
+                        ? "border-primary bg-accent/50 shadow-xs"
+                        : "border-border hover:border-primary/40 hover:bg-muted/50"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="navbar-style"
+                      value={option.value}
+                      checked={isSelected}
+                      onChange={() => change("navbarStyle", option.value)}
+                      className="sr-only"
+                    />
+                    <div className="flex flex-col gap-3">
+                      <div className="relative flex h-12 w-full items-center overflow-hidden rounded-lg border border-border/70 bg-muted/40 p-1">
+                        <div className={cn("flex h-7 w-full items-center justify-between px-2 text-[10px]", option.previewClass)}>
+                          <div className="flex items-center gap-1">
+                            <span className="h-2 w-2 rounded-full bg-primary/70 shrink-0" />
+                            <span className="h-1.5 w-10 rounded bg-muted-foreground/40" />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-xs bg-muted-foreground/30 shrink-0" />
+                            <span className="h-2.5 w-2.5 rounded-full bg-primary/80 shrink-0" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-1.5">
+                        <span className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-foreground">
+                          {isSelected && <Check className="h-3.5 w-3.5 text-primary shrink-0" aria-hidden="true" />}
+                          <span className="truncate">{option.label}</span>
+                        </span>
+                        <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          {option.badge}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{option.description}</p>
+                  </label>
+                );
+              })}
+            </div>
+            <label className="mt-3 flex cursor-pointer items-center gap-2 text-xs font-medium text-foreground">
+              <input
+                type="checkbox"
+                checked={preferences.navbarSticky !== false}
+                onChange={e => change("navbarSticky", e.target.checked)}
+                className="h-4 w-4 rounded border-input accent-primary"
+              />
+              <span>Keep top navigation bar sticky at the top when scrolling down</span>
+            </label>
+          </fieldset>
+
+          {/* 3. Sidebar Placement & Mode */}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <fieldset>
+              <legend className={legendClass}>Sidebar Position</legend>
+              <p className="mb-2 text-xs text-muted-foreground">Dock the main sidebar navigation to either screen edge.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <label className={cn(tileClass((preferences.sidebarPosition ?? "left") === "left"), "text-xs")}>
+                  <input
+                    type="radio"
+                    name="sidebar-position"
+                    value="left"
+                    checked={(preferences.sidebarPosition ?? "left") === "left"}
+                    onChange={() => change("sidebarPosition", "left")}
+                    className="sr-only"
+                  />
+                  <PanelLeft className="h-5 w-5" />
+                  <span>Left side (Default)</span>
+                </label>
+                <label className={cn(tileClass((preferences.sidebarPosition ?? "left") === "right"), "text-xs")}>
+                  <input
+                    type="radio"
+                    name="sidebar-position"
+                    value="right"
+                    checked={(preferences.sidebarPosition ?? "left") === "right"}
+                    onChange={() => change("sidebarPosition", "right")}
+                    className="sr-only"
+                  />
+                  <PanelRight className="h-5 w-5" />
+                  <span>Right side</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend className={legendClass}>Sidebar Mode</legend>
+              <p className="mb-2 text-xs text-muted-foreground">Choose expanded width or space-saving icon rail.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <label className={cn(tileClass((preferences.sidebarMode ?? "full") === "full"), "text-xs")}>
+                  <input
+                    type="radio"
+                    name="sidebar-mode"
+                    value="full"
+                    checked={(preferences.sidebarMode ?? "full") === "full"}
+                    onChange={() => change("sidebarMode", "full")}
+                    className="sr-only"
+                  />
+                  <LayoutGrid className="h-5 w-5" />
+                  <span>Expanded (Full)</span>
+                </label>
+                <label className={cn(tileClass((preferences.sidebarMode ?? "full") === "compact"), "text-xs")}>
+                  <input
+                    type="radio"
+                    name="sidebar-mode"
+                    value="compact"
+                    checked={(preferences.sidebarMode ?? "full") === "compact"}
+                    onChange={() => change("sidebarMode", "compact")}
+                    className="sr-only"
+                  />
+                  <Columns className="h-5 w-5" />
+                  <span>Collapsed (Rail)</span>
+                </label>
+              </div>
+            </fieldset>
+          </div>
+
+          {/* 4. Card & Surface Geometry (Radius) */}
+          <fieldset>
+            <legend className={legendClass}>Card & Surface Geometry (Corner Radius)</legend>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Define the corner curvature of cards, dialogs, dropdowns, and surfaces across TaskFlow.
+            </p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {CARD_RADIUS_OPTIONS.map(option => {
+                const isSelected = (preferences.cardRadius || "default") === option.value;
+                return (
+                  <label
+                    key={option.value}
+                    className={cn(
+                      "flex cursor-pointer flex-col gap-2 rounded-xl border p-3 transition-all text-left has-focus-visible:ring-2 has-focus-visible:ring-ring",
+                      isSelected
+                        ? "border-primary bg-accent/50 shadow-xs"
+                        : "border-border hover:border-primary/40 hover:bg-muted/50"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="card-radius"
+                      value={option.value}
+                      checked={isSelected}
+                      onChange={() => change("cardRadius", option.value)}
+                      className="sr-only"
+                    />
+                    <div className="flex h-8 items-center justify-center rounded-lg border border-border/80 bg-muted/40 p-1">
+                      <div className={cn("h-5 w-12 border border-primary/60 bg-primary/20", option.previewClass)} />
+                    </div>
+                    <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                      {isSelected && <Check className="h-3 w-3 text-primary shrink-0" aria-hidden="true" />}
+                      {option.label}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground leading-normal">{option.description}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+        </div>
+      </SettingsSection>
+
       <div className="rounded-xl border border-border/80 bg-muted/40 p-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
@@ -172,15 +593,15 @@ export function AppearanceSettings({ user }: { user: SessionUser }) {
               <PanelLeft className="h-4 w-4" aria-hidden="true" />
             </span>
             <div>
-              <h3 className="text-sm font-semibold text-foreground">Navbar, Sidebar & Icon Customization</h3>
-              <p className="text-xs text-muted-foreground">Looking to customize your top navbar style, sidebar placement, or icon library? These controls are in the dedicated Navigation tab.</p>
+              <h3 className="text-sm font-semibold text-foreground">Icon Library & Customization</h3>
+              <p className="text-xs text-muted-foreground">Choose from 4 icon families (Lucide, Tabler, Heroicons, Phosphor) and customize stroke weight or module icons.</p>
             </div>
           </div>
           <a
             href="?tab=navigation"
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 shrink-0 self-start sm:self-auto"
           >
-            <span>Open Navigation Settings</span>
+            <span>Open Icon Settings</span>
           </a>
         </div>
       </div>
@@ -277,7 +698,7 @@ export function AppearanceSettings({ user }: { user: SessionUser }) {
         </div>
       </SettingsSection>
 
-      <SettingsSection id="background" title="Background picture" description="A picture behind the app, dimmed so text stays readable.">
+      <SettingsSection id="background" title="Background picture" description="A picture behind the app, dimmed so text stays readable." layout="stacked">
         <BackgroundPicker
           key={preferences.backgroundImage ?? "workspace"}
           preferences={preferences}
@@ -293,6 +714,7 @@ export function AppearanceSettings({ user }: { user: SessionUser }) {
         id="custom-css"
         title="My custom CSS"
         description="Fine-tune corners, shadows, spacing, typefaces, and colours with your own CSS. Only you see it; it's saved when you choose Save."
+        layout="stacked"
       >
         <UserCssEditor
           key={`${user.preferences?.customCss ?? ""}|${Boolean(user.preferences?.customCssEnabled)}`}

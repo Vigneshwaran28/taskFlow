@@ -13,7 +13,7 @@ import { formatDateTime, formatTimeAgo } from "@/lib/dates";
 import { useRealtimeEvent } from "@/realtime";
 import { useArchiveNote, useCreateNote, useDeleteNote, useNote, useNotePresence, useRestoreNote, useUpdateNote } from "../hooks/useNotes";
 import type { Note, NoteColor, NoteConflictBody } from "../services/noteService";
-import { COLOR_META, NOTE_BODY_MAX, NOTE_TITLE_MAX, canControl, canEdit, noteHeading, shareLabel, validateNote, type NoteErrors } from "../utils/noteMeta";
+import { COLOR_META, NOTE_BODY_MAX, NOTE_TITLE_MAX, canControl, canDelete, canEdit, noteHeading, shareLabel, validateNote, type NoteErrors } from "../utils/noteMeta";
 import { ColorPicker } from "./ColorPicker";
 import { ShareNoteDialog } from "./ShareNoteDialog";
 import { TransferNoteDialog } from "./TransferNoteDialog";
@@ -75,6 +75,7 @@ export function NoteEditorDialog({ initial, onClose }: { initial: Note | null; o
   const archived = Boolean(note?.archivedAt);
   const readOnly = !canEdit(access) || archived;
   const control = note ? canControl(access) : false;
+  const mayDelete = note ? canDelete(access) : false;
   const color = note?.color ?? draftColor;
   const dirty = text.title !== saved.title || text.body !== saved.body;
 
@@ -267,7 +268,7 @@ export function NoteEditorDialog({ initial, onClose }: { initial: Note | null; o
               )}
             </p>
             <div className="flex flex-wrap gap-2">
-              {note && control && (
+              {note && (control || mayDelete) && (
                 <>
                   {archived ? (
                     <Button variant="secondary" size="sm" onClick={() => lifecycle(restore, "restored", false)} loading={restore.isPending}>

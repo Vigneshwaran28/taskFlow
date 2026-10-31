@@ -19,6 +19,7 @@ import { Sidebar } from "./Sidebar";
 import { isTaskPage, taskDefaultsFor } from "./taskPages";
 import { ThemeSync } from "./ThemeSync";
 import { Topbar } from "./Topbar";
+import { FloatingGlassDock } from "./FloatingGlassDock";
 
 /** Press "N" on a task page (outside inputs) to create a task there. */
 function NewTaskShortcut({ pathname }: { pathname: string }) {
@@ -59,6 +60,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { preferences } = useTheme();
   const sidebarPosition = preferences.sidebarPosition ?? "left";
   const isCompact = (preferences.sidebarMode ?? "full") === "compact";
+  const layoutWidth = preferences.layoutWidth || "standard";
   // The workspace's page entrance (branding.ui.pageTransition) replays on every page.
   const mainRef = useRef<HTMLElement>(null);
   usePageEntrance(mainRef, pathname);
@@ -96,13 +98,27 @@ export function AppLayout({ children }: { children: ReactNode }) {
           )}
         >
           <Topbar onOpenMenu={() => setMenuOpen(true)} />
-          <main ref={mainRef} id="main" data-tf="page" className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8 print:max-w-none print:p-0">
+          <main
+            ref={mainRef}
+            id="main"
+            data-tf="page"
+            className={cn(
+              "mx-auto w-full px-3.5 py-5 sm:px-6 sm:py-8 lg:px-8 print:max-w-none print:p-0 transition-[max-width] duration-200",
+              (preferences.floatingDock ?? "off") !== "off" && (preferences.floatingDock === "mobile" ? "max-lg:pb-24" : "pb-24"),
+              layoutWidth === "wide"
+                ? "max-w-7xl"
+                : layoutWidth === "full"
+                ? "max-w-[102rem] 2xl:max-w-[115rem]"
+                : "max-w-6xl"
+            )}
+          >
             <MaintenanceBanner />
             <ProviderNotices />
             <BackBar />
             {children}
           </main>
         </div>
+        <FloatingGlassDock />
         </TourProvider>
       </TaskDialogProvider>
     </RealtimeProvider>

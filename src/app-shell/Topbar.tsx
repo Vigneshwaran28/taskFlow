@@ -2,7 +2,7 @@
 import NextLink from "next/link";
 import { usePathname, useRouter } from "@/lib/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeftRight, LayoutGrid, LogOut, Menu, Plus, Settings, SlidersHorizontal } from "lucide-react";
+import { ArrowLeftRight, LayoutGrid, LogOut, Menu, Plus, Settings } from "lucide-react";
 import { Avatar, initials } from "@/components/shared/Avatar";
 import { Button } from "@/components/ui/Button";
 import { useCurrentUser, useLogout, useWorkspaceSessions } from "@/features/auth";
@@ -73,7 +73,8 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
 
   const topbarClass = cn(
     "no-print z-30 flex items-center gap-3 transition-all duration-200",
-    isSticky ? (navbarStyle === "floating" ? "sticky top-2.5" : "sticky top-0") : "relative",
+    isSticky ? (navbarStyle === "floating" || navbarStyle === "dock" ? "sticky top-2.5" : "sticky top-0") : "relative",
+    navbarStyle === "dock" && "mx-auto my-2.5 h-14 w-[calc(100%-1.5rem)] max-w-4xl rounded-full border border-white/25 bg-background/70 px-4 sm:px-6 shadow-xl backdrop-blur-xl saturate-180",
     navbarStyle === "floating" && "mx-3 sm:mx-6 my-2 h-14 rounded-2xl border border-border/80 bg-card/85 px-4 sm:px-6 shadow-md backdrop-blur-md",
     navbarStyle === "solid" && "h-16 border-b bg-card px-4 sm:px-6 shadow-xs",
     navbarStyle === "tinted" && "h-16 border-b border-primary/20 bg-accent/35 px-4 sm:px-6 backdrop-blur",
@@ -119,16 +120,6 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
         <HelpMenu />
 
         <ThemeMenu />
-
-        <button
-          type="button"
-          onClick={() => router.push("/settings?tab=navigation")}
-          title="Customize navbar & navigation in Settings"
-          aria-label="Customize navbar & navigation in Settings"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-all duration-150 hover:bg-muted hover:text-foreground select-none touch-manipulation cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-        </button>
 
         <div className="relative" data-tour="account" ref={accountMenuRef}>
           <button

@@ -1,7 +1,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 
-// ---- Board or list: remembered per browser ----
-export type NotesView = "board" | "list";
+// ---- Board, list, or 3D folder: remembered per browser ----
+export type NotesView = "board" | "list" | "folder";
 const VIEW_KEY = "tf-notes-view";
 const VIEW_EVENT = "tf-notes-view";
 
@@ -10,7 +10,8 @@ let memoryView: NotesView | null = null; // this page's choice, even when storag
 function readView(): NotesView {
   if (memoryView) return memoryView;
   try {
-    return localStorage.getItem(VIEW_KEY) === "list" ? "list" : "board";
+    const stored = localStorage.getItem(VIEW_KEY);
+    return stored === "list" ? "list" : stored === "folder" ? "folder" : "board";
   } catch {
     return "board";
   }

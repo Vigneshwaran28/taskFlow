@@ -124,7 +124,7 @@ export function IconCustomizerSection() {
           Choose which open-source icon family powers navigation, badges, and modules throughout Taskflow.
         </p>
 
-        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
           {ICON_LIBRARIES.map((lib) => {
             const isSelected = currentLibrary === lib.key;
             const sampleIcons = NAV_ICONS[lib.key];
@@ -134,7 +134,7 @@ export function IconCustomizerSection() {
                 key={lib.key}
                 onClick={() => handleSelectLibrary(lib.key)}
                 className={cn(
-                  "group relative flex cursor-pointer flex-col justify-between rounded-xl border p-4 transition-all duration-150 has-focus-visible:ring-2 has-focus-visible:ring-ring",
+                  "group relative flex min-w-0 cursor-pointer flex-col justify-between rounded-xl border p-4 transition-all duration-150 has-focus-visible:ring-2 has-focus-visible:ring-ring",
                   isSelected
                     ? "border-primary bg-accent/50 shadow-xs ring-1 ring-primary"
                     : "border-border/70 bg-card hover:border-primary/50 hover:bg-muted/40"
@@ -143,14 +143,12 @@ export function IconCustomizerSection() {
                 <div>
                   {/* Header: Title + License pill */}
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-foreground">
-                        {lib.name}
-                      </span>
-                    </div>
+                    <span className="truncate text-sm font-semibold text-foreground">
+                      {lib.name}
+                    </span>
                     <span
                       className={cn(
-                        "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                        "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
                         isSelected
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground group-hover:bg-accent group-hover:text-accent-foreground"
@@ -177,18 +175,18 @@ export function IconCustomizerSection() {
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-background/80 px-2.5 py-1.5 shadow-2xs">
-                    {/* Render 5 sample icons from this library */}
-                    <sampleIcons.home className="h-4 w-4 text-foreground/90 shrink-0" strokeWidth={currentStroke} />
-                    <sampleIcons.tasks className="h-4 w-4 text-primary shrink-0" strokeWidth={currentStroke} />
-                    <sampleIcons.messaging className="h-4 w-4 text-foreground/90 shrink-0" strokeWidth={currentStroke} />
-                    <sampleIcons.sales className="h-4 w-4 text-foreground/90 shrink-0" strokeWidth={currentStroke} />
-                    <sampleIcons.clinic className="h-4 w-4 text-foreground/90 shrink-0" strokeWidth={currentStroke} />
-                    <sampleIcons.settings className="h-4 w-4 text-muted-foreground shrink-0" strokeWidth={currentStroke} />
+                  <div className="flex items-center justify-between gap-2 overflow-hidden rounded-lg border border-border/60 bg-background/80 px-2.5 py-1.5 shadow-2xs">
+                    {/* Render sample icons from this library */}
+                    <sampleIcons.home className="h-4 w-4 shrink-0 text-foreground/90" strokeWidth={currentStroke} />
+                    <sampleIcons.tasks className="h-4 w-4 shrink-0 text-primary" strokeWidth={currentStroke} />
+                    <sampleIcons.messaging className="h-4 w-4 shrink-0 text-foreground/90" strokeWidth={currentStroke} />
+                    <sampleIcons.sales className="h-4 w-4 shrink-0 text-foreground/90" strokeWidth={currentStroke} />
+                    <sampleIcons.clinic className="h-4 w-4 shrink-0 text-foreground/90" strokeWidth={currentStroke} />
+                    <sampleIcons.settings className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={currentStroke} />
                   </div>
 
                   {/* External links: Browse and License */}
-                  <div className="flex items-center gap-3 pt-1 text-[11px]">
+                  <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px]">
                     <a
                       href={lib.browseUrl}
                       target="_blank"
@@ -220,7 +218,7 @@ export function IconCustomizerSection() {
       {/* 2. Stroke Thickness & Weight */}
       <fieldset>
         <legend className="mb-2 text-sm font-medium">Icon Stroke & Line Weight</legend>
-        <div className="grid max-w-md grid-cols-3 gap-3">
+        <div className="grid max-w-md grid-cols-3 gap-2.5 sm:gap-3">
           {STROKE_OPTIONS.map((opt) => {
             const active = currentStroke === opt.value;
             const SampleIcon = NAV_ICONS[currentLibrary].tasks;
@@ -228,7 +226,7 @@ export function IconCustomizerSection() {
               <label
                 key={opt.value}
                 className={cn(
-                  "flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border p-3 text-center transition-colors has-focus-visible:ring-2 has-focus-visible:ring-ring",
+                  "flex min-w-0 cursor-pointer flex-col items-center gap-1.5 rounded-xl border p-3 text-center transition-colors has-focus-visible:ring-2 has-focus-visible:ring-ring",
                   active
                     ? "border-primary bg-accent/60 text-accent-foreground"
                     : "hover:bg-muted"
@@ -242,9 +240,9 @@ export function IconCustomizerSection() {
                   onChange={() => handleStrokeChange(opt.value)}
                   className="sr-only"
                 />
-                <SampleIcon className="h-5 w-5 text-primary" strokeWidth={opt.value} />
-                <span className="text-sm font-semibold">{opt.label}</span>
-                <span className="text-[11px] text-muted-foreground">{opt.desc}</span>
+                <SampleIcon className="h-5 w-5 text-primary shrink-0" strokeWidth={opt.value} />
+                <span className="text-sm font-semibold truncate">{opt.label}</span>
+                <span className="text-[11px] text-muted-foreground truncate">{opt.desc}</span>
               </label>
             );
           })}
@@ -257,7 +255,7 @@ export function IconCustomizerSection() {
           <div>
             <legend className="text-sm font-medium">Custom Module Icons</legend>
             <p className="text-xs text-muted-foreground">
-              Customize any specific module icon by picking from Lucide, Tabler, Material Symbols, Heroicons, Phosphor, or Remix Icon.
+              Customize any specific module icon by picking from Lucide, Tabler, Heroicons, or Phosphor Icons.
             </p>
           </div>
           {hasCustomIcons && (
@@ -272,7 +270,7 @@ export function IconCustomizerSection() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {MODULE_ENTRIES.map((entry) => {
             const isCustom = Boolean(customIcons[entry.key]);
             const customItem = isCustom ? ICON_BY_ID[customIcons[entry.key]] : null;
@@ -283,26 +281,28 @@ export function IconCustomizerSection() {
               <div
                 key={entry.key}
                 className={cn(
-                  "flex items-center justify-between gap-2 rounded-xl border p-2.5 transition-colors",
-                  isCustom ? "border-primary/60 bg-accent/30" : "border-border/70 bg-card"
+                  "group flex min-w-0 items-center justify-between gap-2.5 rounded-xl border p-2.5 transition-all",
+                  isCustom
+                    ? "border-primary/60 bg-accent/30 shadow-2xs"
+                    : "border-border/70 bg-card hover:border-primary/40 hover:bg-muted/30"
                 )}
               >
-                <div className="flex min-w-0 items-center gap-2.5">
+                <div className="flex min-w-0 flex-1 items-center gap-2.5">
                   <div
                     className={cn(
-                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
+                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors",
                       isCustom
-                        ? "border-primary bg-primary/10 text-primary shadow-2xs"
-                        : "border-border bg-muted/60 text-foreground"
+                        ? "border-primary/50 bg-primary/10 text-primary shadow-2xs"
+                        : "border-border/80 bg-muted/60 text-foreground group-hover:border-primary/30"
                     )}
                   >
-                    <ActiveIcon className="h-4 w-4" strokeWidth={currentStroke} />
+                    <ActiveIcon className="h-4 w-4 shrink-0" strokeWidth={currentStroke} />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-semibold text-foreground">
                       {entry.label}
                     </span>
-                    <span className="block text-[10px] text-muted-foreground">
+                    <span className="block truncate text-[10px] text-muted-foreground whitespace-nowrap">
                       {isCustom && customItem ? (
                         <span className="font-medium text-primary">Custom ({customItem.library})</span>
                       ) : (
@@ -316,7 +316,7 @@ export function IconCustomizerSection() {
                   type="button"
                   onClick={() => setModalTarget(entry)}
                   title={`Customize icon for ${entry.label}`}
-                  className="rounded-lg border border-border/80 bg-background px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:border-primary hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="shrink-0 rounded-lg border border-border/80 bg-background px-2.5 py-1 text-[11px] font-medium text-foreground transition-all hover:border-primary hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {isCustom ? "Edit" : "Change"}
                 </button>

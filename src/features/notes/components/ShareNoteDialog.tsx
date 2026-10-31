@@ -14,8 +14,9 @@ import type { Note, ShareAll, ShareLevel } from "../services/noteService";
 import { SHARE_ALL_LABELS } from "../utils/noteMeta";
 
 const LEVEL_OPTIONS = [
-  { value: "view", label: "Can view" },
-  { value: "edit", label: "Can edit" },
+  { value: "view", label: "Read (View only)" },
+  { value: "edit", label: "Write (View & Edit)" },
+  { value: "delete", label: "Delete (Full Access)" },
 ] as const;
 
 interface Row {
@@ -74,8 +75,8 @@ export function ShareNoteDialog({ note, onClose }: { note: Note; onClose: () => 
       open
       onClose={onClose}
       size="md"
-      title="Share note"
-      description="Private notes are only visible to you (and workspace note managers)."
+      title="Share Note Permissions"
+      description="Configure Read, Write, and Delete access for colleagues or the entire workspace."
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={share.isPending}>
@@ -94,13 +95,13 @@ export function ShareNoteDialog({ note, onClose }: { note: Note; onClose: () => 
             <Globe className="h-4 w-4" aria-hidden="true" />
             Everyone in the workspace
           </legend>
-          <div className="grid grid-cols-3 gap-2">
-            {(["none", "view", "edit"] as const).map(level => (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {(["none", "view", "edit", "delete"] as const).map(level => (
               <label
                 key={level}
                 className={cn(
-                  "flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
-                  shareAll === level ? "border-primary bg-accent text-accent-foreground" : "border-input hover:bg-muted"
+                  "flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-2.5 py-2 text-xs font-medium has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
+                  shareAll === level ? "border-primary bg-accent text-accent-foreground font-semibold" : "border-input hover:bg-muted"
                 )}
               >
                 <input type="radio" name="note-share-all" value={level} checked={shareAll === level} onChange={() => setShareAll(level)} className="sr-only" />

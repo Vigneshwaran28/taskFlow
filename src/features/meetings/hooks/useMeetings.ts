@@ -64,3 +64,11 @@ export function useDeleteMeeting() {
     },
   });
 }
+
+export function useMeetingAssignableOptions() {
+  return useQuery({
+    queryKey: ["meetings", "assignable-options"],
+    queryFn: ({ signal }) => meetingService.getAssignableOptions({ signal }),
+    staleTime: 60_000,
+  });
+}

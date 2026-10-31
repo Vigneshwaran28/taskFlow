@@ -1,11 +1,11 @@
 "use client";
 import { useState } from "react";
-import { Clock, ExternalLink, Link as LinkIcon, Sparkles } from "lucide-react";
+import { Check, Clock, ExternalLink, Link as LinkIcon, Search, ShieldCheck, Sparkles, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { useToast } from "@/components/shared/Toaster";
 import { PlatformIcon } from "./PlatformBadge";
-import { useCreateMeeting, useUpdateMeeting } from "../hooks/useMeetings";
+import { useCreateMeeting, useMeetingAssignableOptions, useUpdateMeeting } from "../hooks/useMeetings";
 import type { Meeting, MeetingPlatform } from "../services/meetingService";
 import { cn } from "@/lib/cn";
 
@@ -50,6 +50,7 @@ export function MeetingDialog({
   const toast = useToast();
   const createMeeting = useCreateMeeting();
   const updateMeeting = useUpdateMeeting();
+  const { data: assignable } = useMeetingAssignableOptions();
 
   const [platform, setPlatform] = useState<MeetingPlatform>(
     () => meetingToEdit?.platform || initialPlatform || "google_meet"
@@ -73,6 +74,23 @@ export function MeetingDialog({
   const [reminderMinutes, setReminderMinutes] = useState(
     () => meetingToEdit?.reminderMinutes ?? 5
   );
+
+  // Assignment states: All workspace vs Target specific users & roles
+  const [targetMode, setTargetMode] = useState<"all" | "targeted">(() => {
+    if (meetingToEdit) {
+      const hasRoles = (meetingToEdit.roleIds?.length ?? 0) > 0;
+      const hasParticipants = (meetingToEdit.participants?.length ?? 0) > 0;
+      return hasRoles || hasParticipants ? "targeted" : "all";
+    }
+    return "all";
+  });
+  const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>(
+    () => meetingToEdit?.roleIds || []
+  );
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>(
+    () => meetingToEdit?.participants?.map(p => p.id) || []
+  );
+  const [userSearchQuery, setUserSearchQuery] = useState("");
 
   function handlePlatformChange(nextPlatform: MeetingPlatform) {
     setPlatform(nextPlatform);
@@ -109,6 +127,18 @@ export function MeetingDialog({
     }
   }
 
+  function toggleRole(roleId: number) {
+    setSelectedRoleIds(prev =>
+      prev.includes(roleId) ? prev.filter(id => id !== roleId) : [...prev, roleId]
+    );
+  }
+
+  function toggleUser(userId: number) {
+    setSelectedUserIds(prev =>
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    );
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) {
@@ -128,6 +158,9 @@ export function MeetingDialog({
       }
       const endAtDate = new Date(startAtDate.getTime() + durationMinutes * 60_000);
 
+      const roleIds = targetMode === "targeted" ? selectedRoleIds : [];
+      const participantIds = targetMode === "targeted" ? selectedUserIds : [];
+
       if (meetingToEdit) {
         await updateMeeting.mutateAsync({
           id: meetingToEdit.id,
@@ -138,6 +171,8 @@ export function MeetingDialog({
           startAt: startAtDate.toISOString(),
           endAt: endAtDate.toISOString(),
           reminderMinutes,
+          roleIds,
+          participantIds,
         });
         toast.success("Meeting updated successfully");
       } else {
@@ -149,10 +184,14 @@ export function MeetingDialog({
           startAt: startAtDate.toISOString(),
           endAt: endAtDate.toISOString(),
           reminderMinutes,
+          roleIds,
+          participantIds,
         });
         toast.success(
           "Meeting scheduled",
-          "All workspace participants will receive a toast & sound alert 5 minutes before the meeting starts!"
+          targetMode === "targeted"
+            ? "Assigned users and roles will receive a notification and sound alert 5 minutes before the meeting starts!"
+            : "All workspace participants will receive a toast & sound alert 5 minutes before the meeting starts!"
         );
       }
       onClose();
@@ -164,6 +203,16 @@ export function MeetingDialog({
   }
 
   const isPending = createMeeting.isPending || updateMeeting.isPending;
+
+  const filteredUsers = (assignable?.users || []).filter(u => {
+    if (!userSearchQuery.trim()) return true;
+    const q = userSearchQuery.toLowerCase();
+    return (
+      u.name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      (u.jobTitle && u.jobTitle.toLowerCase().includes(q))
+    );
+  });
 
   return (
     <Dialog
@@ -381,6 +430,183 @@ export function MeetingDialog({
             placeholder="What will be discussed, links to docs, etc."
             className="mt-1 w-full resize-none rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
+        </div>
+
+        {/* Assign Attendees & Roles */}
+        <div className="rounded-xl border border-border/80 bg-card/60 p-3.5 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="block text-xs font-semibold text-foreground">
+                Assigned Attendees &amp; Roles
+              </span>
+              <p className="text-[11px] text-muted-foreground">
+                Choose who is invited and receives meeting reminders.
+              </p>
+            </div>
+            <div className="flex items-center gap-1 rounded-lg bg-muted p-0.5 text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => setTargetMode("all")}
+                className={cn(
+                  "rounded-md px-2.5 py-1 transition",
+                  targetMode === "all"
+                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                All Workspace
+              </button>
+              <button
+                type="button"
+                onClick={() => setTargetMode("targeted")}
+                className={cn(
+                  "rounded-md px-2.5 py-1 transition",
+                  targetMode === "targeted"
+                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Targeted
+              </button>
+            </div>
+          </div>
+
+          {targetMode === "all" ? (
+            <div className="flex items-center gap-2 rounded-lg bg-muted/40 p-2.5 text-xs text-muted-foreground">
+              <Users className="h-4 w-4 text-primary shrink-0" />
+              <span>Everyone in this workspace is invited and will see this meeting on their dashboard.</span>
+            </div>
+          ) : (
+            <div className="space-y-3 pt-1">
+              {/* Role-based selection */}
+              <div>
+                <label className="block text-[11px] font-semibold text-foreground uppercase tracking-wider mb-1.5">
+                  Role-Based Options (Assign by Role)
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {assignable?.roles && assignable.roles.length > 0 ? (
+                    assignable.roles.map(r => {
+                      const isSelected = selectedRoleIds.includes(r.id);
+                      return (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => toggleRole(r.id)}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition",
+                            isSelected
+                              ? "border-primary bg-primary/10 text-primary font-medium"
+                              : "border-border bg-background text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                          )}
+                        >
+                          <ShieldCheck className="h-3.5 w-3.5" />
+                          <span>{r.name}</span>
+                          {typeof r.memberCount === "number" && (
+                            <span className="text-[10px] opacity-75 font-mono">({r.memberCount})</span>
+                          )}
+                          {isSelected && <Check className="h-3 w-3 stroke-[2.5]" />}
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No workspace roles found.</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Particular users selection */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[11px] font-semibold text-foreground uppercase tracking-wider">
+                    Particular Users ({selectedUserIds.length} selected)
+                  </label>
+                  {selectedUserIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedUserIds([])}
+                      className="text-[11px] text-muted-foreground hover:text-foreground"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {/* Selected user chips */}
+                {selectedUserIds.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {selectedUserIds.map(uid => {
+                      const u = assignable?.users.find(usr => usr.id === uid);
+                      if (!u) return null;
+                      return (
+                        <span
+                          key={u.id}
+                          className="inline-flex items-center gap-1 rounded-md bg-secondary/80 px-2 py-0.5 text-xs text-secondary-foreground"
+                        >
+                          <span>{u.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleUser(u.id)}
+                            className="rounded-full hover:bg-muted p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Search user */}
+                <div className="relative mb-2">
+                  <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={userSearchQuery}
+                    onChange={e => setUserSearchQuery(e.target.value)}
+                    placeholder="Search user by name or email..."
+                    className="w-full rounded-lg border border-input bg-background pl-8 pr-3 py-1.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </div>
+
+                {/* User selection scroll box */}
+                <div className="max-h-36 overflow-y-auto rounded-lg border border-border/70 bg-background/50 divide-y divide-border/50 text-xs">
+                  {filteredUsers.length === 0 ? (
+                    <div className="p-3 text-center text-muted-foreground">No matching users found</div>
+                  ) : (
+                    filteredUsers.map(u => {
+                      const isSelected = selectedUserIds.includes(u.id);
+                      return (
+                        <button
+                          key={u.id}
+                          type="button"
+                          onClick={() => toggleUser(u.id)}
+                          className={cn(
+                            "w-full flex items-center justify-between px-3 py-1.5 text-left transition hover:bg-muted/60",
+                            isSelected && "bg-primary/5 font-medium"
+                          )}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary shrink-0 uppercase">
+                              {u.avatarUrl ? (
+                                <img src={u.avatarUrl} alt="" className="h-6 w-6 rounded-full object-cover" />
+                              ) : (
+                                u.name.slice(0, 2)
+                              )}
+                            </div>
+                            <div className="truncate">
+                              <span className="block truncate text-foreground">{u.name}</span>
+                              <span className="block truncate text-[10px] text-muted-foreground">{u.email}</span>
+                            </div>
+                          </div>
+                          {isSelected && <Check className="h-4 w-4 text-primary shrink-0" />}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </form>
     </Dialog>

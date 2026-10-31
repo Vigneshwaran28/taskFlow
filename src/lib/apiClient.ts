@@ -5,7 +5,11 @@
 import { reportMaintenance, type MaintenanceWindow } from "./maintenance";
 import { currentWorkspace } from "./tenantPath";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "/api").replace(/\/+$/, "");
+const DEFAULT_PRODUCTION_API = "https://titanflow-svc6.onrender.com/api";
+const API_BASE = (
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== "undefined" && (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.() ? DEFAULT_PRODUCTION_API : DEFAULT_PRODUCTION_API)
+).replace(/\/+$/, "");
 const DEFAULT_TIMEOUT_MS = 15000;
 
 const STATUS_MESSAGES: Record<number, string> = {

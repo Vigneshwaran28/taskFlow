@@ -19,6 +19,7 @@ export interface BackgroundPickerProps {
   preferences: Pick<AppearancePreferences, BackgroundKey>;
   workspaceImage: string;
   workspaceDim: number;
+  userName?: string;
   /** Applies on this device only (while dragging slider or color picker) */
   onPreview: <K extends BackgroundKey>(key: K, value: AppearancePreferences[K]) => void;
   /** Applies and saves to the account */
@@ -29,7 +30,7 @@ export interface BackgroundPickerProps {
 const modeOf = (image: string | null): Mode => (image === null ? "workspace" : image === "none" ? "none" : "custom");
 
 /** Keyed by the saved picture in AppearanceSettings, so the draft starts from it again after every change. */
-export function BackgroundPicker({ preferences, workspaceImage, workspaceDim, onPreview, onSave, chipClass }: BackgroundPickerProps) {
+export function BackgroundPicker({ preferences, workspaceImage, workspaceDim, userName, onPreview, onSave, chipClass }: BackgroundPickerProps) {
   const savedMode = modeOf(preferences.backgroundImage);
   const savedLink = savedMode === "custom" ? (preferences.backgroundImage ?? "") : "";
   // Picking "My own picture" only opens the link field; the saved choice changes when a link is used.
@@ -162,7 +163,7 @@ export function BackgroundPicker({ preferences, workspaceImage, workspaceDim, on
                   textShadow: sampleShadow,
                 }}
               >
-                Good evening, Vigneshwaran
+                Good evening, {userName || "there"}
               </span>
               <p
                 className="text-xs transition-colors"

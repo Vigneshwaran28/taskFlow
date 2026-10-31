@@ -9,6 +9,25 @@ export interface MeetingParticipant {
   avatarUrl?: string;
 }
 
+export interface MeetingRole {
+  id: number;
+  key: string | null;
+  name: string;
+  description?: string | null;
+  memberCount?: number;
+}
+
+export interface MeetingAssignableOptions {
+  users: {
+    id: number;
+    name: string;
+    email: string;
+    jobTitle: string | null;
+    avatarUrl?: string;
+  }[];
+  roles: MeetingRole[];
+}
+
 export interface Meeting {
   id: number;
   title: string;
@@ -23,6 +42,8 @@ export interface Meeting {
   isInstant: boolean;
   createdBy: MeetingParticipant | null;
   participants: MeetingParticipant[];
+  roleIds?: number[];
+  roles?: MeetingRole[];
   isParticipant: boolean;
   canManage: boolean;
   createdAt: string;
@@ -43,6 +64,7 @@ export interface CreateMeetingPayload {
   endAt?: string | null;
   reminderMinutes?: number;
   participantIds?: number[];
+  roleIds?: number[];
   isInstant?: boolean;
 }
 
@@ -55,9 +77,13 @@ export interface UpdateMeetingPayload {
   endAt?: string | null;
   reminderMinutes?: number;
   participantIds?: number[];
+  roleIds?: number[];
 }
 
 export const meetingService = {
+  async getAssignableOptions({ signal }: { signal?: AbortSignal } = {}): Promise<MeetingAssignableOptions> {
+    return apiClient.get<MeetingAssignableOptions>("/meetings/assignable-options", { signal });
+  },
   async getMeetings(query: MeetingQuery = {}, { signal }: { signal?: AbortSignal } = {}): Promise<Meeting[]> {
     const data = await apiClient.get<{ items: Meeting[] }>("/meetings", {
       params: query as Record<string, string>,

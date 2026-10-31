@@ -24,10 +24,8 @@ const LIBRARY_TABS: readonly { key: string; label: string; badge?: string }[] = 
   { key: "classic", label: "Classic Logos", badge: "20" },
   { key: "lucide", label: "Lucide", badge: "ISC" },
   { key: "tabler", label: "Tabler", badge: "MIT" },
-  { key: "material", label: "Google Material", badge: "Apache" },
   { key: "heroicons", label: "Heroicons", badge: "MIT" },
   { key: "phosphor", label: "Phosphor", badge: "MIT" },
-  { key: "remix", label: "Remix Icon", badge: "Apache" },
 ];
 
 const CATEGORIES: readonly { key: string; label: string }[] = [

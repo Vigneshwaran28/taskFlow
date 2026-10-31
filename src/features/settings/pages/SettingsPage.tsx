@@ -77,13 +77,15 @@ function useSettingsTabs(user: SessionUser | null | undefined): SettingsTab[] {
             id="navigation"
             title="Navbar & navigation"
             description="Customize the top navigation bar style, sticky scrolling, quick actions, and sidebar navigation layout."
+            layout="stacked"
           >
             <NavbarCustomizerSection />
           </SettingsSection>
           <SettingsSection
             id="icons"
             title="Icon library & customization"
-            description="Choose your preferred icon family from 6 free icon libraries: Lucide Icons, Tabler Icons, Google Material Symbols, Heroicons, Phosphor Icons, and Remix Icon. Customize line weight and module-specific icons."
+            description="Choose your preferred icon family from 4 free icon libraries: Lucide Icons, Tabler Icons, Heroicons, and Phosphor Icons. Customize line weight and module-specific icons."
+            layout="stacked"
           >
             <IconCustomizerSection />
           </SettingsSection>
