@@ -11,6 +11,7 @@ import { usePublicWorkspace } from "../hooks/useAuth";
 import { LoginForm } from "../components/LoginForm";
 import { LoginTemplateView } from "../components/login-templates";
 import { forgetWorkspace, safeRedirect } from "../utils/rememberedWorkspace";
+import { withTenant } from "@/lib/tenantPath";
 import { TenantCss } from "@/features/workspace/components/TenantCss";
 import { TenantUi } from "@/features/workspace/components/TenantUi";
 import { ACCENT_META } from "@/hooks/useTheme";
@@ -100,7 +101,14 @@ export function WorkspaceLoginPage() {
             <span>Down for maintenance{closed.message ? `: ${closed.message}` : ""}. Only owners and admins can sign in right now.</span>
           </p>
         )}
-        <LoginForm workspace={workspace.slug} onSuccess={() => { window.location.href = redirectTo; }} />
+        <LoginForm
+          workspace={workspace.slug}
+          from={redirectTo}
+          onSuccess={(u) => {
+            const dest = withTenant(u?.tenant?.slug ?? workspace.slug, redirectTo || "/");
+            window.location.href = dest;
+          }}
+        />
       </LoginTemplateView>
     </>
   );

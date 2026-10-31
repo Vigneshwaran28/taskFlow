@@ -36,7 +36,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     return <Redirect to={`${signIn}${pathname && pathname !== "/" ? `?from=${encodeURIComponent(pathname)}` : ""}`} />;
   }
   // A temporary password must be replaced before anything else loads (the server enforces this too).
-  if (user.mustChangePassword) return <ForcePasswordChange />;
+  if (user.mustChangePassword) return <ForcePasswordChange user={user} />;
   // Idempotent: amounts render in the workspace currency from the first frame.
   setCurrency(user.tenant?.settings?.company?.currency ?? user.tenant?.settings?.sales?.currency);
   return <>{children}</>;

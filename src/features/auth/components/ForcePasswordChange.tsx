@@ -8,12 +8,15 @@ import { fieldErrorsOf, formErrorOf } from "@/lib/apiClient";
 import { useChangePassword, useCurrentUser, useLogout, usePasswordRule } from "../hooks/useAuth";
 import { WorkspaceAuthShell } from "./WorkspaceAuthShell";
 
+import type { SessionUser } from "@/types/session";
+
 const EMPTY = { currentPassword: "", newPassword: "", confirm: "" };
 type Values = typeof EMPTY;
 
 /** Feature component: shown instead of the app until someone with a temporary password picks their own. */
-export function ForcePasswordChange() {
-  const { data: user } = useCurrentUser();
+export function ForcePasswordChange({ user: propUser }: { user?: SessionUser } = {}) {
+  const { data: queryUser } = useCurrentUser();
+  const user = propUser ?? queryUser;
   const changePassword = useChangePassword();
   const passwordRule = usePasswordRule();
   const logout = useLogout();
@@ -57,10 +60,14 @@ export function ForcePasswordChange() {
     ? `Welcome${user?.name ? `, ${user.name.split(" ")[0]}` : ""}. Set your personal password to get started.`
     : `Welcome${user?.name ? `, ${user.name.split(" ")[0]}` : ""}. You signed in with a temporary password; pick your own to continue.`;
 
+  const titleText = isCodeFirstTime ? "Create your password" : "Choose your password";
+
   return (
     <WorkspaceAuthShell
       slug={user?.tenant?.slug}
-      title={isCodeFirstTime ? "Create your password" : "Choose your password"}
+      headline={titleText}
+      message={subtitle}
+      title={titleText}
       subtitle={subtitle}
     >
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
