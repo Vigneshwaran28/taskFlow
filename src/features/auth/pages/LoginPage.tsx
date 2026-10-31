@@ -46,29 +46,29 @@ export function LoginPage() {
     <AuthLayout title="Welcome back" subtitle="Sign in to continue to your workspace.">
       {remembered && !generic && <ContinueToWorkspace slug={remembered} from={from} />}
 
-      {/* Login Mode Selector: Standard or Workspace PIN */}
+      {/* Login Mode Selector: Sign In (Email or CodeKey) or Workspace PIN (Register) */}
       <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-muted/60 p-1 text-xs font-medium">
         <button
           type="button"
           onClick={() => setAuthMode("standard")}
-          className={`flex items-center justify-center gap-1.5 rounded-lg py-2 transition-all ${
+          className={`flex items-center justify-center gap-1.5 rounded-lg py-2 transition-all cursor-pointer ${
             authMode === "standard"
               ? "bg-background text-foreground shadow-sm font-semibold"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <span>Email &amp; Password</span>
+          <span>Sign In</span>
         </button>
         <button
           type="button"
           onClick={() => setAuthMode("pin")}
-          className={`flex items-center justify-center gap-1.5 rounded-lg py-2 transition-all ${
+          className={`flex items-center justify-center gap-1.5 rounded-lg py-2 transition-all cursor-pointer ${
             authMode === "pin"
               ? "bg-background text-foreground shadow-sm font-semibold"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <span>Workspace PIN / Code</span>
+          <span>Join with Workspace PIN</span>
         </button>
       </div>
 

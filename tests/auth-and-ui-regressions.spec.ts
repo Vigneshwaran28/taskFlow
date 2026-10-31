@@ -142,5 +142,55 @@ test.describe("Auth & UI Regression Tests", () => {
     // 7. Verify badge is gone
     await expect(badge).toHaveCount(0);
   });
+
+  test("Separate login tabs: Email & Password vs CodeKey & Password", async ({ page, context }) => {
+    await context.clearCookies();
+
+    // 1. Visit workspace login (/titan/login)
+    await page.goto("/titan/login");
+
+    // 2. Default tab is Email & Password
+    const emailTab = page.locator('#tab-email-login');
+    const codeTab = page.locator('#tab-code-login');
+    await expect(emailTab).toBeVisible();
+    await expect(codeTab).toBeVisible();
+    await expect(emailTab).toHaveAttribute("aria-selected", "true");
+
+    // Verify Email form fields
+    const emailInput = page.locator('input[name="email"]');
+    const passwordInput = page.locator('input[name="password"]');
+    await expect(emailInput).toBeVisible();
+    await expect(passwordInput).toBeVisible();
+    await expect(page.locator('[data-testid="email-signin-btn"]')).toBeVisible();
+
+    // Take screenshot of Email & Password tab
+    await page.screenshot({ path: "test-results/login-email-tab.png" });
+
+    // 3. Switch to CodeKey & Password tab
+    await codeTab.click();
+    await expect(codeTab).toHaveAttribute("aria-selected", "true");
+    await expect(emailTab).toHaveAttribute("aria-selected", "false");
+
+    // Verify CodeKey form fields
+    const codeInput = page.locator('input[name="code"]');
+    await expect(codeInput).toBeVisible();
+    await expect(codeInput).toHaveAttribute("placeholder", /TF-491297/);
+    await expect(page.locator('[data-testid="code-signin-btn"]')).toBeVisible();
+
+    // Take screenshot of CodeKey & Password tab
+    await page.screenshot({ path: "test-results/login-code-tab.png" });
+
+    // 4. Fill CodeKey (TF-491297) and sign in directly
+    await codeInput.fill("TF-491297");
+    await page.locator('[data-testid="code-signin-btn"]').click();
+
+    // 5. User 5 has must_change_password; with code login it asks only for new password + confirm
+    await page.waitForURL(url => url.pathname.includes("/titan"), { timeout: 15000 });
+    const createHeading = page.getByRole("heading", { name: /Create your password/i });
+    await expect(createHeading).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('input[name="currentPassword"]')).toHaveCount(0);
+    await expect(page.locator('input[name="newPassword"]')).toBeVisible();
+    await expect(page.locator('input[name="confirm"]')).toBeVisible();
+  });
 });
 

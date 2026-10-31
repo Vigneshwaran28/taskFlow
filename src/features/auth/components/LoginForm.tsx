@@ -1,10 +1,13 @@
 "use client";
 import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
+import { Mail, KeyRound } from "lucide-react";
 import Link from "@/components/navigation/Link";
 import { FormAlert } from "@/components/shared/States";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { ApiError, fieldErrorsOf, formErrorOf } from "@/lib/apiClient";
+import { cn } from "@/lib/cn";
 import type { SessionUser } from "@/types/session";
 import { useCodeLogin, useLogin } from "../hooks/useAuth";
 import { rememberWorkspace, workspaceLoginPath } from "../utils/rememberedWorkspace";
@@ -51,43 +54,80 @@ function ChooseWorkspace({ choices, pending, from, onPick }: { choices: Workspac
   );
 }
 
+export type LoginMethod = "email" | "code";
+
 export interface LoginFormProps {
   onSuccess: (user: SessionUser | null) => void;
   /** Workspace slug when signing in on that workspace's own page: accounts of other workspaces are refused. */
   workspace?: string;
   /** The page to return to (passed along on links to a workspace's own sign-in page). */
   from?: string | null;
+  /** Initial login method tab ("email" | "code") */
+  initialMethod?: LoginMethod;
 }
 
-export function LoginForm({ onSuccess, workspace, from }: LoginFormProps) {
+export function LoginForm({ onSuccess, workspace, from, initialMethod }: LoginFormProps) {
+  const searchParams = useSearchParams();
+  const codeParam = searchParams?.get("code") || "";
+  const tabParam = searchParams?.get("tab");
+
   const login = useLogin();
   const codeLogin = useCodeLogin();
-  const [values, setValues] = useState({ email: "", password: "" });
-  const [clientErrors, setClientErrors] = useState<{ email?: string; password?: string }>({});
+
+  const [method, setMethod] = useState<LoginMethod>(() => {
+    if (codeParam || tabParam === "code") return "code";
+    return initialMethod ?? "email";
+  });
+
+  // Separate form state for Email & Password
+  const [emailValues, setEmailValues] = useState({ email: "", password: "" });
+  const [emailErrors, setEmailErrors] = useState<{ email?: string; password?: string }>({});
+
+  // Separate form state for CodeKey & Password
+  const [codeValues, setCodeValues] = useState({ code: codeParam, password: "" });
+  const [codeErrors, setCodeErrors] = useState<{ code?: string; password?: string }>({});
+
   const [forgotOpen, setForgotOpen] = useState(false);
-  // Several workspaces accepted this email and password: kept until the person edits the form again.
   const [choices, setChoices] = useState<WorkspaceChoice[] | null>(null);
   const [picking, setPicking] = useState<string | null>(null);
-  const activeError = login.error || codeLogin.error;
-  const errors = { ...fieldErrorsOf(activeError), ...clientErrors };
-  const formError = workspaceChoicesOf(activeError) ? null : formErrorOf(activeError);
 
-  function handleChange(event: ChangeEvent<HTMLInputElement>) {
+  const emailApiErrors = fieldErrorsOf(login.error);
+  const activeEmailErrors = { ...emailApiErrors, ...emailErrors };
+  const emailFormError = workspaceChoicesOf(login.error) ? null : formErrorOf(login.error);
+
+  const codeApiErrors = fieldErrorsOf(codeLogin.error);
+  const activeCodeErrors = { ...codeApiErrors, ...codeErrors };
+  const codeFormError = formErrorOf(codeLogin.error);
+
+  function handleEmailChange(event: ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
-    setValues(current => ({ ...current, [name]: value }));
-    setClientErrors(current => ({ ...current, [name]: undefined }));
+    // Auto-switch to CodeKey tab if user enters a codeKey (e.g. TF-XXXXXX) in email input
+    if (name === "email" && (value.trim().toUpperCase().startsWith("TF-") || /^\d{6}$/.test(value.trim()))) {
+      setMethod("code");
+      setCodeValues(curr => ({ ...curr, code: value.trim().toUpperCase() }));
+      login.reset();
+      return;
+    }
+    setEmailValues(current => ({ ...current, [name]: value }));
+    setEmailErrors(current => ({ ...current, [name]: undefined }));
     setChoices(null);
     if (login.error) login.reset();
+  }
+
+  function handleCodeChange(event: ChangeEvent<HTMLInputElement>) {
+    const { name, value } = event.target;
+    const finalVal = name === "code" ? value.toUpperCase() : value;
+    setCodeValues(current => ({ ...current, [name]: finalVal }));
+    setCodeErrors(current => ({ ...current, [name]: undefined }));
     if (codeLogin.error) codeLogin.reset();
   }
 
   function signIn(email: string, slug: string | undefined) {
     login.mutate(
-      { email, password: values.password, ...(slug ? { workspace: slug } : {}) },
+      { email, password: emailValues.password, ...(slug ? { workspace: slug } : {}) },
       {
         onSuccess: user => {
           setPicking(null);
-          // Sign-out and expired sessions come back to this workspace's own page.
           rememberWorkspace(slug ?? user?.tenant?.slug);
           onSuccess(user);
         },
@@ -103,86 +143,222 @@ export function LoginForm({ onSuccess, workspace, from }: LoginFormProps) {
   function pickWorkspace(slug: string) {
     if (login.isPending || codeLogin.isPending) return;
     setPicking(slug);
-    signIn(values.email.trim(), slug);
+    signIn(emailValues.email.trim(), slug);
   }
 
-  function handleSubmit(event: FormEvent) {
+  function handleEmailSubmit(event: FormEvent) {
     event.preventDefault();
-    if (login.isPending || codeLogin.isPending) return;
-    const inputVal = values.email.trim();
-    if (!inputVal) {
-      setClientErrors({ email: "Email or login key code is required." });
-      return;
-    }
+    if (login.isPending) return;
+    const inputVal = emailValues.email.trim();
 
-    // Direct Login Key Code handling (TF-XXXXXX or 6-digit PIN)
     if (inputVal.toUpperCase().startsWith("TF-") || /^\d{6}$/.test(inputVal)) {
-      codeLogin.mutate(
-        { code: inputVal.toUpperCase(), password: values.password || undefined },
-        {
-          onSuccess: user => {
-            rememberWorkspace(workspace ?? user?.tenant?.slug);
-            onSuccess(user);
-          },
-          onError: err => {
-            setClientErrors({ email: formErrorOf(err) ?? err.message });
-          },
-        }
-      );
+      setMethod("code");
+      setCodeValues(curr => ({ ...curr, code: inputVal.toUpperCase() }));
       return;
     }
 
     const nextErrors: { email?: string; password?: string } = {};
-    if (!EMAIL.test(inputVal)) nextErrors.email = "Enter a valid email address or login code.";
-    if (!values.password) nextErrors.password = "Password is required.";
-    setClientErrors(nextErrors);
+    if (!inputVal) {
+      nextErrors.email = "Email is required.";
+    } else if (!EMAIL.test(inputVal)) {
+      nextErrors.email = "Enter a valid email address.";
+    }
+    if (!emailValues.password) {
+      nextErrors.password = "Password is required.";
+    }
+    setEmailErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
     setChoices(null);
     signIn(inputVal, workspace);
   }
 
-  const isEnteringCode = values.email.trim().toUpperCase().startsWith("TF-") || /^\d{6}$/.test(values.email.trim());
+  function handleCodeSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (codeLogin.isPending) return;
+    const cleanCode = codeValues.code.trim().toUpperCase();
+    if (!cleanCode) {
+      setCodeErrors({ code: "Login key code is required." });
+      return;
+    }
+
+    codeLogin.mutate(
+      { code: cleanCode, password: codeValues.password || undefined },
+      {
+        onSuccess: user => {
+          rememberWorkspace(workspace ?? user?.tenant?.slug);
+          onSuccess(user);
+        },
+        onError: err => {
+          const msg = formErrorOf(err) || err.message;
+          if (msg.toLowerCase().includes("password")) {
+            setCodeErrors({ password: msg });
+          } else {
+            setCodeErrors({ code: msg });
+          }
+        },
+      }
+    );
+  }
 
   return (
-    <>
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-        <FormAlert message={formError} />
-        {choices && !workspace && <ChooseWorkspace choices={choices} pending={picking} from={from} onPick={pickWorkspace} />}
-        <TextField
-          label="Email or Login Key Code"
-          name="email"
-          type="text"
-          autoComplete="username"
-          autoFocus
-          placeholder="you@company.com or TF-XXXXXX"
-          value={values.email}
-          error={errors.email}
-          onChange={handleChange}
-        />
-        <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-4">
+      {/* Separate Login Tabs */}
+      <div
+        role="tablist"
+        aria-label="Login methods"
+        className="grid grid-cols-2 gap-1 rounded-xl bg-muted/60 p-1 text-xs font-medium"
+      >
+        <button
+          type="button"
+          role="tab"
+          id="tab-email-login"
+          aria-selected={method === "email"}
+          aria-controls="panel-email-login"
+          tabIndex={method === "email" ? 0 : -1}
+          onClick={() => {
+            setMethod("email");
+            if (codeLogin.error) codeLogin.reset();
+          }}
+          className={cn(
+            "flex items-center justify-center gap-1.5 rounded-lg py-2 transition-all select-none touch-manipulation cursor-pointer",
+            method === "email"
+              ? "bg-background text-foreground shadow-sm font-semibold"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+          )}
+        >
+          <Mail className="h-4 w-4" aria-hidden="true" />
+          <span>Email &amp; Password</span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          id="tab-code-login"
+          aria-selected={method === "code"}
+          aria-controls="panel-code-login"
+          tabIndex={method === "code" ? 0 : -1}
+          onClick={() => {
+            setMethod("code");
+            if (login.error) login.reset();
+          }}
+          className={cn(
+            "flex items-center justify-center gap-1.5 rounded-lg py-2 transition-all select-none touch-manipulation cursor-pointer",
+            method === "code"
+              ? "bg-background text-foreground shadow-sm font-semibold"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+          )}
+        >
+          <KeyRound className="h-4 w-4" aria-hidden="true" />
+          <span>CodeKey &amp; Password</span>
+        </button>
+      </div>
+
+      {/* Mode 1: Email & Password */}
+      {method === "email" && (
+        <form
+          onSubmit={handleEmailSubmit}
+          noValidate
+          id="panel-email-login"
+          role="tabpanel"
+          aria-labelledby="tab-email-login"
+          className="flex flex-col gap-4"
+        >
+          <FormAlert message={emailFormError} />
+          {choices && !workspace && (
+            <ChooseWorkspace choices={choices} pending={picking} from={from} onPick={pickWorkspace} />
+          )}
           <TextField
-            label="Password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            hint={isEnteringCode ? "Optional if signing in with your access code" : undefined}
-            value={values.password}
-            error={errors.password}
-            onChange={handleChange}
+            label="Email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            autoFocus
+            placeholder="you@company.com"
+            value={emailValues.email}
+            error={activeEmailErrors.email}
+            onChange={handleEmailChange}
           />
-          <button
-            type="button"
-            onClick={() => setForgotOpen(true)}
-            className="self-end rounded text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          <div className="flex flex-col gap-1.5">
+            <TextField
+              label="Password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="••••••••"
+              value={emailValues.password}
+              error={activeEmailErrors.password}
+              onChange={handleEmailChange}
+            />
+            <button
+              type="button"
+              onClick={() => setForgotOpen(true)}
+              className="self-end rounded text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+            >
+              Forgot password?
+            </button>
+          </div>
+          <Button
+            type="submit"
+            size="lg"
+            loading={login.isPending}
+            className="mt-1 w-full"
+            data-testid="email-signin-btn"
           >
-            Forgot password?
-          </button>
-        </div>
-        <Button type="submit" size="lg" loading={login.isPending || codeLogin.isPending} className="mt-1 w-full">
-          Sign in
-        </Button>
-      </form>
+            Sign in
+          </Button>
+        </form>
+      )}
+
+      {/* Mode 2: CodeKey & Password */}
+      {method === "code" && (
+        <form
+          onSubmit={handleCodeSubmit}
+          noValidate
+          id="panel-code-login"
+          role="tabpanel"
+          aria-labelledby="tab-code-login"
+          className="flex flex-col gap-4"
+        >
+          <FormAlert message={codeFormError} />
+          <TextField
+            label="CodeKey (Login Access Code)"
+            name="code"
+            type="text"
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            autoFocus
+            placeholder="e.g. TF-491297"
+            value={codeValues.code}
+            error={activeCodeErrors.code}
+            onChange={handleCodeChange}
+          />
+          <div className="flex flex-col gap-1.5">
+            <TextField
+              label="Password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Password (optional for first login)"
+              hint="Optional if signing in with your access code for the first time"
+              value={codeValues.password}
+              error={activeCodeErrors.password}
+              onChange={handleCodeChange}
+            />
+          </div>
+          <Button
+            type="submit"
+            size="lg"
+            loading={codeLogin.isPending}
+            className="mt-1 w-full"
+            data-testid="code-signin-btn"
+          >
+            Sign in with CodeKey
+          </Button>
+        </form>
+      )}
+
       <ForgotPasswordDialog open={forgotOpen} onClose={() => setForgotOpen(false)} workspace={workspace} />
-    </>
+    </div>
   );
 }
