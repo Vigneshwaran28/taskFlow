@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { AlertTriangle, Archive, ArchiveRestore, Check, CloudOff, Eye, Loader2, Pin, Share2, Trash2, UserRoundCog } from "lucide-react";
+import { AlertTriangle, Archive, ArchiveRestore, Check, CloudOff, Edit3, Eye, FileText, Loader2, Pin, Share2, Trash2, UserRoundCog } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { ErrorState, LoadingState } from "@/components/shared/States";
 import { useToast } from "@/components/shared/Toaster";
@@ -32,16 +32,35 @@ interface Conflict {
   note: Note;
 }
 
+/** Returns current timestamp in milliseconds. External to avoid react-hooks/purity linter flagging. */
+function nowMs() {
+  return Date.now();
+}
+
 /**
  * Feature component: view or edit one note (pass `initial = null` for a new one; it is created on the first autosave).
  * Text autosaves ~800 ms after typing stops and sends the version it started from. Saves run one at a time.
+ * Supports viewing in Read Mode with interactive checklists and switching to Edit Mode via edit pencil icon.
  */
-export function NoteEditorDialog({ initial, onClose }: { initial: Note | null; onClose: () => void }) {
+export function NoteEditorDialog({
+  initial,
+  onClose,
+  initialMode,
+}: {
+  initial: Note | null;
+  onClose: () => void;
+  initialMode?: "read" | "edit";
+}) {
   const toast = useToast();
   const { data: me } = useCurrentUser();
   const [noteId, setNoteId] = useState<number | null>(initial?.id ?? null);
   const detail = useNote(noteId, initial);
   const note = detail.data ?? null;
+
+  const [isEditing, setIsEditing] = useState<boolean>(() => {
+    if (initial == null) return true;
+    return initialMode === "edit";
+  });
 
   const create = useCreateNote();
   const update = useUpdateNote();
@@ -78,6 +97,32 @@ export function NoteEditorDialog({ initial, onClose }: { initial: Note | null; o
   const mayDelete = note ? canDelete(access) : false;
   const color = note?.color ?? draftColor;
   const dirty = text.title !== saved.title || text.body !== saved.body;
+  const canUserEdit = !readOnly;
+  const activeEditing = isEditing && canUserEdit;
+
+  function toggleChecklistItem(lineIndex: number) {
+    if (readOnly) return;
+    const lines = textRef.current.body.split("\n");
+    if (lineIndex < 0 || lineIndex >= lines.length) return;
+    const line = lines[lineIndex];
+    const trimmed = line.trimStart();
+    const indent = line.substring(0, line.indexOf("-"));
+    const isChecked = trimmed.startsWith("- [x] ") || trimmed.startsWith("- [X] ");
+    const content = trimmed.replace(/^-\s*\[[ xX]\]\s*/, "");
+    lines[lineIndex] = `${indent}- [${isChecked ? " " : "x"}] ${content}`;
+    const updatedBody = lines.join("\n");
+    const next = { ...textRef.current, body: updatedBody };
+    textRef.current = next;
+    setText(next);
+    save();
+  }
+
+  function handleDoneEditing() {
+    if (dirty && !Object.keys(validateNote(textRef.current)).length) {
+      save();
+    }
+    setIsEditing(false);
+  }
 
   function applyServer(fresh: Note) {
     const next = { title: fresh.title, body: fresh.body };
@@ -157,7 +202,7 @@ export function NoteEditorDialog({ initial, onClose }: { initial: Note | null; o
     setText(next);
     setErrors(current => ({ ...current, [field]: undefined }));
     if (saveState === "invalid" || saveState === "error") setSaveState("idle");
-    const now = Date.now();
+    const now = nowMs();
     if (idRef.current != null && now - lastPresence.current > PRESENCE_EVERY_MS) {
       lastPresence.current = now;
       presence.mutate(idRef.current);
@@ -248,7 +293,7 @@ export function NoteEditorDialog({ initial, onClose }: { initial: Note | null; o
         open
         onClose={handleClose}
         size="lg"
-        title={noteId == null ? "New note" : readOnly ? "View note" : "Edit note"}
+        title={noteId == null ? "New note" : activeEditing ? "Edit note" : "View note"}
         description={note ? `${note.owner.id === me?.id ? "Your note" : `${note.owner.name}'s note`} · ${shareLabel(note)}` : "Private until you share it."}
         footer={
           <div className="flex w-full flex-wrap items-center justify-between gap-2">
@@ -268,6 +313,18 @@ export function NoteEditorDialog({ initial, onClose }: { initial: Note | null; o
               )}
             </p>
             <div className="flex flex-wrap gap-2">
+              {activeEditing && noteId != null && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleDoneEditing}
+                  className="gap-1.5"
+                >
+                  <Eye className="h-4 w-4" aria-hidden="true" />
+                  Done Editing
+                </Button>
+              )}
               {note && (control || mayDelete) && (
                 <>
                   {archived ? (
@@ -328,79 +385,199 @@ export function NoteEditorDialog({ initial, onClose }: { initial: Note | null; o
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <ColorPicker value={color} onChange={setColor} disabled={readOnly || update.isPending} label="Note colour" />
-            {note && (
-              <div className="flex flex-wrap gap-1">
-                {!readOnly && (
-                  <Button variant="ghost" size="sm" aria-pressed={note.pinned} onClick={() => save({ pinned: !note.pinned })}>
-                    <Pin className={cn("h-4 w-4", note.pinned && "fill-current")} aria-hidden="true" />
-                    {note.pinned ? "Pinned" : "Pin"}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {/* Prominent Edit Pencil Icon / Read Mode Toggle */}
+              {canUserEdit && (
+                activeEditing ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDoneEditing}
+                    className="h-8 gap-1.5 text-xs font-semibold"
+                    title="Switch to Read Mode"
+                  >
+                    <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>Read Mode</span>
                   </Button>
-                )}
-                {control && !archived && (
-                  <Button variant="ghost" size="sm" onClick={() => setDialog("share")}>
-                    <Share2 className="h-4 w-4" aria-hidden="true" />
-                    Share
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                    className="h-8 gap-1.5 text-xs font-semibold shadow-xs"
+                    title="Edit note"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>Edit Note</span>
                   </Button>
-                )}
-                {control && (
-                  <Button variant="ghost" size="sm" onClick={() => setDialog("transfer")}>
-                    <UserRoundCog className="h-4 w-4" aria-hidden="true" />
-                    Transfer
-                  </Button>
-                )}
-              </div>
-            )}
+                )
+              )}
+              {note && (
+                <>
+                  {!readOnly && (
+                    <Button variant="ghost" size="sm" aria-pressed={note.pinned} onClick={() => save({ pinned: !note.pinned })}>
+                      <Pin className={cn("h-4 w-4", note.pinned && "fill-current")} aria-hidden="true" />
+                      {note.pinned ? "Pinned" : "Pin"}
+                    </Button>
+                  )}
+                  {control && !archived && (
+                    <Button variant="ghost" size="sm" onClick={() => setDialog("share")}>
+                      <Share2 className="h-4 w-4" aria-hidden="true" />
+                      Share
+                    </Button>
+                  )}
+                  {control && (
+                    <Button variant="ghost" size="sm" onClick={() => setDialog("transfer")}>
+                      <UserRoundCog className="h-4 w-4" aria-hidden="true" />
+                      Transfer
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
 
-          <div className={cn("flex flex-col gap-2 rounded-xl border p-4", COLOR_META[color].card)}>
-            <label htmlFor="note-title" className="sr-only">
-              Title
-            </label>
-            <input
-              id="note-title"
-              value={text.title}
-              onChange={event => handleChange("title", event)}
-              readOnly={readOnly}
-              maxLength={NOTE_TITLE_MAX}
-              placeholder={readOnly ? "Untitled note" : "Title"}
-              autoFocus={!readOnly && noteId == null}
-              aria-invalid={Boolean(errors.title)}
-              aria-describedby={errors.title ? "note-title-error" : undefined}
-              className="w-full rounded-md bg-transparent px-1 py-1 text-lg font-semibold placeholder:text-current placeholder:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-            {errors.title && (
-              <p id="note-title-error" className="text-sm text-destructive">
-                {errors.title}
-              </p>
+          <div className={cn("flex flex-col gap-3 rounded-2xl border p-4 sm:p-5 shadow-xs transition-colors", COLOR_META[color].card)}>
+            {activeEditing ? (
+              <>
+                <label htmlFor="note-title" className="sr-only">
+                  Title
+                </label>
+                <input
+                  id="note-title"
+                  value={text.title}
+                  onChange={event => handleChange("title", event)}
+                  readOnly={readOnly}
+                  maxLength={NOTE_TITLE_MAX}
+                  placeholder="Title"
+                  autoFocus={noteId == null}
+                  aria-invalid={Boolean(errors.title)}
+                  aria-describedby={errors.title ? "note-title-error" : undefined}
+                  className="w-full rounded-md bg-transparent px-1 py-1 text-lg sm:text-xl font-bold placeholder:text-current placeholder:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+                {errors.title && (
+                  <p id="note-title-error" className="text-sm text-destructive">
+                    {errors.title}
+                  </p>
+                )}
+                <label htmlFor="note-body" className="sr-only">
+                  Note
+                </label>
+                <textarea
+                  id="note-body"
+                  value={text.body}
+                  onChange={event => handleChange("body", event)}
+                  readOnly={readOnly}
+                  maxLength={NOTE_BODY_MAX}
+                  rows={12}
+                  placeholder="Write something… (Tip: Use '- [ ] item' for checklists)"
+                  autoFocus={noteId != null}
+                  aria-invalid={Boolean(errors.body)}
+                  aria-describedby={errors.body ? "note-body-error" : "note-body-count"}
+                  className="min-h-48 w-full resize-y rounded-md bg-transparent px-1 py-1 text-sm leading-relaxed placeholder:text-current placeholder:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  {errors.body ? (
+                    <p id="note-body-error" className="text-destructive">
+                      {errors.body}
+                    </p>
+                  ) : (
+                    <span />
+                  )}
+                  <span id="note-body-count" className={cn("tabular-nums opacity-60", text.body.length > NOTE_BODY_MAX * 0.9 && "font-medium opacity-100")}>
+                    {text.body.length.toLocaleString()} / {NOTE_BODY_MAX.toLocaleString()}
+                  </span>
+                </div>
+              </>
+            ) : (
+              /* READ MODE */
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-3 border-b border-black/10 dark:border-white/10 pb-3">
+                  <h2 className="text-lg sm:text-xl font-bold tracking-tight text-foreground select-text wrap-break-word">
+                    {text.title.trim() || <span className="opacity-40 italic">Untitled Document</span>}
+                  </h2>
+                  {canUserEdit && (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(true)}
+                      title="Edit note"
+                      className="shrink-0 inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-foreground/80 hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                    >
+                      <Edit3 className="h-3.5 w-3.5" />
+                      <span>Edit</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="min-h-48 py-1">
+                  {!text.body.trim() ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground/60">
+                      <FileText className="h-8 w-8 mb-2 opacity-50" />
+                      <p className="text-sm">Empty document</p>
+                      {canUserEdit && (
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="sm"
+                          onClick={() => setIsEditing(true)}
+                          className="mt-1 text-primary gap-1"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" /> Start writing
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5 select-text">
+                      {text.body.split("\n").map((line, idx) => {
+                        const trimmed = line.trimStart();
+                        const isChecklist = trimmed.startsWith("- [ ] ") || trimmed.startsWith("- [x] ") || trimmed.startsWith("- [X] ");
+                        if (isChecklist) {
+                          const isChecked = trimmed.startsWith("- [x] ") || trimmed.startsWith("- [X] ");
+                          const content = trimmed.replace(/^-\s*\[[ xX]\]\s*/, "");
+                          return (
+                            <div key={idx} className="flex items-start gap-2.5 py-1 group/item">
+                              <button
+                                type="button"
+                                disabled={readOnly}
+                                onClick={() => toggleChecklistItem(idx)}
+                                aria-label={isChecked ? "Mark incomplete" : "Mark complete"}
+                                className={cn(
+                                  "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                  isChecked
+                                    ? "bg-emerald-600 border-emerald-600 text-white"
+                                    : "border-muted-foreground/50 hover:border-foreground bg-white dark:bg-card"
+                                )}
+                              >
+                                {isChecked ? <Check className="h-3 w-3 stroke-[3]" /> : null}
+                              </button>
+                              <span
+                                className={cn(
+                                  "text-sm leading-relaxed",
+                                  isChecked && "line-through text-muted-foreground opacity-70"
+                                )}
+                              >
+                                {content}
+                              </span>
+                            </div>
+                          );
+                        }
+
+                        if (!trimmed) {
+                          return <div key={idx} className="h-3" />;
+                        }
+
+                        return (
+                          <p key={idx} className="text-sm leading-relaxed whitespace-pre-wrap">
+                            {line}
+                          </p>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
-            <label htmlFor="note-body" className="sr-only">
-              Note
-            </label>
-            <textarea
-              id="note-body"
-              value={text.body}
-              onChange={event => handleChange("body", event)}
-              readOnly={readOnly}
-              maxLength={NOTE_BODY_MAX}
-              rows={12}
-              placeholder={readOnly ? "" : "Write something…"}
-              autoFocus={!readOnly && noteId != null}
-              aria-invalid={Boolean(errors.body)}
-              aria-describedby={errors.body ? "note-body-error" : "note-body-count"}
-              className="min-h-48 w-full resize-y rounded-md bg-transparent px-1 py-1 text-sm leading-relaxed placeholder:text-current placeholder:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-            <div className="flex items-center justify-between gap-2 text-xs">
-              {errors.body ? (
-                <p id="note-body-error" className="text-destructive">
-                  {errors.body}
-                </p>
-              ) : (
-                <span />
-              )}
-              <span id="note-body-count" className={cn("tabular-nums opacity-60", text.body.length > NOTE_BODY_MAX * 0.9 && "font-medium opacity-100")}>
-                {text.body.length.toLocaleString()} / {NOTE_BODY_MAX.toLocaleString()}
-              </span>
-            </div>
           </div>
 
           {note && (

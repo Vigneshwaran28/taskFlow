@@ -53,11 +53,12 @@ export function NotesPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search.trim(), 300);
   const { data, isPending, error, refetch, isFetching } = useNotes({ scope, search: debouncedSearch, color });
-  const [editor, setEditor] = useState<{ key: number; note: Note | null } | null>(null);
+  const [editor, setEditor] = useState<{ key: number; note: Note | null; mode?: "read" | "edit" } | null>(null);
 
   const [view, setView] = useNotesView();
 
-  const open = (note: Note | null) => setEditor(current => ({ key: (current?.key ?? 0) + 1, note }));
+  const open = (note: Note | null, mode: "read" | "edit" = note ? "read" : "edit") =>
+    setEditor(current => ({ key: (current?.key ?? 0) + 1, note, mode }));
   const filtered = Boolean(debouncedSearch || color);
 
   const viewToggle = (
@@ -162,7 +163,7 @@ export function NotesPage() {
         </div>
       </Tabs>
       )}
-      {editor && <NoteEditorDialog key={editor.key} initial={editor.note} onClose={() => setEditor(null)} />}
+      {editor && <NoteEditorDialog key={editor.key} initial={editor.note} initialMode={editor.mode} onClose={() => setEditor(null)} />}
     </div>
   );
 }
