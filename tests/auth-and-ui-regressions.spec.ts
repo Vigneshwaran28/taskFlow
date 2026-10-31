@@ -143,7 +143,7 @@ test.describe("Auth & UI Regression Tests", () => {
     await expect(badge).toHaveCount(0);
   });
 
-  test("Separate login tabs: Email & Password vs CodeKey & Password", async ({ page, context }) => {
+  test("CodeKey login has NO password input; first time sets password once, future logins never ask again", async ({ page, context }) => {
     await context.clearCookies();
 
     // 1. Visit workspace login (/titan/login)
@@ -156,41 +156,52 @@ test.describe("Auth & UI Regression Tests", () => {
     await expect(codeTab).toBeVisible();
     await expect(emailTab).toHaveAttribute("aria-selected", "true");
 
-    // Verify Email form fields
-    const emailInput = page.locator('input[name="email"]');
-    const passwordInput = page.locator('input[name="password"]');
-    await expect(emailInput).toBeVisible();
-    await expect(passwordInput).toBeVisible();
-    await expect(page.locator('[data-testid="email-signin-btn"]')).toBeVisible();
-
-    // Take screenshot of Email & Password tab
-    await page.screenshot({ path: "test-results/login-email-tab.png" });
-
-    // 3. Switch to CodeKey & Password tab
+    // 3. Switch to CodeKey tab
     await codeTab.click();
     await expect(codeTab).toHaveAttribute("aria-selected", "true");
     await expect(emailTab).toHaveAttribute("aria-selected", "false");
 
-    // Verify CodeKey form fields
-    const codeInput = page.locator('input[name="code"]');
+    // Verify CodeKey form has NO password input
+    const codeInput = page.locator('#panel-code-login input[name="code"]');
     await expect(codeInput).toBeVisible();
-    await expect(codeInput).toHaveAttribute("placeholder", /TF-491297/);
+    await expect(page.locator('#panel-code-login input[type="password"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="code-signin-btn"]')).toBeVisible();
 
-    // Take screenshot of CodeKey & Password tab
+    // Take screenshot of CodeKey tab without password input
     await page.screenshot({ path: "test-results/login-code-tab.png" });
 
-    // 4. Fill CodeKey (TF-491297) and sign in directly
+    // 4. Fill CodeKey (TF-491297) and sign in directly with NO password
     await codeInput.fill("TF-491297");
     await page.locator('[data-testid="code-signin-btn"]').click();
 
-    // 5. User 5 has must_change_password; with code login it asks only for new password + confirm
+    // 5. FIRST TIME LOGIN: User 5 has must_change_password = true; asks only for new password + confirm
     await page.waitForURL(url => url.pathname.includes("/titan"), { timeout: 15000 });
     const createHeading = page.getByRole("heading", { name: /Create your password/i });
     await expect(createHeading).toBeVisible({ timeout: 10000 });
     await expect(page.locator('input[name="currentPassword"]')).toHaveCount(0);
     await expect(page.locator('input[name="newPassword"]')).toBeVisible();
     await expect(page.locator('input[name="confirm"]')).toBeVisible();
+
+    // 6. Complete password setup (changes password and sets must_change_password = false)
+    await page.locator('input[name="newPassword"]').fill("BrandNewPass456!@#");
+    await page.locator('input[name="confirm"]').fill("BrandNewPass456!@#");
+    await page.locator('button:has-text("Save and continue")').click();
+    await expect(createHeading).toHaveCount(0, { timeout: 15000 });
+
+    // 7. Clear session cookies to simulate future login
+    await context.clearCookies();
+
+    // 8. FUTURE LOGIN: Visit workspace login again and sign in with TF-491297
+    await page.goto("/titan/login");
+    await page.locator('#tab-code-login').click();
+    await page.locator('#panel-code-login input[name="code"]').fill("TF-491297");
+    await page.locator('[data-testid="code-signin-btn"]').click();
+
+    // 9. Verified: Lands in /titan directly, NEVER asks to change password again
+    await page.waitForURL(url => url.pathname.includes("/titan"), { timeout: 15000 });
+    await expect(page.getByRole("heading", { name: /Create your password/i })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: /Choose your password/i })).toHaveCount(0);
+    await expect(page.locator('text=Good evening, Titan').or(page.locator('text=Good morning, Titan')).or(page.locator('text=Good afternoon, Titan'))).toBeVisible({ timeout: 10000 });
   });
 });
 

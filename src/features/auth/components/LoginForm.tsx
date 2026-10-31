@@ -182,7 +182,7 @@ export function LoginForm({ onSuccess, workspace, from, initialMethod }: LoginFo
     }
 
     codeLogin.mutate(
-      { code: cleanCode, password: codeValues.password || undefined },
+      { code: cleanCode },
       {
         onSuccess: user => {
           rememberWorkspace(workspace ?? user?.tenant?.slug);
@@ -190,11 +190,7 @@ export function LoginForm({ onSuccess, workspace, from, initialMethod }: LoginFo
         },
         onError: err => {
           const msg = formErrorOf(err) || err.message;
-          if (msg.toLowerCase().includes("password")) {
-            setCodeErrors({ password: msg });
-          } else {
-            setCodeErrors({ code: msg });
-          }
+          setCodeErrors({ code: msg });
         },
       }
     );
@@ -249,7 +245,7 @@ export function LoginForm({ onSuccess, workspace, from, initialMethod }: LoginFo
           )}
         >
           <KeyRound className="h-4 w-4" aria-hidden="true" />
-          <span>CodeKey &amp; Password</span>
+          <span>CodeKey</span>
         </button>
       </div>
 
@@ -309,7 +305,7 @@ export function LoginForm({ onSuccess, workspace, from, initialMethod }: LoginFo
         </form>
       )}
 
-      {/* Mode 2: CodeKey & Password */}
+      {/* Mode 2: CodeKey Login (no password input needed) */}
       {method === "code" && (
         <form
           onSubmit={handleCodeSubmit}
@@ -321,7 +317,7 @@ export function LoginForm({ onSuccess, workspace, from, initialMethod }: LoginFo
         >
           <FormAlert message={codeFormError} />
           <TextField
-            label="CodeKey (Login Access Code)"
+            label="Login Access Code (CodeKey)"
             name="code"
             type="text"
             autoComplete="off"
@@ -333,19 +329,6 @@ export function LoginForm({ onSuccess, workspace, from, initialMethod }: LoginFo
             error={activeCodeErrors.code}
             onChange={handleCodeChange}
           />
-          <div className="flex flex-col gap-1.5">
-            <TextField
-              label="Password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="Password (optional for first login)"
-              hint="Optional if signing in with your access code for the first time"
-              value={codeValues.password}
-              error={activeCodeErrors.password}
-              onChange={handleCodeChange}
-            />
-          </div>
           <Button
             type="submit"
             size="lg"
