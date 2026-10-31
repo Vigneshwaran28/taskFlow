@@ -73,9 +73,13 @@ export function NotificationBell({ onOpenTask, onOpenTicket }: NotificationBellP
       </button>
 
       {open && (
-        <div className="absolute right-0 z-40 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border bg-card shadow-xl">
-          <div className="flex items-center justify-between border-b px-4 py-3">
-            <p className="text-sm font-semibold">Notifications</p>
+        <div
+          role="region"
+          aria-label="Notifications"
+          className="absolute right-0 z-40 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-card shadow-2xl"
+        >
+          <div className="flex items-center justify-between border-b px-4 py-3 bg-muted/40">
+            <p className="text-sm font-semibold text-foreground">Notifications</p>
             {unread > 0 && (
               <button
                 type="button"
@@ -105,7 +109,7 @@ export function NotificationBell({ onOpenTask, onOpenTicket }: NotificationBellP
                   >
                     <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", item.isRead ? "bg-transparent" : "bg-primary")} aria-hidden="true" />
                     <span className="min-w-0 flex-1">
-                      <span className={cn("block truncate text-sm", !item.isRead && "font-medium")}>
+                      <span className={cn("block truncate text-sm", !item.isRead ? "font-semibold text-foreground" : "font-medium text-foreground/90")}>
                         {!item.isRead && <span className="sr-only">Unread: </span>}
                         {item.title}
                       </span>

@@ -142,7 +142,11 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
             {user?.avatarUrl ? <Avatar name={user.name} imageUrl={user.avatarUrl} /> : initials(user?.name) || "?"}
           </button>
           {menuOpen && (
-            <div className="absolute right-0 z-40 mt-2 w-[min(15rem,calc(100vw-2rem))] overflow-hidden rounded-xl border bg-card shadow-xl">
+            <div
+              role="menu"
+              aria-label="Account menu"
+              className="absolute right-0 z-40 mt-2 w-[min(15rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-card shadow-2xl"
+            >
               <div className="flex items-center gap-3 border-b px-4 py-3">
                 <Avatar name={user?.name} imageUrl={user?.avatarUrl} />
                 <div className="min-w-0">

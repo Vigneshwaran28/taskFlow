@@ -1,3 +1,4 @@
+import bcrypt from "../../../server/node_modules/bcryptjs/index.js";
 import { readConfig } from "../../../server/src/config/store.js";
 import { initDb, getDb, closeDb } from "../../../server/src/db/connection.js";
 
@@ -7,11 +8,13 @@ export async function resetTestUser() {
     await initDb(config.database);
     const db = getDb();
     // User 5 ('Titan Test 01', TF-491297)
+    const password_hash = await bcrypt.hash("ValidPass123!@#", 10);
     await db("users").where({ id: 5 }).update({
+      password_hash,
       must_change_password: true,
       is_code_login_enabled: true,
     });
-    console.log("Reset user 5 (TF-491297) to must_change_password = true");
+    console.log("Reset user 5 (TF-491297) to must_change_password = true and password = ValidPass123!@#");
     await closeDb();
   }
 }

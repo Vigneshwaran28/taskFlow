@@ -129,12 +129,96 @@ html.dark[data-style="glass"], .dark [data-style-preview="glass"] {
   --sidebar-dark-bg: rgb(3 7 18 / 0.85);
 }
 @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
-  html[data-style="glass"], [data-style-preview="glass"] { --color-card: rgb(255 255 255 / 0.62); }
-  html.dark[data-style="glass"], .dark [data-style-preview="glass"] { --color-card: rgb(17 24 39 / 0.58); }
-  html[data-style="glass"] .bg-card, [data-style-preview="glass"] .bg-card { -webkit-backdrop-filter: blur(16px) saturate(160%); backdrop-filter: blur(16px) saturate(160%); }
-  /* Modals sit over a dimmed backdrop: keep them solid, readable, and non-overlapping. */
-  html[data-style="glass"] dialog, html[data-style="glass"] [role="dialog"] { --color-card: #ffffff; }
-  html.dark[data-style="glass"] dialog, html.dark[data-style="glass"] [role="dialog"] { --color-card: #111827; }
+  html[data-style="glass"], [data-style-preview="glass"] { --color-card: rgb(255 255 255 / 0.78); }
+  html.dark[data-style="glass"], .dark [data-style-preview="glass"] { --color-card: rgb(17 24 39 / 0.78); }
+  html[data-style="glass"] .bg-card, [data-style-preview="glass"] .bg-card { -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%); }
+  /* Modals, menus, dropdowns, popovers, and floating overlays sit over page content: keep them solid, readable, and non-overlapping. */
+  html[data-style="glass"] :is(
+    dialog,
+    [role="dialog"],
+    [role="alertdialog"],
+    [role="menu"],
+    [role="listbox"],
+    [role="tooltip"],
+    [role="region"][aria-label],
+    [popover],
+    [data-floating],
+    [data-tf-popover],
+    [data-dropdown],
+    header[data-tf="topbar"] .absolute,
+    .absolute.z-40,
+    .absolute.z-50,
+    .fixed.z-40,
+    .fixed.z-50,
+    option
+  ),
+  [data-style-preview="glass"] :is(
+    dialog,
+    [role="dialog"],
+    [role="alertdialog"],
+    [role="menu"],
+    [role="listbox"],
+    [role="tooltip"],
+    [role="region"][aria-label],
+    [popover],
+    [data-floating],
+    [data-tf-popover],
+    [data-dropdown],
+    header[data-tf="topbar"] .absolute,
+    .absolute.z-40,
+    .absolute.z-50,
+    .fixed.z-40,
+    .fixed.z-50,
+    option
+  ) {
+    --color-card: #ffffff;
+    background-color: #ffffff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  html.dark[data-style="glass"] :is(
+    dialog,
+    [role="dialog"],
+    [role="alertdialog"],
+    [role="menu"],
+    [role="listbox"],
+    [role="tooltip"],
+    [role="region"][aria-label],
+    [popover],
+    [data-floating],
+    [data-tf-popover],
+    [data-dropdown],
+    header[data-tf="topbar"] .absolute,
+    .absolute.z-40,
+    .absolute.z-50,
+    .fixed.z-40,
+    .fixed.z-50,
+    option
+  ),
+  .dark [data-style-preview="glass"] :is(
+    dialog,
+    [role="dialog"],
+    [role="alertdialog"],
+    [role="menu"],
+    [role="listbox"],
+    [role="tooltip"],
+    [role="region"][aria-label],
+    [popover],
+    [data-floating],
+    [data-tf-popover],
+    [data-dropdown],
+    header[data-tf="topbar"] .absolute,
+    .absolute.z-40,
+    .absolute.z-50,
+    .fixed.z-40,
+    .fixed.z-50,
+    option
+  ) {
+    --color-card: #111827;
+    background-color: #111827;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 /* Midnight executive: deep dark surfaces with accent-tinted edges and glow (made for dark mode; light mode keeps the dark sidebar). */

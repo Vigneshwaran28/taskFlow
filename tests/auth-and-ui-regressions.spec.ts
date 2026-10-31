@@ -42,4 +42,42 @@ test.describe("Auth & UI Regression Tests", () => {
       expect(bgImage).toBe("none");
     }
   });
+
+  test("In glass style, floating dropdowns and notification popovers have opaque background to avoid text bleed-through", async ({ page, context }) => {
+    await context.clearCookies();
+
+    // 1. Visit workspace login
+    await page.goto("/titan/login");
+    await page.locator('input[name="email"]').fill("edgevicky28@gmail.com");
+    await page.locator('input[name="password"]').fill("ValidPass123!@#");
+    await page.locator('button[type="submit"]').click();
+
+    // 2. Complete password setup since user 5 has must_change_password = true
+    await page.waitForURL(url => url.pathname === "/titan" || url.pathname === "/titan/", { timeout: 15000 });
+    const chooseHeading = page.getByRole("heading", { name: /Choose your password/i });
+    await chooseHeading.waitFor({ state: "visible", timeout: 10000 });
+    await page.locator('input[name="currentPassword"]').fill("ValidPass123!@#");
+    await page.locator('input[name="newPassword"]').fill("BrandNewPass456!@#");
+    await page.locator('input[name="confirm"]').fill("BrandNewPass456!@#");
+    await page.locator('button:has-text("Save and continue")').click();
+    await expect(chooseHeading).toHaveCount(0, { timeout: 15000 });
+
+    // 3. Set data-style="glass" on html
+    await page.evaluate(() => {
+      document.documentElement.dataset.style = "glass";
+    });
+
+    // 4. Click notification bell
+    const bellBtn = page.locator('button[aria-label*="Notification"]').first();
+    await expect(bellBtn).toBeVisible({ timeout: 10000 });
+    await bellBtn.click();
+
+    // 5. Verify notification popover is visible and has opaque background
+    const popover = page.locator('div[role="region"][aria-label="Notifications"]');
+    await expect(popover).toBeVisible();
+
+    const bgColor = await popover.evaluate(el => window.getComputedStyle(el).backgroundColor);
+    // Background must be rgb(255, 255, 255) / opaque, NOT transparent rgba(..., 0.62)
+    expect(bgColor).toBe("rgb(255, 255, 255)");
+  });
 });
