@@ -1,5 +1,5 @@
 "use client";
-import { useState, useId, useSyncExternalStore } from "react";
+import { useState, useId, useSyncExternalStore, useMemo } from "react";
 import {
   FileText,
   Lock,
@@ -62,10 +62,76 @@ function notifyPrefChange() {
   }
 }
 
+function readViewMode(): NotesViewMode {
+  if (typeof window === "undefined") return "grid";
+  try {
+    const val = localStorage.getItem("tf_notes_view_mode");
+    if (val === "grid" || val === "list" || val === "compact") return val as NotesViewMode;
+    return "grid";
+  } catch {
+    return "grid";
+  }
+}
+const getViewModeServerSnapshot = () => "grid" as NotesViewMode;
+
+function readCardSize(): NotesCardSize {
+  if (typeof window === "undefined") return "md";
+  try {
+    const val = localStorage.getItem("tf_notes_card_size");
+    if (val === "sm" || val === "md" || val === "lg") return val as NotesCardSize;
+    return "md";
+  } catch {
+    return "md";
+  }
+}
+const getCardSizeServerSnapshot = () => "md" as NotesCardSize;
+
+function readSortBy(): NotesSortBy {
+  if (typeof window === "undefined") return "updated";
+  try {
+    const val = localStorage.getItem("tf_notes_sort_by");
+    if (val === "updated" || val === "created" || val === "title_asc" || val === "title_desc" || val === "color") {
+      return val as NotesSortBy;
+    }
+    return "updated";
+  } catch {
+    return "updated";
+  }
+}
+const getSortByServerSnapshot = () => "updated" as NotesSortBy;
+
+function readPinnedFirst(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    const val = localStorage.getItem("tf_notes_pinned_first");
+    if (val !== null) return val === "true";
+    return true;
+  } catch {
+    return true;
+  }
+}
+const getPinnedFirstServerSnapshot = () => true;
+
 export interface Folder3DNotesProps {
   notes: Note[];
   onOpenNote: (note: Note | null, mode?: "read" | "edit", folderId?: string) => void;
   canCreateNote?: boolean;
+}
+
+function getFormattedMemoDate() {
+  const now = new Date();
+  return {
+    date: now.toLocaleDateString("en-US", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }),
+    time: now.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  };
 }
 
 export function Folder3DNotes({
@@ -77,6 +143,7 @@ export function Folder3DNotes({
   const toast = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [sharingNote, setSharingNote] = useState<Note | null>(null);
+  const [memoTimestamp] = useState(getFormattedMemoDate);
   const archiveNote = useArchiveNote();
 
   // Multi-Folder management hook
@@ -111,66 +178,13 @@ export function Folder3DNotes({
 
   const [deletingFolder, setDeletingFolder] = useState<NoteFolder | null>(null);
 
-  // Document Viewer Settings (synchronized via useSyncExternalStore)
+  // Document Viewer Settings (synchronized via useSyncExternalStore with stable readers)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const viewMode = useSyncExternalStore(
-    subscribePrefs,
-    () => {
-      try {
-        const val = localStorage.getItem("tf_notes_view_mode");
-        if (val === "grid" || val === "list" || val === "compact") return val as NotesViewMode;
-        return "grid" as NotesViewMode;
-      } catch {
-        return "grid" as NotesViewMode;
-      }
-    },
-    () => "grid" as NotesViewMode
-  );
-
-  const cardSize = useSyncExternalStore(
-    subscribePrefs,
-    () => {
-      try {
-        const val = localStorage.getItem("tf_notes_card_size");
-        if (val === "sm" || val === "md" || val === "lg") return val as NotesCardSize;
-        return "md" as NotesCardSize;
-      } catch {
-        return "md" as NotesCardSize;
-      }
-    },
-    () => "md" as NotesCardSize
-  );
-
-  const sortBy = useSyncExternalStore(
-    subscribePrefs,
-    () => {
-      try {
-        const val = localStorage.getItem("tf_notes_sort_by");
-        if (val === "updated" || val === "created" || val === "title_asc" || val === "title_desc" || val === "color") {
-          return val as NotesSortBy;
-        }
-        return "updated" as NotesSortBy;
-      } catch {
-        return "updated" as NotesSortBy;
-      }
-    },
-    () => "updated" as NotesSortBy
-  );
-
-  const pinnedFirst = useSyncExternalStore(
-    subscribePrefs,
-    () => {
-      try {
-        const val = localStorage.getItem("tf_notes_pinned_first");
-        if (val !== null) return val === "true";
-        return true;
-      } catch {
-        return true;
-      }
-    },
-    () => true
-  );
+  const viewMode = useSyncExternalStore(subscribePrefs, readViewMode, getViewModeServerSnapshot);
+  const cardSize = useSyncExternalStore(subscribePrefs, readCardSize, getCardSizeServerSnapshot);
+  const sortBy = useSyncExternalStore(subscribePrefs, readSortBy, getSortByServerSnapshot);
+  const pinnedFirst = useSyncExternalStore(subscribePrefs, readPinnedFirst, getPinnedFirstServerSnapshot);
 
   // Settings update helpers
   function updateViewMode(next: NotesViewMode) {
@@ -264,30 +278,34 @@ export function Folder3DNotes({
     setSharingNote(note);
   }
 
-  // Filter notes for active folder selection
-  const folderNotes = filterNotesByFolder(notes, activeFolderId);
+  // Filter notes for active folder selection (memoized)
+  const folderNotes = useMemo(() => {
+    return filterNotesByFolder(notes, activeFolderId);
+  }, [filterNotesByFolder, notes, activeFolderId]);
 
-  // Sort notes according to sort preference & pinned
-  const sortedNotes = [...folderNotes].sort((a, b) => {
-    if (pinnedFirst) {
-      if (a.pinned && !b.pinned) return -1;
-      if (!a.pinned && b.pinned) return 1;
-    }
-    switch (sortBy) {
-      case "updated":
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-      case "created":
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      case "title_asc":
-        return (a.title || "Untitled").localeCompare(b.title || "Untitled");
-      case "title_desc":
-        return (b.title || "Untitled").localeCompare(a.title || "Untitled");
-      case "color":
-        return a.color.localeCompare(b.color);
-      default:
-        return 0;
-    }
-  });
+  // Sort notes according to sort preference & pinned (memoized)
+  const sortedNotes = useMemo(() => {
+    return [...folderNotes].sort((a, b) => {
+      if (pinnedFirst) {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+      }
+      switch (sortBy) {
+        case "updated":
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        case "created":
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case "title_asc":
+          return (a.title || "Untitled").localeCompare(b.title || "Untitled");
+        case "title_desc":
+          return (b.title || "Untitled").localeCompare(a.title || "Untitled");
+        case "color":
+          return a.color.localeCompare(b.color);
+        default:
+          return 0;
+      }
+    });
+  }, [folderNotes, pinnedFirst, sortBy]);
 
   // Current active folder theme
   const currentTheme = activeFolder
@@ -300,18 +318,6 @@ export function Folder3DNotes({
     "--folder-dark": currentTheme.dark,
     "--folder-glow": currentTheme.glow,
   } as React.CSSProperties;
-
-  const now = new Date();
-  const formattedDate = now.toLocaleDateString("en-US", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-  const formattedTime = now.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 
   return (
     <div className="flex flex-col gap-8 w-full">
@@ -433,7 +439,7 @@ export function Folder3DNotes({
           <div className={styles.paper}>
             <div className={styles.memoHeader}>
               <span className={styles.memoDate}>
-                {formattedDate} <span className={styles.timeBadge}>{formattedTime}</span>
+                {memoTimestamp.date} <span className={styles.timeBadge}>{memoTimestamp.time}</span>
               </span>
               <div className={styles.memoHeaderRight}>
                 <svg className={styles.headerDotsIcon} viewBox="0 0 16 16" fill="currentColor">

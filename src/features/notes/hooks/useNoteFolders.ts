@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import type { Note } from "../services/noteService";
 
 export type FolderColorKey = "blue" | "amber" | "emerald" | "purple" | "rose" | "cyan" | "slate";
@@ -93,16 +93,26 @@ const STORAGE_ACTIVE_KEY = "tf_notes_active_folder_id";
 const STORAGE_MAP_KEY = "tf_note_to_folder_map";
 const EVENT_FOLDERS_CHANGE = "tf-note-folders-changed";
 
-const DEFAULT_FOLDER: NoteFolder = {
+export const DEFAULT_FOLDER: NoteFolder = Object.freeze({
   id: "default",
   title: "Daily Memo",
   desc: "Notes & Journaling",
   color: "blue",
   createdAt: "2026-10-31T00:00:00.000Z",
-};
+});
+
+export const DEFAULT_FOLDERS: NoteFolder[] = Object.freeze([DEFAULT_FOLDER]) as unknown as NoteFolder[];
+export const EMPTY_MAP: Record<string, string> = Object.freeze({}) as unknown as Record<string, string>;
+
+// Module-level cached snapshot state to guarantee referential stability for useSyncExternalStore
+let cachedFoldersRaw: string | null = null;
+let cachedFolders: NoteFolder[] = DEFAULT_FOLDERS;
+
+let cachedMapRaw: string | null = null;
+let cachedMap: Record<string, string> = EMPTY_MAP;
 
 function readFolders(): NoteFolder[] {
-  if (typeof window === "undefined") return [DEFAULT_FOLDER];
+  if (typeof window === "undefined") return DEFAULT_FOLDERS;
   try {
     const raw = localStorage.getItem(STORAGE_FOLDERS_KEY);
     if (!raw) {
@@ -115,18 +125,36 @@ function readFolders(): NoteFolder[] {
           title: legacyTitle?.trim() || DEFAULT_FOLDER.title,
           desc: legacyDesc?.trim() || DEFAULT_FOLDER.desc,
         };
-        localStorage.setItem(STORAGE_FOLDERS_KEY, JSON.stringify([initialDefault]));
-        return [initialDefault];
+        const initialList = Object.freeze([initialDefault]) as unknown as NoteFolder[];
+        const initialJson = JSON.stringify(initialList);
+        try {
+          localStorage.setItem(STORAGE_FOLDERS_KEY, initialJson);
+        } catch {}
+        cachedFoldersRaw = initialJson;
+        cachedFolders = initialList;
+        return cachedFolders;
       }
-      return [DEFAULT_FOLDER];
+      cachedFoldersRaw = null;
+      cachedFolders = DEFAULT_FOLDERS;
+      return cachedFolders;
     }
+
+    if (raw === cachedFoldersRaw) {
+      return cachedFolders;
+    }
+
     const parsed = JSON.parse(raw) as NoteFolder[];
     if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
+      cachedFoldersRaw = raw;
+      cachedFolders = Object.freeze(parsed) as unknown as NoteFolder[];
+      return cachedFolders;
     }
-    return [DEFAULT_FOLDER];
+
+    cachedFoldersRaw = raw;
+    cachedFolders = DEFAULT_FOLDERS;
+    return cachedFolders;
   } catch {
-    return [DEFAULT_FOLDER];
+    return cachedFolders;
   }
 }
 
@@ -140,12 +168,31 @@ function readActiveId(): string {
 }
 
 function readNoteFolderMap(): Record<string, string> {
-  if (typeof window === "undefined") return {};
+  if (typeof window === "undefined") return EMPTY_MAP;
   try {
     const raw = localStorage.getItem(STORAGE_MAP_KEY);
-    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    if (!raw) {
+      cachedMapRaw = null;
+      cachedMap = EMPTY_MAP;
+      return cachedMap;
+    }
+
+    if (raw === cachedMapRaw) {
+      return cachedMap;
+    }
+
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      cachedMapRaw = raw;
+      cachedMap = Object.freeze(parsed) as unknown as Record<string, string>;
+      return cachedMap;
+    }
+
+    cachedMapRaw = raw;
+    cachedMap = EMPTY_MAP;
+    return cachedMap;
   } catch {
-    return {};
+    return cachedMap;
   }
 }
 
@@ -164,14 +211,19 @@ function notifyFolders() {
   }
 }
 
-const EMPTY_MAP: Record<string, string> = {};
+const getServerFoldersSnapshot = () => DEFAULT_FOLDERS;
+const getServerActiveId = () => "default";
+const getServerMapSnapshot = () => EMPTY_MAP;
 
 export function useNoteFolders() {
-  const folders = useSyncExternalStore(subscribeFolders, readFolders, () => [DEFAULT_FOLDER]);
-  const activeFolderId = useSyncExternalStore(subscribeFolders, readActiveId, () => "default");
-  const noteFolderMap = useSyncExternalStore(subscribeFolders, readNoteFolderMap, () => EMPTY_MAP);
+  const folders = useSyncExternalStore(subscribeFolders, readFolders, getServerFoldersSnapshot);
+  const activeFolderId = useSyncExternalStore(subscribeFolders, readActiveId, getServerActiveId);
+  const noteFolderMap = useSyncExternalStore(subscribeFolders, readNoteFolderMap, getServerMapSnapshot);
 
-  const activeFolder = activeFolderId === "all" ? null : folders.find(f => f.id === activeFolderId) || folders[0] || DEFAULT_FOLDER;
+  const activeFolder = useMemo(() => {
+    if (activeFolderId === "all") return null;
+    return folders.find(f => f.id === activeFolderId) || folders[0] || DEFAULT_FOLDER;
+  }, [activeFolderId, folders]);
 
   const setActiveFolderId = useCallback((id: string) => {
     try {
@@ -191,10 +243,13 @@ export function useNoteFolders() {
       createdAt: new Date().toISOString(),
     };
     const updated = [...current, newFolder];
+    const json = JSON.stringify(updated);
     try {
-      localStorage.setItem(STORAGE_FOLDERS_KEY, JSON.stringify(updated));
+      localStorage.setItem(STORAGE_FOLDERS_KEY, json);
       localStorage.setItem(STORAGE_ACTIVE_KEY, id);
     } catch {}
+    cachedFoldersRaw = json;
+    cachedFolders = Object.freeze(updated) as unknown as NoteFolder[];
     notifyFolders();
     return newFolder;
   }, []);
@@ -212,8 +267,9 @@ export function useNoteFolders() {
       }
       return f;
     });
+    const json = JSON.stringify(updated);
     try {
-      localStorage.setItem(STORAGE_FOLDERS_KEY, JSON.stringify(updated));
+      localStorage.setItem(STORAGE_FOLDERS_KEY, json);
       // Keep legacy keys updated for default folder
       const def = updated.find(f => f.id === "default");
       if (def) {
@@ -221,6 +277,8 @@ export function useNoteFolders() {
         localStorage.setItem("tf_memo_folder_desc", def.desc);
       }
     } catch {}
+    cachedFoldersRaw = json;
+    cachedFolders = Object.freeze(updated) as unknown as NoteFolder[];
     notifyFolders();
   }, []);
 
@@ -238,22 +296,34 @@ export function useNoteFolders() {
         updatedMap[noteId] = fId;
       }
     }
+    const foldersJson = JSON.stringify(updated);
+    const mapJson = JSON.stringify(updatedMap);
     try {
-      localStorage.setItem(STORAGE_FOLDERS_KEY, JSON.stringify(updated));
-      localStorage.setItem(STORAGE_MAP_KEY, JSON.stringify(updatedMap));
+      localStorage.setItem(STORAGE_FOLDERS_KEY, foldersJson);
+      localStorage.setItem(STORAGE_MAP_KEY, mapJson);
       if (readActiveId() === id) {
         localStorage.setItem(STORAGE_ACTIVE_KEY, "default");
       }
     } catch {}
+    cachedFoldersRaw = foldersJson;
+    cachedFolders = Object.freeze(updated) as unknown as NoteFolder[];
+    cachedMapRaw = mapJson;
+    cachedMap = Object.freeze(updatedMap) as unknown as Record<string, string>;
     notifyFolders();
   }, []);
 
   const assignNoteToFolder = useCallback((noteId: number, folderId: string) => {
-    const map = readNoteFolderMap();
-    map[String(noteId)] = folderId;
+    const currentMap = readNoteFolderMap();
+    const nextMap: Record<string, string> = {
+      ...currentMap,
+      [String(noteId)]: folderId,
+    };
+    const json = JSON.stringify(nextMap);
     try {
-      localStorage.setItem(STORAGE_MAP_KEY, JSON.stringify(map));
+      localStorage.setItem(STORAGE_MAP_KEY, json);
     } catch {}
+    cachedMapRaw = json;
+    cachedMap = Object.freeze(nextMap) as unknown as Record<string, string>;
     notifyFolders();
   }, []);
 

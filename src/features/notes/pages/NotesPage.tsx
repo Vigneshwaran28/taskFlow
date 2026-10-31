@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Archive, Folder, Inbox, LayoutDashboard, List, Plus, Search, StickyNote, User, Users } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared/States";
@@ -19,6 +19,8 @@ import { useNotesView } from "../hooks/useBoardPrefs";
 import { useNotes } from "../hooks/useNotes";
 import { NOTE_COLORS, type Note, type NoteColor, type NoteScope } from "../services/noteService";
 import { COLOR_META } from "../utils/noteMeta";
+
+const EMPTY_NOTES: Note[] = [];
 
 const TABS = [
   { id: "all", label: "All", icon: StickyNote },
@@ -57,8 +59,16 @@ export function NotesPage() {
 
   const [view, setView] = useNotesView();
 
-  const open = (note: Note | null, mode: "read" | "edit" = note ? "read" : "edit", folderId?: string) =>
-    setEditor(current => ({ key: (current?.key ?? 0) + 1, note, mode, folderId }));
+  const open = useCallback(
+    (note: Note | null, mode: "read" | "edit" = note ? "read" : "edit", folderId?: string) =>
+      setEditor(current => ({ key: (current?.key ?? 0) + 1, note, mode, folderId })),
+    []
+  );
+
+  const handleCloseEditor = useCallback(() => {
+    setEditor(null);
+  }, []);
+
   const filtered = Boolean(debouncedSearch || color);
 
   const viewToggle = (
@@ -102,7 +112,7 @@ export function NotesPage() {
         <NotesBoard onOpen={open} />
       ) : view === "folder" ? (
         <Folder3DNotes
-          notes={data?.items || []}
+          notes={data?.items || EMPTY_NOTES}
           onOpenNote={open}
           canCreateNote={canWrite}
         />
@@ -163,7 +173,7 @@ export function NotesPage() {
         </div>
       </Tabs>
       )}
-      {editor && <NoteEditorDialog key={editor.key} initial={editor.note} initialMode={editor.mode} defaultFolderId={editor.folderId} onClose={() => setEditor(null)} />}
+      {editor && <NoteEditorDialog key={editor.key} initial={editor.note} initialMode={editor.mode} defaultFolderId={editor.folderId} onClose={handleCloseEditor} />}
     </div>
   );
 }
