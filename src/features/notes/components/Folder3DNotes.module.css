@@ -3,14 +3,70 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 28em;
+  min-height: 360px;
   width: 100%;
-  overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
   font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: transparent;
-  padding: 2rem 0;
+  padding: 4.5rem 1rem 1.5rem 1rem;
+}
+
+.foldersGrid {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 3.5rem 2.5rem;
+  width: 100%;
+  padding: 4.5rem 1rem 2rem 1rem;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.folderWrapper {
+  position: relative;
+  width: 320px;
+  height: 270px;
+  display: flex;
+  justify-content: center;
+}
+
+.newFolderCard {
+  position: relative;
+  width: 320px;
+  height: 270px;
+  border-radius: 18px;
+  border: 2px dashed rgba(156, 163, 175, 0.45);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.newFolderCard:hover {
+  transform: translateY(-4px);
+  border-color: #3b82f6;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 14px 28px rgba(59, 130, 246, 0.15);
+}
+
+:global(.dark) .newFolderCard {
+  background: rgba(30, 41, 59, 0.45);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+:global(.dark) .newFolderCard:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: #60a5fa;
+  box-shadow: 0 14px 28px rgba(96, 165, 250, 0.2);
 }
 
 .memoCheckbox {
