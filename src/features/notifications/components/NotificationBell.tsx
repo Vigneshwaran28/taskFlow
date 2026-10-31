@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { formatTimeAgo } from "@/lib/dates";
 import { useRouter } from "@/lib/navigation";
 import { alertTitle, describeNotification, useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications, useReminderAlerts } from "../hooks/useNotifications";
+import { useProviderInbox, useMarkNoticeRead } from "@/features/broadcasts";
 import type { AppNotification } from "../services/notificationService";
 
 export interface NotificationBellProps {
@@ -19,8 +20,10 @@ export function NotificationBell({ onOpenTask, onOpenTicket }: NotificationBellP
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { data, isPending, error } = useNotifications();
+  const { data: providerData } = useProviderInbox();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
+  const markNoticeRead = useMarkNoticeRead();
 
   useReminderAlerts(notification => toast.info(alertTitle(notification), describeNotification(notification)));
 
@@ -41,17 +44,58 @@ export function NotificationBell({ onOpenTask, onOpenTicket }: NotificationBellP
     };
   }, [open]);
 
-  const unread = data?.unreadCount ?? 0;
+  const notificationUnread = data?.unreadCount ?? 0;
   const items = data?.items ?? [];
+
+  // Integrate unread provider broadcasts so the bell badge accurately reflects ALL pending notices
+  const unreadBroadcasts = (providerData?.items ?? []).filter(b => !b.isRead);
+  const unreadNotifTitles = new Set(items.filter(n => !n.isRead).map(n => n.title));
+  const distinctBroadcastUnread = unreadBroadcasts.filter(b => !unreadNotifTitles.has(b.title)).length;
+  const unread = notificationUnread + distinctBroadcastUnread;
+
+  // Merge any unread broadcasts that aren't already represented in in-app notifications
+  const unreadBroadcastTitles = new Set(unreadBroadcasts.map(b => b.title));
+  const filteredItems = items.filter(i => !(unreadBroadcastTitles.has(i.title) && i.isRead));
+  const displayItems: AppNotification[] = [...filteredItems];
+  for (const b of unreadBroadcasts) {
+    if (!filteredItems.some(i => i.title === b.title && !i.isRead)) {
+      displayItems.unshift({
+        id: -b.id,
+        taskId: null,
+        ticketId: null,
+        meetingId: null,
+        title: b.title,
+        body: b.body,
+        dueAt: null,
+        isRead: b.isRead,
+        createdAt: b.publishAt,
+      });
+    }
+  }
 
   const router = useRouter();
 
   function handleSelect(notification: AppNotification) {
-    if (!notification.isRead) markRead.mutate(notification.id);
+    if (!notification.isRead) {
+      if (notification.id < 0) {
+        markNoticeRead.mutate(-notification.id);
+      } else {
+        markRead.mutate(notification.id);
+        const matchingBroadcast = providerData?.items.find(b => b.title === notification.title && !b.isRead);
+        if (matchingBroadcast) markNoticeRead.mutate(matchingBroadcast.id);
+      }
+    }
     setOpen(false);
     if (notification.meetingId) router.push("/meetings");
     else if (notification.ticketId) onOpenTicket(notification.ticketId);
     else if (notification.taskId) onOpenTask(notification.taskId);
+  }
+
+  function handleMarkAllRead() {
+    markAllRead.mutate(undefined, { onError: error => toast.error("Couldn't mark notifications read", error.message) });
+    for (const item of unreadBroadcasts) {
+      markNoticeRead.mutate(item.id);
+    }
   }
 
   return (
@@ -66,8 +110,12 @@ export function NotificationBell({ onOpenTask, onOpenTicket }: NotificationBellP
       >
         <Bell className="h-5 w-5" aria-hidden="true" />
         {unread > 0 && (
-          <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
-            {unread > 9 ? "9+" : unread}
+          <span
+            data-testid="notification-badge"
+            className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[11px] font-bold leading-none text-white ring-2 ring-background shadow-md tabular-nums pointer-events-none select-none z-10 animate-in zoom-in-75 duration-150"
+            aria-hidden="true"
+          >
+            {unread > 99 ? "99+" : unread}
           </span>
         )}
       </button>
@@ -84,7 +132,7 @@ export function NotificationBell({ onOpenTask, onOpenTicket }: NotificationBellP
               <button
                 type="button"
                 disabled={markAllRead.isPending}
-                onClick={() => markAllRead.mutate(undefined, { onError: error => toast.error("Couldn't mark notifications read", error.message) })}
+                onClick={handleMarkAllRead}
                 className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline select-none touch-manipulation cursor-pointer active:scale-95 transition-all"
               >
                 <CheckCheck className="h-3.5 w-3.5" aria-hidden="true" />
@@ -94,13 +142,13 @@ export function NotificationBell({ onOpenTask, onOpenTicket }: NotificationBellP
           </div>
           {isPending ? (
             <p className="px-4 py-10 text-center text-sm text-muted-foreground">Loading notifications…</p>
-          ) : error && !items.length ? (
+          ) : error && !displayItems.length ? (
             <p role="alert" className="px-4 py-10 text-center text-sm text-destructive">
               Unable to load notifications.
             </p>
-          ) : items.length ? (
+          ) : displayItems.length ? (
             <ul className="max-h-96 divide-y overflow-y-auto">
-              {items.map(item => (
+              {displayItems.map(item => (
                 <li key={item.id}>
                   <button
                     type="button"

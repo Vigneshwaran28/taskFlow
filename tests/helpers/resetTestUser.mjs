@@ -14,7 +14,15 @@ export async function resetTestUser() {
       must_change_password: true,
       is_code_login_enabled: true,
     });
-    console.log("Reset user 5 (TF-491297) to must_change_password = true and password = ValidPass123!@#");
+    await db("notifications").where({ user_id: 5 }).delete();
+    await db("notifications").insert({
+      user_id: 5,
+      title: "Test Task Reminder",
+      body: "Please review and complete your onboarding tasks.",
+      is_read: false,
+      created_at: new Date().toISOString(),
+    });
+    console.log("Reset user 5 (TF-491297) to must_change_password = true, password = ValidPass123!@#, and seeded 1 unread notification");
     await closeDb();
   }
 }

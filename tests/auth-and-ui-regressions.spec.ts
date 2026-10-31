@@ -67,6 +67,12 @@ test.describe("Auth & UI Regression Tests", () => {
       document.documentElement.dataset.style = "glass";
     });
 
+    // Close onboarding tour if present
+    const closeTour1 = page.locator('button[aria-label="Close the tour"]');
+    if (await closeTour1.isVisible({ timeout: 1500 }).catch(() => false)) {
+      await closeTour1.click();
+    }
+
     // 4. Click notification bell
     const bellBtn = page.locator('button[aria-label*="Notification"]').first();
     await expect(bellBtn).toBeVisible({ timeout: 10000 });
@@ -80,4 +86,61 @@ test.describe("Auth & UI Regression Tests", () => {
     // Background must be rgb(255, 255, 255) / opaque, NOT transparent rgba(..., 0.62)
     expect(bgColor).toBe("rgb(255, 255, 255)");
   });
+
+  test("Notification badge count is prominent, properly visible, and marks read correctly", async ({ page, context }) => {
+    await context.clearCookies();
+
+    // 1. Visit workspace login and complete first-time password setup for user 5
+    await page.goto("/titan/login");
+    await page.locator('input[name="email"]').fill("edgevicky28@gmail.com");
+    await page.locator('input[name="password"]').fill("ValidPass123!@#");
+    await page.locator('button[type="submit"]').click();
+
+    await page.waitForURL(url => url.pathname === "/titan" || url.pathname === "/titan/", { timeout: 15000 });
+    const chooseHeading = page.getByRole("heading", { name: /Choose your password/i });
+    await chooseHeading.waitFor({ state: "visible", timeout: 10000 });
+    await page.locator('input[name="currentPassword"]').fill("ValidPass123!@#");
+    await page.locator('input[name="newPassword"]').fill("BrandNewPass456!@#");
+    await page.locator('input[name="confirm"]').fill("BrandNewPass456!@#");
+    await page.locator('button:has-text("Save and continue")').click();
+    await expect(chooseHeading).toHaveCount(0, { timeout: 15000 });
+
+    // Close onboarding tour if present
+    const closeTour2 = page.locator('button[aria-label="Close the tour"]');
+    if (await closeTour2.isVisible({ timeout: 1500 }).catch(() => false)) {
+      await closeTour2.click();
+    }
+
+    // 2. Notification badge must be visible with unread count
+    const badge = page.locator('[data-testid="notification-badge"]');
+    await expect(badge).toBeVisible({ timeout: 10000 });
+    await expect(badge).toHaveText("1");
+
+    // 3. Verify styling: bold, white text on red-600 background with border ring and shadow
+    const classList = (await badge.getAttribute("class")) || "";
+    expect(classList).toContain("bg-red-600");
+    expect(classList).toContain("text-white");
+    expect(classList).toContain("font-bold");
+    expect(classList).toContain("ring-2");
+    expect(classList).toContain("-top-1");
+    expect(classList).toContain("-right-1");
+
+    // 4. Click notification bell to open popover
+    const bellBtn = page.locator('button[aria-label*="Notification"]').first();
+    await bellBtn.click();
+    const popover = page.locator('div[role="region"][aria-label="Notifications"]');
+    await expect(popover).toBeVisible();
+
+    // 5. Verify the notification item is displayed
+    await expect(page.getByText("Test Task Reminder")).toBeVisible();
+
+    // 6. Click Mark all read
+    const markAllReadBtn = page.locator('button:has-text("Mark all read")');
+    await expect(markAllReadBtn).toBeVisible();
+    await markAllReadBtn.click();
+
+    // 7. Verify badge is gone
+    await expect(badge).toHaveCount(0);
+  });
 });
+
