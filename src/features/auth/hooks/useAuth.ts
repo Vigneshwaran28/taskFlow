@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import type { FeatureKey, SessionUser, SettingsKey, WorkspaceSettings } from "@/types/session";
-import { ApiError, setAuthToken } from "@/lib/apiClient";
+import { ApiError } from "@/lib/apiClient";
 import { useTenantSlug } from "@/lib/navigation";
 import { currentWorkspace } from "@/lib/tenantPath";
 import { nativeSecurity } from "@/lib/nativeSecurity";
@@ -62,10 +62,8 @@ function useSessionMutation<TInput>(mutationFn: (input: TInput) => Promise<Sessi
       // Signed in from a page outside the workspace (/login): its own pages start with this session too.
       if (user?.tenant?.slug) queryClient.setQueryData(authKeys.session(user.tenant.slug), user);
       if (user) {
-        if (user.token) setAuthToken(user.token);
         void nativeSecurity.setSecureItem(`session_${user.tenant?.slug || "default"}`, JSON.stringify(user));
       } else {
-        setAuthToken(null);
         void nativeSecurity.removeSecureItem("workspace_session");
       }
     },

@@ -1,9 +1,8 @@
 // Generic HTTP concerns only: base URL, JSON, credentials, timeout, error normalization.
-// Requests target Express server endpoints at https://titanflow-svc6.onrender.com/api.
+// Requests go to /api on the same origin; next.config.ts proxies them to the Express server.
 // Each request names the workspace of the page it comes from (X-Workspace), so a browser can be signed in to
 // several workspaces at once and every tab talks to its own (server: middleware/auth.js).
 import { reportMaintenance, type MaintenanceWindow } from "./maintenance";
-import { nativeSecurity } from "./nativeSecurity";
 import { currentWorkspace } from "./tenantPath";
 
 const DEFAULT_PRODUCTION_API = "https://titanflow-svc6.onrender.com/api";
@@ -12,51 +11,6 @@ const API_BASE = (
   (typeof window !== "undefined" && (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.() ? DEFAULT_PRODUCTION_API : DEFAULT_PRODUCTION_API)
 ).replace(/\/+$/, "");
 const DEFAULT_TIMEOUT_MS = 15000;
-
-let activeAuthToken: string | null = null;
-
-/** Sets and persists the session JWT token in local and encrypted native storage */
-export function setAuthToken(token: string | null) {
-  activeAuthToken = token;
-  if (typeof window !== "undefined") {
-    if (token) {
-      localStorage.setItem("tf_auth_token", token);
-      void nativeSecurity.setSecureItem("auth_token", token);
-    } else {
-      localStorage.removeItem("tf_auth_token");
-      void nativeSecurity.removeSecureItem("auth_token");
-    }
-  }
-}
-
-/** Retrieves the active JWT authorization token */
-export function getAuthToken(): string | null {
-  if (activeAuthToken) return activeAuthToken;
-  if (typeof window !== "undefined") {
-    const cached = localStorage.getItem("tf_auth_token");
-    if (cached) {
-      activeAuthToken = cached;
-      return cached;
-    }
-  }
-  return null;
-}
-
-/** Asynchronously restores session token from native hardware secure storage into memory */
-export async function initNativeSession(): Promise<string | null> {
-  if (typeof window === "undefined") return null;
-  try {
-    const nativeToken = await nativeSecurity.getSecureItem("auth_token");
-    if (nativeToken) {
-      activeAuthToken = nativeToken;
-      localStorage.setItem("tf_auth_token", nativeToken);
-      return nativeToken;
-    }
-  } catch (e) {
-    console.warn("Error restoring native token:", e);
-  }
-  return getAuthToken();
-}
 
 const STATUS_MESSAGES: Record<number, string> = {
   400: "The request was invalid.",
@@ -113,9 +67,6 @@ export function setUnauthorizedHandler(handler: (path: string) => void) {
 export type QueryParams = Record<string, string | number | boolean | null | undefined | (string | number)[]>;
 
 function buildUrl(path: string, params?: QueryParams) {
-  // Strip duplicate /api prefix if present in path
-  const normalizedPath = path.startsWith("/api/") ? path.slice(4) : path.startsWith("api/") ? path.slice(3) : path;
-  const targetPath = normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`;
   const search = new URLSearchParams();
   Object.entries(params ?? {}).forEach(([key, value]) => {
     if (value === undefined || value === null || value === "") return;
@@ -123,7 +74,7 @@ function buildUrl(path: string, params?: QueryParams) {
     else search.set(key, String(value));
   });
   const query = search.toString();
-  return `${API_BASE}${targetPath}${query ? `?${query}` : ""}`;
+  return `${API_BASE}${path}${query ? `?${query}` : ""}`;
 }
 
 async function parseBody(response: Response): Promise<unknown> {
@@ -153,8 +104,6 @@ async function request<T>(method: string, path: string, { params, signal, timeou
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
   const workspace = currentWorkspace();
-  const token = getAuthToken();
-
   let response: Response;
   try {
     response = await fetch(buildUrl(path, params), {
@@ -163,7 +112,6 @@ async function request<T>(method: string, path: string, { params, signal, timeou
       headers: {
         Accept: "application/json",
         ...(workspace ? { "X-Workspace": workspace } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(body !== undefined && !isFormData ? { "Content-Type": "application/json" } : {}),
       },
       body: body === undefined ? undefined : isFormData ? (body as FormData) : JSON.stringify(body),
@@ -180,10 +128,7 @@ async function request<T>(method: string, path: string, { params, signal, timeou
   const data = await parseBody(response).catch(() => null);
   if (response.ok) return data as T;
 
-  if (response.status === 401) {
-    setAuthToken(null);
-    handleUnauthorized(path);
-  }
+  if (response.status === 401) handleUnauthorized(path);
   // A maintenance window closed the app: the maintenance gate takes over the page (the console is never closed).
   if (response.status === 503 && (data as { code?: string } | null)?.code === "MAINTENANCE" && !path.startsWith("/bunny")) {
     reportMaintenance((data as { maintenance?: MaintenanceWindow }).maintenance ?? null);
