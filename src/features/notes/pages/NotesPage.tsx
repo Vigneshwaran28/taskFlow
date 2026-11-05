@@ -11,14 +11,32 @@ import { useCan, useCurrentUser } from "@/features/auth";
 import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/cn";
 import { useSearchParam } from "@/lib/navigation";
-import { NotesBoard } from "../components/board/NotesBoard";
+import dynamic from "next/dynamic";
 import { NoteCard } from "../components/NoteCard";
-import { NoteEditorDialog } from "../components/NoteEditorDialog";
-import { Folder3DNotes } from "../components/Folder3DNotes";
 import { useNotesView } from "../hooks/useBoardPrefs";
 import { useNotes } from "../hooks/useNotes";
 import { NOTE_COLORS, type Note, type NoteColor, type NoteScope } from "../services/noteService";
 import { COLOR_META } from "../utils/noteMeta";
+
+const Folder3DNotes = dynamic(
+  () => import("../components/Folder3DNotes").then(m => m.Folder3DNotes),
+  {
+    loading: () => <LoadingState label="Loading 3D folder view…" />,
+    ssr: false,
+  }
+);
+
+const NotesBoard = dynamic(
+  () => import("../components/board/NotesBoard").then(m => m.NotesBoard),
+  {
+    loading: () => <LoadingState label="Loading notes board…" />,
+  }
+);
+
+const NoteEditorDialog = dynamic(
+  () => import("../components/NoteEditorDialog").then(m => m.NoteEditorDialog),
+  { ssr: false }
+);
 
 const EMPTY_NOTES: Note[] = [];
 

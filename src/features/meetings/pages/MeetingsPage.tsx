@@ -9,15 +9,20 @@ import {
   Video,
   Volume2,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/shared/Toaster";
 import { playMeetingChime } from "@/lib/sound";
 import { PlatformIcon } from "../components/PlatformBadge";
 import { MeetingCard } from "../components/MeetingCard";
-import { MeetingDialog } from "../components/MeetingDialog";
 import { ScheduledMeetingsCard } from "../components/ScheduledMeetingsCard";
 import { useMeetings } from "../hooks/useMeetings";
 import type { Meeting, MeetingPlatform } from "../services/meetingService";
+
+const MeetingDialog = dynamic(
+  () => import("../components/MeetingDialog").then(m => m.MeetingDialog),
+  { ssr: false }
+);
 
 export function MeetingsPage() {
   const toast = useToast();

@@ -2,6 +2,8 @@
 import type { ComponentType, ReactNode } from "react";
 import { AlertTriangle, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Spinner } from "@/components/ui/Spinner";
+import { CardSkeleton, ListSkeleton, TableSkeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/cn";
 
 export function EmptyState({ title, message, icon: Icon = Inbox, action }: { title: string; message?: ReactNode; icon?: ComponentType<{ className?: string }>; action?: ReactNode }) {
@@ -33,11 +35,50 @@ export function ErrorState({ message = "Something went wrong.", onRetry }: { mes
   );
 }
 
-export function LoadingState({ label = "Loading…", className = "py-16" }: { label?: string; className?: string }) {
+export function LoadingState({
+  label = "Loading…",
+  className = "py-16",
+  variant = "spinner",
+  count = 3,
+}: {
+  label?: string;
+  className?: string;
+  variant?: "spinner" | "card" | "table" | "list";
+  count?: number;
+}) {
+  if (variant === "card") {
+    return (
+      <div role="status" aria-label={label} className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}>
+        {Array.from({ length: count }).map((_, i) => (
+          <CardSkeleton key={i} />
+        ))}
+        <span className="sr-only">{label}</span>
+      </div>
+    );
+  }
+
+  if (variant === "table") {
+    return (
+      <div role="status" aria-label={label} className={cn("w-full", className)}>
+        <TableSkeleton rows={count} />
+        <span className="sr-only">{label}</span>
+      </div>
+    );
+  }
+
+  if (variant === "list") {
+    return (
+      <div role="status" aria-label={label} className={cn("w-full", className)}>
+        <ListSkeleton count={count} />
+        <span className="sr-only">{label}</span>
+      </div>
+    );
+  }
+
   return (
     <div role="status" aria-live="polite" className={cn("flex items-center justify-center gap-3 text-sm text-muted-foreground", className)}>
-      <span aria-hidden="true" className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent motion-reduce:animate-none" />
-      {label}
+      <Spinner size="md" label={label} />
+      <span>{label}</span>
     </div>
   );
 }

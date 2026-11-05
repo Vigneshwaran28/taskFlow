@@ -588,6 +588,7 @@ export function MeetingDialog({
                           <div className="flex items-center gap-2 min-w-0">
                             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary shrink-0 uppercase">
                               {u.avatarUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element -- user avatar URL can be any host
                                 <img src={u.avatarUrl} alt="" className="h-6 w-6 rounded-full object-cover" />
                               ) : (
                                 u.name.slice(0, 2)
