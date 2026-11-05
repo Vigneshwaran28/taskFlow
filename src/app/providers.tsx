@@ -7,7 +7,7 @@ import { Redirect } from "@/app-shell/guards";
 import { FullPageError, LoadingState } from "@/components/shared/States";
 import { ToastProvider } from "@/components/shared/Toaster";
 import { ThemeProvider } from "@/hooks/useTheme";
-import { setUnauthorizedHandler } from "@/lib/apiClient";
+import { initNativeSession, setUnauthorizedHandler } from "@/lib/apiClient";
 import { getQueryClient } from "@/lib/queryClient";
 import { adminKeys } from "@/features/admin";
 import { setCurrentSession } from "@/features/auth";
@@ -18,6 +18,7 @@ import { useSetupStatus } from "@/features/setup";
 function SessionWatcher() {
   // Registers a module-level handler (external to React) once.
   useEffect(() => {
+    void initNativeSession();
     const queryClient = getQueryClient();
     setUnauthorizedHandler(path => {
       if (path.startsWith("/bunny/")) {

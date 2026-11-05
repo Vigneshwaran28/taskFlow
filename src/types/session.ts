@@ -202,6 +202,7 @@ export interface SessionUser {
   name: string;
   email: string;
   jobTitle: string | null;
+  token?: string;
   roles: RoleRef[];
   /** Effective permission keys, e.g. "helpdesk.work" */
   permissions: string[];
