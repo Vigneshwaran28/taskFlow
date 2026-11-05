@@ -7,7 +7,14 @@ const shouldRetry = (failureCount: number, error: unknown) =>
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
-      queries: { staleTime: 30_000, retry: shouldRetry, retryDelay: attempt => Math.min(1000 * 2 ** attempt, 8000) },
+      queries: {
+        staleTime: 60_000, // 1 minute fresh window to prevent redundant fetches
+        gcTime: 10 * 60 * 1000, // 10 minutes cache retention for instant back/forward navigation
+        refetchOnWindowFocus: false, // Prevents battery and network drain on tab switching
+        refetchOnReconnect: "always", // Automatically resync when network reconnects
+        retry: shouldRetry,
+        retryDelay: attempt => Math.min(1000 * 2 ** attempt, 8000),
+      },
       mutations: { retry: false },
     },
   });
