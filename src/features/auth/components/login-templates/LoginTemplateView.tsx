@@ -211,7 +211,14 @@ function InteractiveTemplate({ r, form }: TemplateProps) {
     const target = e.target as HTMLElement;
     if (target.tagName === "INPUT") {
       const input = target as HTMLInputElement;
-      if (input.type === "password") {
+      const isPwd =
+        input.type === "password" ||
+        input.dataset.passwordField === "true" ||
+        input.name === "password" ||
+        input.name === "currentPassword" ||
+        input.name === "newPassword" ||
+        input.id?.toLowerCase().includes("password");
+      if (isPwd) {
         setIsPasswordFocused(true);
         setIsInputFocused(false);
       } else {
@@ -279,8 +286,16 @@ function ShapesTemplate({ r, form }: TemplateProps) {
 
   const handleFocusCapture = (e: React.FocusEvent) => {
     const target = e.target as HTMLElement;
-    if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "password") {
-      setIsPasswordFocused(true);
+    if (target.tagName === "INPUT") {
+      const input = target as HTMLInputElement;
+      const isPwd =
+        input.type === "password" ||
+        input.dataset.passwordField === "true" ||
+        input.name === "password" ||
+        input.name === "currentPassword" ||
+        input.name === "newPassword" ||
+        input.id?.toLowerCase().includes("password");
+      setIsPasswordFocused(isPwd);
     } else {
       setIsPasswordFocused(false);
     }

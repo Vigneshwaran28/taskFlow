@@ -752,6 +752,12 @@ dialog:modal > div.max-h-\[85vh\] { max-height: min(85vh, calc(100dvh - 2rem)); 
     border-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-border));
   }
 
+  /* Disable browser native password reveal icons (Edge/IE) so custom eye toggle does not conflict */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none !important;
+  }
+
   /* Sleek, Modern Scrollbars globally */
   * {
     scrollbar-width: thin;

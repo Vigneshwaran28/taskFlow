@@ -39,6 +39,7 @@ export function TextField({
         <input
           id={id}
           type={effectiveType}
+          data-password-field={isPassword ? "true" : undefined}
           required={required}
           aria-invalid={Boolean(error)}
           aria-describedby={describedBy(id, error, hint)}
@@ -48,13 +49,15 @@ export function TextField({
         {isPassword && showPasswordToggle && (
           <button
             type="button"
+            onMouseDown={e => e.preventDefault()}
             onClick={() => setRevealed(v => !v)}
             disabled={inputProps.disabled}
             aria-label={revealed ? "Hide password" : "Show password"}
             aria-pressed={revealed}
             title={revealed ? "Hide password" : "Show password"}
             tabIndex={-1}
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40"
+            data-testid="password-toggle-btn"
+            className="absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40 cursor-pointer z-10"
           >
             {revealed ? (
               <EyeOff className="h-4 w-4" aria-hidden="true" />
