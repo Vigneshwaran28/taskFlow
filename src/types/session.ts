@@ -54,7 +54,7 @@ export type AppointmentType = "consultation" | "follow_up" | "procedure" | "tele
 export type PaymentMethod = "cash" | "card" | "bank_transfer" | "upi" | "cheque" | "other";
 export type CelebrationMode = "everyone" | "self" | "off";
 /** Layouts for a workspace's own sign-in page (server: moduleSettings LOGIN_TEMPLATES). */
-export type LoginTemplate = "split" | "centered" | "banner" | "minimal" | "corporate";
+export type LoginTemplate = "interactive" | "shapes" | "split" | "scenic" | "glass" | "centered" | "banner" | "minimal" | "corporate";
 export type LoginBackground = "indigo" | "ocean" | "sunset" | "forest" | "midnight" | "rose" | "plain";
 
 /** GET /api/public/workspaces/:slug — what a workspace's sign-in page shows. */
@@ -75,6 +75,8 @@ export interface PublicWorkspace {
     message: string;
     highlights: string[];
     supportContact: string;
+    /** Custom image URL for scenic or glass templates */
+    loginImageUrl?: string | null;
     /** The workspace's sign-in page CSS (sanitized server-side); present only while custom CSS is on. */
     customCss?: string;
   };
@@ -131,6 +133,7 @@ export interface WorkspaceSettings {
     loginMessage: string;
     loginHighlights: string[];
     supportContact: string;
+    loginImageUrl?: string;
     /** Tenant CSS for the sign-in page and the signed-in app (server: services/moduleSettings.js customCssProblem). */
     customCssEnabled?: boolean;
     customCss?: { login: string; app: string };

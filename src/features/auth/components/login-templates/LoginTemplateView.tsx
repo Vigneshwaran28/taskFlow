@@ -3,12 +3,13 @@
 // variants), so the same markup works on a 360 px phone, a desktop, and as a scaled-down preview card.
 import { LogoGlyph } from "@/components/shared/logoIcons";
 import { useEffect, useRef, useState, type ComponentType, type CSSProperties, type ReactNode } from "react";
-import { CheckCircle2, LifeBuoy } from "lucide-react";
+import { CheckCircle2, LifeBuoy, Lock, ShieldCheck } from "lucide-react";
 import { MODULES } from "@/app-shell/modules";
 import { useTheme, type Accent } from "@/hooks/useTheme";
 import { cn } from "@/lib/cn";
 import type { LoginTemplate } from "@/types/session";
 import { ACCENT_PRIMARY, LOGIN_BACKGROUNDS, LOGIN_LIMITS, type LoginTemplateWorkspace } from "./loginTemplateMeta";
+import { InteractiveCharacters, InteractiveShapesPanel } from "./InteractiveCharacters";
 
 type IconType = ComponentType<{ className?: string }>;
 
@@ -63,9 +64,12 @@ interface Resolved {
   formSubtitle: string;
   /** "Sign in to continue" on the banner template */
   formTitleShort: string;
+  imageUrl: string;
 }
 
 const SAFE_IMAGE = /^https?:\/\/[^\s"'()<>\\]+$/i;
+const DEFAULT_SCENIC_IMAGE = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80";
+const DEFAULT_GLASS_IMAGE = "https://images.wallpapersden.com/image/download/firewatch-new-hd-22-art_bWpubm2UmZqaraWkpJRnamtlrWZpaWU.jpg";
 
 function resolve(workspace: LoginTemplateWorkspace): Resolved {
   const { login } = workspace;
@@ -75,6 +79,7 @@ function resolve(workspace: LoginTemplateWorkspace): Resolved {
     ? custom.map(text => ({ text, icon: CheckCircle2 as IconType }))
     : workspace.features.flatMap(key => (MODULES[key] ? [{ text: MODULES[key].label, icon: MODULES[key].icon }] : []));
   const plain = login.background === "plain";
+  const imageUrl = login.loginImageUrl?.trim() || (login.template === "glass" ? DEFAULT_GLASS_IMAGE : DEFAULT_SCENIC_IMAGE);
   return {
     siteTitle,
     tagline: workspace.tagline.trim(),
@@ -90,6 +95,7 @@ function resolve(workspace: LoginTemplateWorkspace): Resolved {
     formTitle: "Welcome back",
     formSubtitle: `Sign in with your ${siteTitle} account.`,
     formTitleShort: "Sign in to continue",
+    imageUrl,
   };
 }
 
@@ -194,32 +200,250 @@ interface TemplateProps {
   form: ReactNode;
 }
 
-/** Brand panel beside the form; on narrow screens the panel becomes a compact header. */
+/** Design 1: Fun Interactive Characters tracking cursor and reacting to credentials */
+function InteractiveTemplate({ r, form }: TemplateProps) {
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const handleFocusCapture = (e: React.FocusEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === "INPUT") {
+      const input = target as HTMLInputElement;
+      if (input.type === "password") {
+        setIsPasswordFocused(true);
+        setIsInputFocused(false);
+      } else {
+        setIsPasswordFocused(false);
+        setIsInputFocused(true);
+      }
+    }
+  };
+
+  const handleBlurCapture = () => {
+    setIsPasswordFocused(false);
+    setIsInputFocused(false);
+  };
+
+  const handleInputCapture = () => {
+    setIsTyping(true);
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => setIsTyping(false), 250);
+  };
+
+  return (
+    <div className="relative flex flex-1 flex-col items-center justify-center min-h-screen px-4 py-8 bg-[#f7ede2] dark:bg-slate-950 overflow-hidden">
+      {/* Decorative Pastel Background Glows */}
+      <div className="absolute top-10 left-10 w-72 h-72 bg-[#ffafcc]/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-80 h-80 bg-[#a2d2ff]/20 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative w-full max-w-[440px] flex flex-col items-center">
+        {/* Animated Characters Header */}
+        <InteractiveCharacters
+          isPasswordFocused={isPasswordFocused}
+          isInputFocused={isInputFocused}
+          isTyping={isTyping}
+        />
+
+        {/* Card */}
+        <div
+          data-tf="login-card"
+          onFocusCapture={handleFocusCapture}
+          onBlurCapture={handleBlurCapture}
+          onInputCapture={handleInputCapture}
+          className="relative w-full rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-7 sm:p-9 shadow-2xl shadow-slate-900/10 z-20"
+        >
+          <div className="flex flex-col items-center text-center mb-6">
+            <Mark initial={r.initial} logo={r.logo} tone={ON_SURFACE} />
+            <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-800 dark:text-white">
+              {r.headline}
+            </h1>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              {r.message || `Sign in with your ${r.siteTitle} account.`}
+            </p>
+          </div>
+
+          <div>{form}</div>
+
+          <Support contact={r.supportContact} tone={ON_SURFACE} fallback={NO_ACCOUNT} className="mt-6 text-center text-xs text-slate-500" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Design 2: Playful Geometric Shapes with animated blinking and mouse tracking */
+function ShapesTemplate({ r, form }: TemplateProps) {
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+
+  const handleFocusCapture = (e: React.FocusEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "password") {
+      setIsPasswordFocused(true);
+    } else {
+      setIsPasswordFocused(false);
+    }
+  };
+
+  const handleBlurCapture = () => {
+    setIsPasswordFocused(false);
+  };
+
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center min-h-screen px-4 py-8 bg-slate-100 dark:bg-slate-950">
+      <div className="w-full max-w-5xl rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden grid grid-cols-1 @3xl:grid-cols-2">
+        {/* Left Side: Playful Shapes Panel */}
+        <InteractiveShapesPanel isPasswordFocused={isPasswordFocused} />
+
+        {/* Right Side: Form */}
+        <div
+          data-tf="login-card"
+          onFocusCapture={handleFocusCapture}
+          onBlurCapture={handleBlurCapture}
+          className="flex flex-col justify-center p-8 sm:p-12 @3xl:p-14"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <Mark initial={r.initial} logo={r.logo} tone={ON_SURFACE} />
+            <div>
+              <p className="font-bold text-lg leading-tight text-foreground">{r.siteTitle}</p>
+              {r.tagline && <p className="text-xs text-muted-foreground">{r.tagline}</p>}
+            </div>
+          </div>
+
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{r.headline}</h1>
+          <p className="mt-1 text-sm text-muted-foreground mb-6">
+            {r.message || "Please enter your credentials to continue"}
+          </p>
+
+          <div>{form}</div>
+
+          <Support contact={r.supportContact} tone={ON_SURFACE} fallback={NO_ACCOUNT} className="mt-6 text-xs text-muted-foreground" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Design 3: Security Showcase Split with Trust Badges */
 function SplitTemplate({ r, form }: TemplateProps) {
   const { tone } = r;
   return (
-    <div className="grid flex-1 @3xl:grid-cols-[1fr_1.1fr]">
-      <aside className={cn("relative overflow-hidden px-5 py-7 @3xl:flex @3xl:flex-col @3xl:justify-between @3xl:p-12", r.background, tone.text)}>
+    <div className="grid flex-1 @3xl:grid-cols-[1fr_1.1fr] min-h-screen">
+      <aside className={cn("relative overflow-hidden px-6 py-10 @3xl:flex @3xl:flex-col @3xl:justify-between @3xl:p-14", r.background, tone.text)}>
         {tone === ON_GRADIENT && <Glow />}
         <div className="relative">
           <Brand title={r.siteTitle} subtitle={r.tagline} initial={r.initial} logo={r.logo} tone={tone} />
         </div>
-        <div className="relative mt-6 max-w-md @3xl:mt-0">
-          <h1 className="wrap-break-word text-2xl font-semibold leading-tight tracking-tight @3xl:text-4xl">{r.headline}</h1>
+        <div className="relative mt-8 max-w-md @3xl:mt-0">
+          <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 bg-white/15 text-xs font-semibold backdrop-blur mb-5">
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            <span>Verified Workspace Access</span>
+          </div>
+
+          <h1 className="wrap-break-word text-3xl font-extrabold leading-tight tracking-tight @3xl:text-4xl">{r.headline}</h1>
           {r.message && <p className={cn("wrap-break-word mt-3 text-sm leading-relaxed @3xl:text-base", tone.soft)}>{r.message}</p>}
           <HighlightList items={r.highlights} tone={tone} className="mt-8 hidden @3xl:flex" />
+
+          {/* Security Trust Badges */}
+          <div className="mt-8 hidden @3xl:grid grid-cols-2 gap-3 pt-6 border-t border-white/15 text-xs">
+            <div className="flex items-center gap-2 text-white/90">
+              <Lock className="h-3.5 w-3.5" />
+              <span>TLS 1.3 In-Transit</span>
+            </div>
+            <div className="flex items-center gap-2 text-white/90">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>Isolated Architecture</span>
+            </div>
+          </div>
         </div>
-        <p className={cn("relative hidden text-sm @3xl:block", tone.soft)}>{r.companyName}</p>
+        <p className={cn("relative hidden text-xs @3xl:block", tone.soft)}>© {YEAR} {r.companyName} · Protected by TaskFlow</p>
       </aside>
 
       <main className="flex items-center justify-center px-4 py-10 @md:px-8">
         <div data-tf="login-card" className="w-full max-w-sm">
-          <h2 className="text-xl font-semibold tracking-tight">{r.formTitle}</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">{r.formTitle}</h2>
           {r.formSubtitle && <p className="mt-1 text-sm text-muted-foreground">{r.formSubtitle}</p>}
           <div className="mt-6">{form}</div>
-          <Support contact={r.supportContact} tone={ON_SURFACE} fallback={NO_ACCOUNT} className="mt-6 text-center" />
+          <Support contact={r.supportContact} tone={ON_SURFACE} fallback={NO_ACCOUNT} className="mt-6 text-center text-xs" />
         </div>
       </main>
+    </div>
+  );
+}
+
+/** Design 4: Showcase Split Card with customizable scenic image */
+function ScenicTemplate({ r, form }: TemplateProps) {
+  return (
+    <div className="relative flex flex-1 items-center justify-center min-h-screen px-4 py-8 bg-slate-100 dark:bg-slate-950">
+      <div className="relative w-full max-w-5xl rounded-3xl bg-card border border-border shadow-2xl overflow-hidden grid grid-cols-1 @3xl:grid-cols-2">
+        {/* Left Side: Scenic Image Showcase */}
+        <div className="relative min-h-[300px] @3xl:min-h-[580px] overflow-hidden bg-slate-900">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={r.imageUrl}
+            alt="Workspace scenery"
+            className="absolute inset-0 w-full h-full object-cover filter brightness-[0.85] contrast-[1.05]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/40 p-8 flex flex-col justify-between text-white">
+            <div className="flex items-center gap-2">
+              <Mark initial={r.initial} logo={r.logo} tone={ON_GRADIENT} small />
+              <span className="font-bold tracking-wide text-sm">{r.siteTitle}</span>
+            </div>
+            <div>
+              <h2 className="text-2xl @3xl:text-3xl font-extrabold leading-tight text-white">{r.headline}</h2>
+              {r.tagline && <p className="mt-2 text-sm text-white/80">{r.tagline}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Form */}
+        <div data-tf="login-card" className="flex flex-col justify-center p-8 sm:p-12 @3xl:p-14 bg-card">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">{r.formTitle}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{r.formSubtitle || `Sign in to access your ${r.siteTitle} workspace.`}</p>
+          </div>
+
+          <div>{form}</div>
+
+          <Support contact={r.supportContact} tone={ON_SURFACE} fallback={NO_ACCOUNT} className="mt-6 text-xs text-muted-foreground text-center" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Design 5: Frosted Glassmorphism card over customizable hero background image */
+function GlassTemplate({ r, form }: TemplateProps) {
+  return (
+    <div className="relative flex flex-1 items-center justify-center min-h-screen px-4 py-10 overflow-hidden bg-slate-950">
+      {/* Fullscreen Hero Background Image */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={r.imageUrl}
+        alt="Background scenery"
+        className="absolute inset-0 w-full h-full object-cover object-center filter brightness-90"
+      />
+      {/* Dark Blur Overlay */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+
+      {/* Centered Glassmorphic Card */}
+      <div
+        data-tf="login-card"
+        className="relative w-full max-w-[440px] rounded-3xl backdrop-blur-xl bg-slate-950/60 dark:bg-slate-950/70 border border-white/20 p-8 sm:p-10 shadow-2xl text-white z-10"
+      >
+        <div className="flex flex-col items-center text-center mb-6">
+          <Mark initial={r.initial} logo={r.logo} tone={ON_GRADIENT} />
+          <h1 className="mt-4 text-2xl font-bold tracking-tight text-white">{r.headline}</h1>
+          <p className="mt-1 text-sm text-white/80">{r.message || `Sign in to ${r.siteTitle}`}</p>
+        </div>
+
+        <div className="[&_input]:bg-white/10 [&_input]:border-white/20 [&_input]:text-white [&_input::placeholder]:text-white/50 [&_label]:text-white/90">
+          {form}
+        </div>
+
+        <Support contact={r.supportContact} tone={ON_GRADIENT} fallback={NO_ACCOUNT} className="mt-6 text-center text-xs text-white/70" />
+      </div>
     </div>
   );
 }
@@ -347,10 +571,14 @@ function CorporateTemplate({ r, form }: TemplateProps) {
 }
 
 const TEMPLATES: Record<LoginTemplate, ComponentType<TemplateProps>> = {
+  interactive: InteractiveTemplate,
+  shapes: ShapesTemplate,
   split: SplitTemplate,
+  scenic: ScenicTemplate,
+  glass: GlassTemplate,
   centered: CenteredTemplate,
-  banner: BannerTemplate,
   minimal: MinimalTemplate,
+  banner: BannerTemplate,
   corporate: CorporateTemplate,
 };
 

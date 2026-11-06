@@ -10,11 +10,13 @@ export interface LoginTemplateMeta {
 }
 
 export const LOGIN_TEMPLATES: readonly LoginTemplateMeta[] = Object.freeze([
-  { key: "split", name: "Split", description: "Brand panel with your headline and highlights beside the form." },
-  { key: "centered", name: "Centered", description: "A single card floating on a full-page gradient." },
-  { key: "banner", name: "Banner", description: "A wide hero band across the top, the form below it." },
-  { key: "minimal", name: "Minimal", description: "Plain page, small logo, just the form." },
-  { key: "corporate", name: "Corporate", description: "Side column with company name and support, plus a footer." },
+  { key: "interactive", name: "Playful Characters", description: "Interactive family of animated SVG characters tracking cursor and looking away on password." },
+  { key: "shapes", name: "Playful Shapes", description: "Modern split layout with lively geometric shapes and reactive animated eyes." },
+  { key: "split", name: "Security Split", description: "Brand panel with your headline, verified security badges, and module highlights." },
+  { key: "scenic", name: "Showcase Split", description: "Floating split card featuring customizable scenic hero imagery and brand overview." },
+  { key: "glass", name: "Frosted Glass", description: "Modern glassmorphism card floating with real-time blur over a hero background image." },
+  { key: "centered", name: "Centered", description: "A clean minimalist card floating on a full-page gradient." },
+  { key: "minimal", name: "Minimal", description: "Plain distraction-free page with small logo and form." },
 ]);
 
 /** Complete Tailwind classes for each background preset (listed in full so Tailwind generates them). */
@@ -79,6 +81,7 @@ export function loginPreviewWorkspace({
       message: branding.loginMessage ?? "",
       highlights: (branding.loginHighlights ?? []).map(item => item.trim()).filter(Boolean),
       supportContact: branding.supportContact ?? "",
+      loginImageUrl: branding.loginImageUrl || branding.backgroundImage || "",
     },
   };
 }
@@ -115,5 +118,6 @@ export function cleanLoginBranding<T extends Partial<BrandingSettings>>(value: T
     loginMessage: (value.loginMessage ?? "").trim(),
     loginHighlights: (value.loginHighlights ?? []).map(item => item.trim()).filter(Boolean),
     supportContact: (value.supportContact ?? "").trim(),
+    loginImageUrl: (value.loginImageUrl ?? "").trim(),
   };
 }

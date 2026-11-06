@@ -28,6 +28,7 @@ export const DEFAULT_BRANDING: BrandingSettings = {
   loginMessage: "",
   loginHighlights: [],
   supportContact: "",
+  loginImageUrl: "",
   logoIcon: "check",
   logoUrl: "",
   backgroundImage: "",

@@ -211,6 +211,18 @@ export function LoginBrandingFields({ value, onChange, slug, slugPending = false
         </figure>
       )}
 
+      {(template === "scenic" || template === "glass") && (
+        <TextField
+          label="Hero image URL"
+          id={`${id}-login-image`}
+          type="url"
+          placeholder="https://images.unsplash.com/photo-..."
+          hint="Custom photo for the showcase panel or full-page glass background. Empty uses a curated high-resolution image."
+          value={value.loginImageUrl ?? ""}
+          onChange={event => set("loginImageUrl", event.target.value)}
+        />
+      )}
+
       <TextField
         label="Headline"
         id={`${id}-headline`}
