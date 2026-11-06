@@ -15,9 +15,9 @@ import { useUpdatePreferences } from "@/features/auth";
 import {
   useTheme,
   type AppearancePreferences,
-  type FloatingDockMode,
   type NavbarStyle,
   type SidebarAlign,
+  type SidebarChoice,
   type SidebarMode,
   type SidebarPosition,
 } from "@/hooks/useTheme";
@@ -67,30 +67,51 @@ const NAVBAR_STYLE_OPTIONS: readonly {
   },
 ];
 
-const FLOATING_DOCK_OPTIONS: readonly {
-  value: FloatingDockMode;
+const SIDEBAR_LOOK_OPTIONS: readonly {
+  value: SidebarChoice;
   label: string;
   description: string;
   badge: string;
 }[] = [
   {
-    value: "always",
-    label: "Always Visible (Dock Bar)",
-    description: "Floating glass dock menu fixed at bottom center on desktop, tablet, and mobile.",
-    badge: "Full Dock",
+    value: "dock",
+    label: "Glass Dock",
+    description: "Ultra-glassmorphic vertical dock with 3D specular shine, spring micro-interactions, and glossy active pill.",
+    badge: "Uiverse",
   },
   {
-    value: "mobile",
-    label: "Mobile & Tablet Only",
-    description: "Activates the floating glass dock exclusively on mobile screens and tablets.",
-    badge: "Responsive",
+    value: "tinted",
+    label: "Tinted Accent",
+    description: "Warm, branded presence tinted with your workspace accent color.",
+    badge: "Branded",
   },
   {
-    value: "off",
-    label: "Disabled (Sidebar only)",
-    description: "Traditional workspace navigation using the main sidebar and top header.",
-    badge: "Standard",
+    value: "dark",
+    label: "Dark Obsidian",
+    description: "High-contrast dark card look with subtle glows and crisp borders.",
+    badge: "Modern",
   },
+  {
+    value: "light",
+    label: "Clean Solid",
+    description: "Crisp, solid card background with defined borders and high contrast.",
+    badge: "Clean",
+  },
+];
+
+const SIDEBAR_COLOR_OPTIONS: readonly {
+  value: string;
+  label: string;
+  color: string;
+}[] = [
+  { value: "default", label: "Default Accent", color: "var(--color-primary)" },
+  { value: "#2563eb", label: "Ocean Blue", color: "#2563eb" },
+  { value: "#059669", label: "Emerald Green", color: "#059669" },
+  { value: "#0891b2", label: "Cyan Glow", color: "#0891b2" },
+  { value: "#7c3aed", label: "Royal Violet", color: "#7c3aed" },
+  { value: "#ea580c", label: "Sunset Amber", color: "#ea580c" },
+  { value: "#e11d48", label: "Rose Neon", color: "#e11d48" },
+  { value: "#334155", label: "Slate Frost", color: "#334155" },
 ];
 
 const POSITION_OPTIONS: readonly {
@@ -211,13 +232,13 @@ export function NavbarCustomizerSection() {
         </div>
       </fieldset>
 
-      {/* 2. Floating Glass Dock Navigation (Uiverse.io design) */}
+      {/* 2. Left Sidebar Navigation & Glass Dock Style (Uiverse.io design) */}
       <fieldset>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <div>
-            <legend className="text-sm font-semibold text-foreground">Floating Glass Dock Navigation</legend>
+            <legend className="text-sm font-semibold text-foreground">Left Sidebar Navigation & Glass Dock</legend>
             <p className="text-xs text-muted-foreground">
-              Ultra-glassmorphic bottom dock menu with spring micro-interactions, 3D specular shine, and quick module navigation.
+              Ultra-glassmorphic styling with 3D specular shine, spring micro-interactions, glossy active pill, and custom color accents applied to your vertical sidebar.
             </p>
           </div>
           <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide">
@@ -225,48 +246,93 @@ export function NavbarCustomizerSection() {
           </span>
         </div>
 
-        {/* Live Miniature Preview of the Uiverse Dock */}
-        <div className="relative mb-4 flex w-full items-center justify-center overflow-hidden rounded-2xl border border-border/80 bg-muted/30 p-4 sm:p-5">
-          <div className="menu menu-preview max-w-lg">
-            <a href="#" className="active" onClick={e => e.preventDefault()}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
-                <path d="M11.47 3.841a.75.75 0 0 1 1.06 0l8.69 8.69a.75.75 0 1 0 1.06-1.061l-8.689-8.69a2.25 2.25 0 0 0-3.182 0l-8.69 8.69a.75.75 0 1 0 1.061 1.06l8.69-8.689Z" />
-                <path d="m12 5.432 8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 0-.75-.75h-3a.75.75 0 0 0-.75.75V21a.75.75 0 0 1-.75.75H5.625a1.875 1.875 0 0 1-1.875-1.875v-6.198a2.29 2.29 0 0 0 .091-.086L12 5.432Z" />
-              </svg>
-              <span>Home</span>
-            </a>
-            <a href="#" onClick={e => e.preventDefault()}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
-                <path fillRule="evenodd" d="M6.75 2.25A.75.75 0 0 1 7.5 3v1.5h9V3A.75.75 0 0 1 18 3v1.5h.75a3 3 0 0 1 3 3v11.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V7.5a3 3 0 0 1 3-3H6V3a.75.75 0 0 1 .75-.75Zm13.5 9a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v7.5a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5v-7.5Z" clipRule="evenodd" />
-              </svg>
-              <span>Tasks</span>
-            </a>
-            <a href="#" onClick={e => e.preventDefault()}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
-                <path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3V18a3 3 0 0 0 3 3h15ZM1.5 10.146V6a3 3 0 0 1 3-3h5.379a2.25 2.25 0 0 1 1.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 0 1 3 3v1.146A4.483 4.483 0 0 0 19.5 9h-15a4.483 4.483 0 0 0-3 1.146Z" />
-              </svg>
-              <span>Notes</span>
-            </a>
-            <a href="#" onClick={e => e.preventDefault()}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
-                <path d="M4.5 4.5a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h8.25a3 3 0 0 0 3-3v-9a3 3 0 0 0-3-3H4.5ZM19.94 18.75l-2.69-2.69V7.94l2.69-2.69a1.5 1.5 0 0 1 2.56 1.06v11.38a1.5 1.5 0 0 1-2.56 1.06Z" />
-              </svg>
-              <span>Meet</span>
-            </a>
-            <a href="#" onClick={e => e.preventDefault()}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
-                <path d="M17.004 10.407c.138.435-.216.842-.672.842h-3.465a.75.75 0 0 1-.65-.375l-1.732-3c-.229-.396-.053-.907.393-1.004a5.252 5.252 0 0 1 6.126 3.537ZM8.12 8.464c.307-.338.838-.235 1.066.16l1.732 3a.75.75 0 0 1 0 .75l-1.732 3c-.229.397-.76.5-1.067.161A5.23 5.23 0 0 1 6.75 12a5.23 5.23 0 0 1 1.37-3.536ZM10.878 17.13c-.447-.098-.623-.608-.394-1.004l1.733-3.002a.75.75 0 0 1 .65-.375h3.465c.457 0 .81.407.672.842a5.252 5.252 0 0 1-6.126 3.539Z" />
-                <path fillRule="evenodd" d="M21 12.75a.75.75 0 1 0 0-1.5h-.783a8.22 8.22 0 0 0-.237-1.357l.734-.267a.75.75 0 1 0-.513-1.41l-.735.268a8.24 8.24 0 0 0-.689-1.192l.6-.503a.75.75 0 1 0-.964-1.149l-.6.504a8.3 8.3 0 0 0-1.054-.885l.391-.678a.75.75 0 1 0-1.299-.75l-.39.676a8.188 8.188 0 0 0-1.295-.47l.136-.77a.75.75 0 0 0-1.477-.26l-.136.77a8.36 8.36 0 0 0-1.377 0l-.136-.77a.75.75 0 1 0-1.477.26l.136.77c-.448.121-.88.28-1.294.47l-.39-.676a.75.75 0 0 0-1.3.75l.392.678a8.29 8.29 0 0 0-1.054.885l-.6-.504a.75.75 0 1 0-.965 1.149l.6.503a8.243 8.243 0 0 0-.689 1.192L3.8 8.216a.75.75 0 1 0-.513 1.41l.735.267a8.222 8.222 0 0 0-.238 1.356h-.783a.75.75 0 0 0 0 1.5h.783c.042.464.122.917.238 1.356l-.735.268a.75.75 0 0 0 .513 1.41l.735-.268c.197.417.428.816.69 1.191l-.6.504a.75.75 0 0 0 .963 1.15l.601-.505c.326.323.679.62 1.054.885l-.392.68a.75.75 0 0 0 1.3.75l.39-.679c.414.192.847.35 1.294.471l-.136.77a.75.75 0 0 0 1.477.261l.137-.772a8.332 8.332 0 0 0 1.376 0l.136.772a.75.75 0 1 0 1.477-.26l-.136-.771a8.19 8.19 0 0 0 1.294-.47l.391.677a.75.75 0 0 0 1.3-.75l-.393-.679a8.29 8.29 0 0 0 1.054-.885l.601.504a.75.75 0 0 0 .964-1.15l-.6-.503c.261-.375.492-.774.69-1.191l.735.267a.75.75 0 1 0 .512-1.41l-.734-.267c.115-.439.195-.892.237-1.356h.784Zm-2.657-3.06a6.744 6.744 0 0 0-1.19-2.053 6.784 6.784 0 0 0-1.82-1.51A6.705 6.705 0 0 0 12 5.25a6.8 6.8 0 0 0-1.225.11 6.7 6.7 0 0 0-2.15.793 6.784 6.784 0 0 0-2.952 3.489.76.76 0 0 1-.036.098A6.74 6.74 0 0 0 5.251 12a6.74 6.74 0 0 0 3.366 5.842l.009.005a6.704 6.704 0 0 0 2.18.798l.022.003a6.792 6.792 0 0 0 2.368-.004 6.704 6.704 0 0 0 2.205-.811 6.785 6.785 0 0 0 1.762-1.484l.009-.01.009-.01a6.743 6.743 0 0 0 1.18-2.066c.253-.707.39-1.469.39-2.263a6.74 6.74 0 0 0-.408-2.309Z" clipRule="evenodd" />
-              </svg>
-              <span>Settings</span>
-            </a>
+        {/* Live Miniature Preview of the Left Sidebar Glass Dock */}
+        <div className="relative mb-5 flex w-full flex-col sm:flex-row items-center justify-center gap-6 overflow-hidden rounded-2xl border border-border/80 bg-muted/30 p-5 sm:p-6">
+          {/* Vertical Dock Pill Preview (Compact Mode) */}
+          <div className="flex flex-col items-center">
+            <span className="mb-2 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Vertical Dock (Compact)</span>
+            <div
+              className="flex flex-col items-center gap-2 p-2 rounded-2xl border backdrop-blur-xl shadow-xl transition-all"
+              style={{
+                background: preferences.sidebarColor
+                  ? `color-mix(in srgb, ${preferences.sidebarColor} 22%, rgba(255, 255, 255, 0.72))`
+                  : "rgba(0, 122, 255, 0.18)",
+                borderColor: "rgba(255, 255, 255, 0.35)",
+                boxShadow: "0 12px 32px rgba(0,0,0,0.12), inset 1px 1px 3px rgba(255,255,255,0.6)",
+              }}
+            >
+              <div
+                className="h-9 w-9 rounded-xl flex items-center justify-center shadow-md font-bold text-xs ring-1 ring-white/60 transition-transform hover:scale-110"
+                style={{
+                  background: "rgba(255, 255, 255, 0.96)",
+                  color: preferences.sidebarColor || "var(--color-primary)",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.12), inset 0 1px 1.5px rgba(255,255,255,0.95)",
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                  <path d="M11.47 3.841a.75.75 0 0 1 1.06 0l8.69 8.69a.75.75 0 1 0 1.06-1.061l-8.689-8.69a2.25 2.25 0 0 0-3.182 0l-8.69 8.69a.75.75 0 1 0 1.061 1.06l8.69-8.689Z" />
+                  <path d="m12 5.432 8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 0-.75-.75h-3a.75.75 0 0 0-.75.75V21a.75.75 0 0 1-.75.75H5.625a1.875 1.875 0 0 1-1.875-1.875v-6.198a2.29 2.29 0 0 0 .091-.086L12 5.432Z" />
+                </svg>
+              </div>
+              <div className="h-9 w-9 rounded-xl flex items-center justify-center text-foreground/80 hover:bg-white/30 transition-all text-xs cursor-pointer hover:scale-105">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                  <path fillRule="evenodd" d="M6.75 2.25A.75.75 0 0 1 7.5 3v1.5h9V3A.75.75 0 0 1 18 3v1.5h.75a3 3 0 0 1 3 3v11.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V7.5a3 3 0 0 1 3-3H6V3a.75.75 0 0 1 .75-.75Zm13.5 9a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v7.5a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5v-7.5Z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="h-9 w-9 rounded-xl flex items-center justify-center text-foreground/80 hover:bg-white/30 transition-all text-xs cursor-pointer hover:scale-105">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                  <path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3V18a3 3 0 0 0 3 3h15ZM1.5 10.146V6a3 3 0 0 1 3-3h5.379a2.25 2.25 0 0 1 1.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 0 1 3 3v1.146A4.483 4.483 0 0 0 19.5 9h-15a4.483 4.483 0 0 0-3 1.146Z" />
+                </svg>
+              </div>
+              <div className="h-9 w-9 rounded-xl flex items-center justify-center text-foreground/80 hover:bg-white/30 transition-all text-xs cursor-pointer hover:scale-105">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                  <path d="M4.5 4.5a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h8.25a3 3 0 0 0 3-3v-9a3 3 0 0 0-3-3H4.5ZM19.94 18.75l-2.69-2.69V7.94l2.69-2.69a1.5 1.5 0 0 1 2.56 1.06v11.38a1.5 1.5 0 0 1-2.56 1.06Z" />
+                </svg>
+              </div>
+              <div className="h-9 w-9 rounded-xl flex items-center justify-center text-foreground/80 hover:bg-white/30 transition-all text-xs cursor-pointer hover:scale-105">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                  <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm0 13.5a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Color & Tint Selector */}
+          <div className="flex flex-col gap-3 min-w-0 flex-1">
+            <span className="text-xs font-semibold text-foreground">Sidebar Dock Tint & Glow Color</span>
+            <p className="text-xs text-muted-foreground">Select a custom color wash for your left navigation dock:</p>
+            <div className="flex flex-wrap items-center gap-2.5">
+              {SIDEBAR_COLOR_OPTIONS.map(c => {
+                const isSelected = (preferences.sidebarColor || "default") === c.value;
+                return (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => update("sidebarColor", c.value === "default" ? null : c.value)}
+                    title={c.label}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all cursor-pointer border",
+                      isSelected
+                        ? "border-primary bg-primary text-primary-foreground shadow-sm scale-105"
+                        : "border-border bg-card hover:border-primary/40 text-foreground"
+                    )}
+                  >
+                    <span
+                      className="h-3 w-3 rounded-full shrink-0 border border-white/40"
+                      style={{ backgroundColor: c.color }}
+                    />
+                    <span>{c.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Option cards */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {FLOATING_DOCK_OPTIONS.map(opt => {
-            const isSelected = (preferences.floatingDock ?? "off") === opt.value;
+        {/* Sidebar Look Option Cards */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {SIDEBAR_LOOK_OPTIONS.map(opt => {
+            const isSelected = (preferences.sidebar || "dock") === opt.value;
             return (
               <label
                 key={opt.value}
@@ -279,10 +345,10 @@ export function NavbarCustomizerSection() {
               >
                 <input
                   type="radio"
-                  name="floating-dock-mode"
+                  name="sidebar-look"
                   value={opt.value}
                   checked={isSelected}
-                  onChange={() => update("floatingDock", opt.value)}
+                  onChange={() => update("sidebar", opt.value)}
                   className="sr-only"
                 />
                 <div className="flex flex-wrap items-center justify-between gap-1.5">

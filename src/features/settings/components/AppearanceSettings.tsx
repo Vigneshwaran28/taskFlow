@@ -135,8 +135,9 @@ const TYPEFACE_OPTIONS: readonly { value: Exclude<FontChoice, "auto">; label: st
 ];
 
 const SIDEBAR_OPTIONS: readonly { value: Exclude<SidebarChoice, "auto">; label: string }[] = [
-  { value: "light", label: "Light" },
+  { value: "dock", label: "Glass Dock" },
   { value: "tinted", label: "Tinted" },
+  { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
 ];
 

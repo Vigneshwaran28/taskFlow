@@ -16,7 +16,7 @@ export const ACCENTS = ["indigo", "blue", "teal", "emerald", "amber", "rose", "v
 export const STYLES = ["classic", "business", "glass", "midnight", "minimal", "soft", "contrast", "neon", "ocean", "sunset", "forest"] as const;
 /** "auto" = the style preset's own choice */
 export const FONTS = ["auto", "system", "inter", "jakarta", "plex"] as const;
-export const SIDEBARS = ["auto", "light", "tinted", "dark"] as const;
+export const SIDEBARS = ["auto", "dock", "glass", "tinted", "light", "dark"] as const;
 export const SIDEBAR_POSITIONS = ["left", "right"] as const;
 export const SIDEBAR_MODES = ["full", "compact"] as const;
 export const SIDEBAR_ALIGNS = ["left", "center"] as const;
@@ -87,6 +87,7 @@ export interface AppearancePreferences {
   sidebarPosition: SidebarPosition;
   sidebarMode: SidebarMode;
   sidebarAlign: SidebarAlign;
+  sidebarColor?: string | null;
   navbarStyle: NavbarStyle;
   navbarSticky: boolean;
   floatingDock?: FloatingDockMode | boolean;
@@ -130,10 +131,11 @@ export const DEFAULT_PREFERENCES: AppearancePreferences = Object.freeze({
   accent: null,
   style: null,
   font: "auto",
-  sidebar: "auto",
+  sidebar: "dock",
   sidebarPosition: "left",
-  sidebarMode: "full",
+  sidebarMode: "compact",
   sidebarAlign: "left",
+  sidebarColor: null,
   navbarStyle: "glass",
   navbarSticky: true,
   floatingDock: "off",
@@ -257,6 +259,13 @@ function apply(preferences: AppearancePreferences, accent: Accent, style: StyleP
   root.dataset.style = style;
   root.dataset.typeface = preferences.font && preferences.font !== "auto" ? preferences.font : defaults.font;
   root.dataset.sidebar = preferences.sidebar && preferences.sidebar !== "auto" ? preferences.sidebar : defaults.sidebar;
+  if (preferences.sidebarColor) {
+    root.style.setProperty("--sidebar-accent-color", preferences.sidebarColor);
+    root.dataset.sidebarColor = preferences.sidebarColor;
+  } else {
+    root.style.removeProperty("--sidebar-accent-color");
+    delete root.dataset.sidebarColor;
+  }
   root.dataset.sidebarPosition = preferences.sidebarPosition || "left";
   root.dataset.sidebarMode = preferences.sidebarMode || "full";
   root.dataset.sidebarAlign = preferences.sidebarAlign || "left";

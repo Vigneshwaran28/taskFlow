@@ -130,10 +130,10 @@ function NavItem({
           aria-current={active ? "page" : undefined}
           aria-label={typeof children === "string" ? children : undefined}
           className={cn(
-            "relative flex h-10 w-10 items-center justify-center rounded-xl mx-auto transition-all duration-150 select-none touch-manipulation cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "relative flex h-10 w-10 items-center justify-center rounded-xl mx-auto select-none touch-manipulation cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring duration-200 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
             active
-              ? "bg-accent text-accent-foreground font-semibold shadow-xs"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              ? "dock-item-active font-semibold shadow-md"
+              : "dock-item text-muted-foreground hover:text-foreground"
           )}
         >
           {/* Active indicator bar */}
@@ -185,13 +185,13 @@ function NavItem({
       onClick={onClose}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 select-none touch-manipulation cursor-pointer active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "flex items-center rounded-xl px-3 py-2 text-sm font-medium select-none touch-manipulation cursor-pointer duration-200 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         align === "center"
           ? "justify-center text-center gap-2.5"
           : "justify-start text-left gap-3",
         active
-          ? "bg-accent text-accent-foreground font-semibold shadow-2xs"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          ? "dock-item-active font-semibold shadow-xs"
+          : "dock-item text-muted-foreground hover:text-foreground"
       )}
     >
       <DynamicIcon navKey={navKey} fallback={Icon} className="h-4 w-4 shrink-0" strokeWidth={strokeWidth} aria-hidden={true} />
@@ -343,13 +343,13 @@ function ListLink({
       onClick={onClose}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 select-none touch-manipulation cursor-pointer active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "flex items-center rounded-xl px-3 py-2 text-sm font-medium select-none touch-manipulation cursor-pointer duration-200 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         align === "center"
           ? "justify-center text-center gap-2.5"
           : "justify-start text-left gap-3",
         active
-          ? "bg-accent text-accent-foreground font-semibold shadow-2xs"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          ? "dock-item-active font-semibold shadow-xs"
+          : "dock-item text-muted-foreground hover:text-foreground"
       )}
     >
       <span
@@ -679,7 +679,7 @@ export function Sidebar({
         data-tour="sidebar"
         data-sidebar-panel="auto"
         className={cn(
-          "no-print fixed inset-y-0 hidden z-30 bg-card transition-[width,transform] duration-200 ease-in-out lg:block",
+          "no-print fixed inset-y-0 hidden z-30 sidebar-dock-panel transition-[width,transform,background,border,box-shadow] duration-200 ease-in-out lg:block",
           position === "right"
             ? "right-0 border-l border-r-0"
             : "left-0 border-r",

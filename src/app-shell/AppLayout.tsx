@@ -19,7 +19,6 @@ import { Sidebar } from "./Sidebar";
 import { isTaskPage, taskDefaultsFor } from "./taskPages";
 import { ThemeSync } from "./ThemeSync";
 import { Topbar } from "./Topbar";
-import { FloatingGlassDock } from "./FloatingGlassDock";
 
 /** Press "N" on a task page (outside inputs) to create a task there. */
 function NewTaskShortcut({ pathname }: { pathname: string }) {
@@ -104,7 +103,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
             data-tf="page"
             className={cn(
               "mx-auto w-full px-3.5 py-5 sm:px-6 sm:py-8 lg:px-8 print:max-w-none print:p-0 transition-[max-width] duration-200",
-              (preferences.floatingDock ?? "off") !== "off" && (preferences.floatingDock === "mobile" ? "max-lg:pb-24" : "pb-24"),
               layoutWidth === "wide"
                 ? "max-w-7xl"
                 : layoutWidth === "full"
@@ -118,7 +116,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
             {children}
           </main>
         </div>
-        <FloatingGlassDock />
         </TourProvider>
       </TaskDialogProvider>
     </RealtimeProvider>
