@@ -15,6 +15,7 @@ import { cn } from "@/lib/cn";
 import { usePathname } from "@/lib/navigation";
 import { RealtimeProvider } from "@/realtime";
 import { BackBar } from "./BackBar";
+import { FloatingGlassDock } from "./FloatingGlassDock";
 import { Sidebar } from "./Sidebar";
 import { isTaskPage, taskDefaultsFor } from "./taskPages";
 import { ThemeSync } from "./ThemeSync";
@@ -107,7 +108,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 ? "max-w-7xl"
                 : layoutWidth === "full"
                 ? "max-w-[102rem] 2xl:max-w-[115rem]"
-                : "max-w-6xl"
+                : "max-w-6xl",
+              preferences.floatingDock === "always"
+                ? "pb-24"
+                : preferences.floatingDock === "mobile"
+                ? "pb-24 lg:pb-8"
+                : ""
             )}
           >
             <MaintenanceBanner />
@@ -115,6 +121,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <BackBar />
             {children}
           </main>
+          <FloatingGlassDock />
         </div>
         </TourProvider>
       </TaskDialogProvider>

@@ -571,7 +571,7 @@ export function NotesBoard({ onOpen }: { onOpen: (note: Note | null) => void }) 
           </div>
         </div>
         {!visible.length && !draft && (
-          <div className={cn("pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center", background.chalk ? "text-white/90" : "text-zinc-800")}>
+          <div className={cn("pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center", background.chalk ? "text-white/90" : "text-zinc-800 dark:text-zinc-100")}>
             <StickyIcon className="h-8 w-8 opacity-70" aria-hidden="true" />
             <p className="max-w-sm text-sm font-medium">{scope === "shared" ? "Nothing shared with you yet." : "Your board is empty. Add a note and drag it wherever you like."}</p>
             {canWrite && scope !== "shared" && (

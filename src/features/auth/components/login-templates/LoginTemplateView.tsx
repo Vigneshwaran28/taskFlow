@@ -273,7 +273,7 @@ function InteractiveTemplate({ r, form }: TemplateProps) {
 
           <div>{form}</div>
 
-          <Support contact={r.supportContact} tone={ON_SURFACE} fallback={NO_ACCOUNT} className="mt-6 text-center text-xs text-slate-500" />
+          <Support contact={r.supportContact} tone={ON_SURFACE} fallback={NO_ACCOUNT} className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400" />
         </div>
       </div>
     </div>

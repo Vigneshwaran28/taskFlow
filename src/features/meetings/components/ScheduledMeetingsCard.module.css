@@ -275,6 +275,117 @@
   color: #6b7280;
 }
 
+/* =========================================
+   Dark Mode Support
+========================================= */
+:global(.dark) .meetingCard {
+  background-color: var(--color-card, #111827);
+  color: var(--color-foreground, #f1f5f9);
+  border: 1px solid var(--color-border, #293548);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .title {
+  color: var(--color-foreground, #f1f5f9);
+}
+
+:global(.dark) .dateSelector {
+  background-color: var(--color-muted, #1e293b);
+  border-color: var(--color-border, #293548);
+  color: var(--color-foreground, #f1f5f9);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+:global(.dark) .dateSelector:hover {
+  background-color: #334155;
+}
+
+:global(.dark) .callsInfo {
+  color: var(--color-muted-foreground, #94a3b8);
+}
+
+:global(.dark) .dateNavContainer {
+  background-color: var(--color-muted, #1e293b);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--color-border, #293548);
+}
+
+:global(.dark) .dayNumber {
+  color: var(--color-foreground, #f1f5f9);
+}
+
+:global(.dark) .dayName {
+  color: var(--color-muted-foreground, #94a3b8);
+}
+
+:global(.dark) .dayItem:hover .dayNumber,
+:global(.dark) .dayItem:hover .dayName {
+  background-color: #334155;
+  color: #ffffff;
+}
+
+:global(.dark) .dayActive .dayNumber,
+:global(.dark) .dayActive .dayName {
+  background-color: var(--color-primary, #6366f1) !important;
+  color: #ffffff !important;
+}
+
+:global(.dark) .indicatorDot {
+  background-color: #475569;
+}
+
+:global(.dark) .indicatorActive {
+  background-color: #ffffff !important;
+}
+
+:global(.dark) .indicatorHasMeetings {
+  background-color: #34d399;
+}
+
+:global(.dark) .indicatorLine {
+  border-top-color: #334155;
+}
+
+:global(.dark) .callItem {
+  background-color: var(--color-muted, #1e293b);
+  border: 1px solid var(--color-border, #293548);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+:global(.dark) .callItem:hover {
+  border-color: var(--color-primary, #6366f1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+:global(.dark) .callTimeBadge {
+  background-color: #0f172a;
+  color: #93c5fd;
+  border: 1px solid #1e293b;
+}
+
+:global(.dark) .callTitle {
+  color: var(--color-foreground, #f1f5f9);
+}
+
+:global(.dark) .callMeta {
+  color: var(--color-muted-foreground, #94a3b8);
+}
+
+:global(.dark) .joinButton {
+  background-color: var(--color-primary, #6366f1);
+  color: #ffffff;
+}
+
+:global(.dark) .joinButton:hover {
+  background-color: color-mix(in srgb, var(--color-primary, #6366f1) 85%, #ffffff);
+}
+
+:global(.dark) .emptyCalls {
+  background: rgba(30, 41, 59, 0.55);
+  border: 1px solid var(--color-border, #293548);
+  color: var(--color-muted-foreground, #94a3b8);
+}
+
 @media screen and (max-width: 480px) {
   .meetingCard {
     max-width: 100%;

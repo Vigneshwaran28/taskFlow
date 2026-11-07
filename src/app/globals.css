@@ -22,15 +22,17 @@
   --color-destructive-foreground: #ffffff;
   --color-success: #047857; /* AA as text on white */
   --color-warning: #b45309; /* #d97706 was 3.2:1 as text on white */
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0f172a;
 }
 
 .dark {
   --color-background: #0b1120;
-  --color-foreground: #e2e8f0;
+  --color-foreground: #f1f5f9;
   --color-card: #111827;
-  --color-muted: #1f2937;
+  --color-muted: #1e293b;
   --color-muted-foreground: #94a3b8;
-  --color-border: #1f2937;
+  --color-border: #293548;
   --color-input: #334155;
   --color-ring: #818cf8;
   --color-primary: #6366f1;
@@ -41,6 +43,8 @@
   --color-destructive-foreground: #ffffff;
   --color-success: #10b981;
   --color-warning: #f59e0b;
+  --color-popover: #111827;
+  --color-popover-foreground: #f1f5f9;
 }
 
 /* Dark mode: primary-coloured text (links, counts, "View all") on dark cards was ~4:1. The ring colour is each accent's
@@ -522,13 +526,15 @@ html[data-sidebar="glass"] [data-sidebar-panel="auto"],
   box-shadow: 2px 0 24px rgba(0, 0, 0, 0.06), inset 1px 0 2px rgba(255, 255, 255, 0.6) !important;
 }
 
-.dark html[data-sidebar="dock"] [data-sidebar-panel="auto"],
-.dark html[data-sidebar="glass"] [data-sidebar-panel="auto"],
+html.dark[data-sidebar="dock"] [data-sidebar-panel="auto"],
+html.dark[data-sidebar="glass"] [data-sidebar-panel="auto"],
 .dark [data-sidebar-panel="dock"],
-.dark [data-sidebar-panel="glass"] {
-  background: color-mix(in srgb, var(--sidebar-accent-color, var(--color-primary)) 14%, rgba(15, 23, 42, 0.78)) !important;
-  border-color: rgba(255, 255, 255, 0.16) !important;
-  box-shadow: 2px 0 24px rgba(0, 0, 0, 0.4), inset 1px 0 2px rgba(255, 255, 255, 0.15) !important;
+.dark [data-sidebar-panel="glass"],
+html.dark [data-sidebar-panel="dock"],
+html.dark [data-sidebar-panel="glass"] {
+  background: color-mix(in srgb, var(--sidebar-accent-color, var(--color-primary)) 14%, rgba(15, 23, 42, 0.88)) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 2px 0 24px rgba(0, 0, 0, 0.45), inset 1px 0 2px rgba(255, 255, 255, 0.12) !important;
 }
 
 /* Dock Nav Items with Uiverse Micro-Interactions */
@@ -542,11 +548,13 @@ html[data-sidebar="glass"] [data-sidebar-panel="auto"],
     inset -1px -1px 3px rgba(255, 255, 255, 0.3);
   transform: scale(1.06) translateY(-1px);
 }
-.dark .dock-item:hover {
-  background-color: color-mix(in srgb, var(--sidebar-accent-color, var(--color-primary)) 20%, rgba(255, 255, 255, 0.12));
+.dark .dock-item:hover,
+html.dark .dock-item:hover {
+  background-color: color-mix(in srgb, var(--sidebar-accent-color, var(--color-primary)) 22%, rgba(255, 255, 255, 0.14));
   box-shadow:
-    inset 1px 1px 3px -1px rgba(255, 255, 255, 0.3),
-    inset -1px -1px 3px rgba(255, 255, 255, 0.1);
+    inset 1px 1px 3px -1px rgba(255, 255, 255, 0.25),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.08);
+  color: #ffffff !important;
 }
 
 /* Active Dock Item: Glossy Specular Glass Pill */
@@ -559,13 +567,15 @@ html[data-sidebar="glass"] [data-sidebar-panel="auto"],
     0 0 0 1px rgba(255, 255, 255, 0.6) !important;
   transform: scale(1.05);
 }
-.dark .dock-item-active {
-  background: color-mix(in srgb, var(--sidebar-accent-color, var(--color-primary)) 30%, rgba(255, 255, 255, 0.94)) !important;
-  color: #090e17 !important;
+.dark .dock-item-active,
+html.dark .dock-item-active {
+  background: color-mix(in srgb, var(--sidebar-accent-color, var(--color-primary)) 25%, #1e293b) !important;
+  color: #ffffff !important;
   box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.35),
-    inset 0 1px 1.5px rgba(255, 255, 255, 0.8),
-    0 0 0 1px rgba(255, 255, 255, 0.3) !important;
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.2),
+    0 0 0 1px color-mix(in srgb, var(--sidebar-accent-color, var(--color-primary)) 50%, rgba(255, 255, 255, 0.25)) !important;
+  transform: scale(1.05);
 }
 
 /* ---- Text size and density: every size and spacing utility is rem-based, so these scale the whole UI. ---- */
@@ -692,6 +702,39 @@ dialog:modal > div.max-h-\[85vh\] { max-height: min(85vh, calc(100dvh - 2rem)); 
   /* Long unbroken words (URLs, IDs) wrap instead of overflowing their card; truncate/nowrap text is unaffected. */
   body { font-family: var(--font-sans); overflow-wrap: break-word; }
   dialog::backdrop { background: rgb(15 23 42 / 0.72); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+
+  /* Ensure all buttons have pointer cursor and instant mobile tap response */
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  input[type="button"]:disabled,
+  input[type="submit"]:disabled,
+  input[type="reset"]:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* Accessible and visible placeholders across themes */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-muted-foreground);
+    opacity: 0.75;
+  }
+
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+    color: #94a3b8;
+    opacity: 0.85;
+  }
 
   /* Ensure toast notifications / alert toaster sit in the browser's top layer with highest z-index,
      clearly visible over any open modal dialog and backdrop. */

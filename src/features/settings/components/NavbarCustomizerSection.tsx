@@ -155,6 +155,7 @@ export function NavbarCustomizerSection() {
   const sidebarPosition = preferences.sidebarPosition ?? "left";
   const sidebarMode = preferences.sidebarMode ?? "full";
   const sidebarAlign = preferences.sidebarAlign ?? "left";
+  const isDark = preferences.theme === "dark" || (preferences.theme === "system" && typeof document !== "undefined" && document.documentElement.classList.contains("dark"));
 
   function update<K extends keyof AppearancePreferences>(key: K, value: AppearancePreferences[K]) {
     setPreference(key, value);
@@ -254,19 +255,27 @@ export function NavbarCustomizerSection() {
             <div
               className="flex flex-col items-center gap-2 p-2 rounded-2xl border backdrop-blur-xl shadow-xl transition-all"
               style={{
-                background: preferences.sidebarColor
+                background: isDark
+                  ? preferences.sidebarColor
+                    ? `color-mix(in srgb, ${preferences.sidebarColor} 20%, rgba(15, 23, 42, 0.85))`
+                    : "rgba(15, 23, 42, 0.85)"
+                  : preferences.sidebarColor
                   ? `color-mix(in srgb, ${preferences.sidebarColor} 22%, rgba(255, 255, 255, 0.72))`
                   : "rgba(0, 122, 255, 0.18)",
-                borderColor: "rgba(255, 255, 255, 0.35)",
-                boxShadow: "0 12px 32px rgba(0,0,0,0.12), inset 1px 1px 3px rgba(255,255,255,0.6)",
+                borderColor: isDark ? "rgba(255, 255, 255, 0.14)" : "rgba(255, 255, 255, 0.35)",
+                boxShadow: isDark
+                  ? "0 12px 32px rgba(0,0,0,0.4), inset 1px 1px 3px rgba(255,255,255,0.15)"
+                  : "0 12px 32px rgba(0,0,0,0.12), inset 1px 1px 3px rgba(255,255,255,0.6)",
               }}
             >
               <div
                 className="h-9 w-9 rounded-xl flex items-center justify-center shadow-md font-bold text-xs ring-1 ring-white/60 transition-transform hover:scale-110"
                 style={{
-                  background: "rgba(255, 255, 255, 0.96)",
-                  color: preferences.sidebarColor || "var(--color-primary)",
-                  boxShadow: "0 4px 14px rgba(0,0,0,0.12), inset 0 1px 1.5px rgba(255,255,255,0.95)",
+                  background: isDark ? "rgba(30, 41, 59, 0.95)" : "rgba(255, 255, 255, 0.96)",
+                  color: isDark ? "#ffffff" : (preferences.sidebarColor || "var(--color-primary)"),
+                  boxShadow: isDark
+                    ? "0 4px 14px rgba(0,0,0,0.35), inset 0 1px 1.5px rgba(255,255,255,0.2)"
+                    : "0 4px 14px rgba(0,0,0,0.12), inset 0 1px 1.5px rgba(255,255,255,0.95)",
                 }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
@@ -274,22 +283,22 @@ export function NavbarCustomizerSection() {
                   <path d="m12 5.432 8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 0-.75-.75h-3a.75.75 0 0 0-.75.75V21a.75.75 0 0 1-.75.75H5.625a1.875 1.875 0 0 1-1.875-1.875v-6.198a2.29 2.29 0 0 0 .091-.086L12 5.432Z" />
                 </svg>
               </div>
-              <div className="h-9 w-9 rounded-xl flex items-center justify-center text-foreground/80 hover:bg-white/30 transition-all text-xs cursor-pointer hover:scale-105">
+              <div className="h-9 w-9 rounded-xl flex items-center justify-center text-foreground/80 hover:bg-white/20 transition-all text-xs cursor-pointer hover:scale-105">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
                   <path fillRule="evenodd" d="M6.75 2.25A.75.75 0 0 1 7.5 3v1.5h9V3A.75.75 0 0 1 18 3v1.5h.75a3 3 0 0 1 3 3v11.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V7.5a3 3 0 0 1 3-3H6V3a.75.75 0 0 1 .75-.75Zm13.5 9a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v7.5a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5v-7.5Z" clipRule="evenodd" />
                 </svg>
               </div>
-              <div className="h-9 w-9 rounded-xl flex items-center justify-center text-foreground/80 hover:bg-white/30 transition-all text-xs cursor-pointer hover:scale-105">
+              <div className="h-9 w-9 rounded-xl flex items-center justify-center text-foreground/80 hover:bg-white/20 transition-all text-xs cursor-pointer hover:scale-105">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
                   <path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3V18a3 3 0 0 0 3 3h15ZM1.5 10.146V6a3 3 0 0 1 3-3h5.379a2.25 2.25 0 0 1 1.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 0 1 3 3v1.146A4.483 4.483 0 0 0 19.5 9h-15a4.483 4.483 0 0 0-3 1.146Z" />
                 </svg>
               </div>
-              <div className="h-9 w-9 rounded-xl flex items-center justify-center text-foreground/80 hover:bg-white/30 transition-all text-xs cursor-pointer hover:scale-105">
+              <div className="h-9 w-9 rounded-xl flex items-center justify-center text-foreground/80 hover:bg-white/20 transition-all text-xs cursor-pointer hover:scale-105">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
                   <path d="M4.5 4.5a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h8.25a3 3 0 0 0 3-3v-9a3 3 0 0 0-3-3H4.5ZM19.94 18.75l-2.69-2.69V7.94l2.69-2.69a1.5 1.5 0 0 1 2.56 1.06v11.38a1.5 1.5 0 0 1-2.56 1.06Z" />
                 </svg>
               </div>
-              <div className="h-9 w-9 rounded-xl flex items-center justify-center text-foreground/80 hover:bg-white/30 transition-all text-xs cursor-pointer hover:scale-105">
+              <div className="h-9 w-9 rounded-xl flex items-center justify-center text-foreground/80 hover:bg-white/20 transition-all text-xs cursor-pointer hover:scale-105">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
                   <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm0 13.5a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" clipRule="evenodd" />
                 </svg>

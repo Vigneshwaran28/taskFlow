@@ -38,7 +38,7 @@ export function ColorPicker({ value, onChange, disabled = false, label = "Colour
               selected && "ring-2 ring-foreground/60 ring-offset-2 ring-offset-background"
             )}
           >
-            {selected && <Check className="h-3.5 w-3.5 text-zinc-900" aria-hidden="true" />}
+            {selected && <Check className="h-3.5 w-3.5 text-zinc-900 dark:text-zinc-950 stroke-[2.5]" aria-hidden="true" />}
           </button>
         );
       })}

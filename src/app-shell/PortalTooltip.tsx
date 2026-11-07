@@ -44,7 +44,7 @@ export function PortalTooltip({ label, position, visible, anchorRect }: PortalTo
       role="tooltip"
       style={style}
       className={cn(
-        "pointer-events-none fixed z-[9999] whitespace-nowrap rounded-lg border border-border/80 bg-popover/95 px-3 py-1.5 text-xs font-medium text-popover-foreground shadow-xl backdrop-blur-xs animate-in fade-in zoom-in-95 duration-100"
+        "pointer-events-none fixed z-[9999] whitespace-nowrap rounded-lg border border-border bg-card/98 px-3 py-1.5 text-xs font-medium text-foreground shadow-xl backdrop-blur-sm animate-in fade-in zoom-in-95 duration-100"
       )}
     >
       {label}

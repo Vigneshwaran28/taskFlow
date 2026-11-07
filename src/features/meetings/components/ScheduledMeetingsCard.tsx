@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import { ExternalLink, Plus, Users, Shield } from "lucide-react";
+import { cn } from "@/lib/cn";
 import type { Meeting } from "../services/meetingService";
 import { PlatformIcon } from "./PlatformBadge";
 import styles from "./ScheduledMeetingsCard.module.css";
@@ -181,12 +182,12 @@ export function ScheduledMeetingsCard({
       <div className={styles.scheduledList}>
         {selectedDayMeetings.length === 0 ? (
           <div className={styles.emptyCalls}>
-            <p className="font-medium text-gray-700">No meetings on this day</p>
+            <p className="font-medium text-foreground">No meetings on this day</p>
             {onScheduleClick && (
               <button
                 type="button"
                 onClick={onScheduleClick}
-                className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-gray-900 underline hover:text-black"
+                className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary underline hover:text-primary/80 transition-colors cursor-pointer select-none touch-manipulation"
               >
                 <Plus className="h-3 w-3" /> Schedule a meeting
               </button>
@@ -212,13 +213,13 @@ export function ScheduledMeetingsCard({
                     <div className={styles.callMeta}>
                       <span>{m.platformLabel}</span>
                       {m.roles && m.roles.length > 0 && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] text-gray-600">
+                        <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
                           • <Shield className="h-2.5 w-2.5" />
                           {m.roles.map(r => r.name).join(", ")}
                         </span>
                       )}
                       {m.participants && m.participants.length > 0 && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] text-gray-600">
+                        <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
                           • <Users className="h-2.5 w-2.5" />
                           {m.participants.length}
                         </span>
@@ -227,12 +228,12 @@ export function ScheduledMeetingsCard({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   <a
                     href={m.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={styles.joinButton}
+                    className={cn(styles.joinButton, "select-none touch-manipulation cursor-pointer")}
                   >
                     <span>Join</span>
                     <ExternalLink className="h-3 w-3" />
@@ -241,7 +242,7 @@ export function ScheduledMeetingsCard({
                     <button
                       type="button"
                       onClick={() => onEditMeeting(m)}
-                      className="rounded-full p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition"
+                      className="rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer select-none touch-manipulation"
                       title="Edit meeting"
                     >
                       <svg
